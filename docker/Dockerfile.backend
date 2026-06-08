@@ -1,0 +1,93 @@
+# =============================================================================
+# AI ERP Assistant — Backend Dockerfile
+# Multi-stage build for development and production
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Stage 1: Base
+# ---------------------------------------------------------------------------
+FROM python:3.12-slim AS base
+
+LABEL maintainer="ERP AI Team"
+LABEL description="AI ERP Assistant Backend"
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONFAULTHANDLER=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    libpq-dev \
+    poppler-utils \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# ---------------------------------------------------------------------------
+# Stage 2: Dependencies
+# ---------------------------------------------------------------------------
+FROM base AS dependencies
+
+COPY pyproject.toml .
+COPY README.md .
+RUN pip install --upgrade pip && \
+    pip install hatchling && \
+    pip install ".[dev]"
+
+# ---------------------------------------------------------------------------
+# Stage 3: Development
+# ---------------------------------------------------------------------------
+FROM dependencies AS development
+
+ENV APP_ENV=development \
+    DEBUG=true
+
+COPY . .
+
+# Create directories
+RUN mkdir -p /app/uploads /app/logs
+
+EXPOSE 8000
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--log-level", "debug"]
+
+# ---------------------------------------------------------------------------
+# Stage 4: Production
+# ---------------------------------------------------------------------------
+FROM base AS production
+
+ENV APP_ENV=production \
+    DEBUG=false
+
+WORKDIR /app
+
+COPY pyproject.toml .
+COPY README.md .
+COPY . .
+
+RUN pip install --upgrade pip && \
+    pip install hatchling && \
+    pip install -e "."
+
+
+
+#COPY alembic/ /app/alembic/
+#COPY alembic.ini /app/
+
+# Non-root user for security
+RUN groupadd --gid 1001 appgroup && \
+    useradd --uid 1001 --gid appgroup --shell /bin/bash --create-home appuser && \
+    mkdir -p /app/uploads /app/logs && \
+    chown -R appuser:appgroup /app
+
+USER appuser
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4", "--log-level", "info"]
