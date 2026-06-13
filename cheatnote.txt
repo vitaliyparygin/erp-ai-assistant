@@ -1,0 +1,2 @@
+docker compose exec postgres psql -U erp_user -d erp_assistant
+

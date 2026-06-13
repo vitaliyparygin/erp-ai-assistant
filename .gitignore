@@ -1,3 +1,6 @@
 .env
 .idea/
 .DS_Store
+cheatnote.txt
+app/__pycache__/
+app/workers/__pycache__/

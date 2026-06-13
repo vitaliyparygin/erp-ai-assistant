@@ -1,0 +1,41 @@
+tests:
+
+  - question: "Хто платник газового рахунку?"
+    expected:
+      - "Ivan Petrenko"
+
+  - question: "Яка сума газового рахунку?"
+    expected:
+      - "147"
+
+  - question: "Який EIC код?"
+    expected:
+      - "62Z1234567890123"
+
+  - question: "Який тариф інтернету?"
+    expected:
+      - "100 Mbps"
+
+  - question: "Хто виконавець договору?"
+    "expected_any": [
+        "ERP Solutions",
+        "ERP Solutions LLC"
+    ]
+  - question: "Який номер договору?"
+    expected:
+      - "Який номер договору?"
+  - question: "Хто замовник договору?"
+    expected:
+      - "Ivan Petrenko"
+
+  - question: "Хто працівник у наказі?"
+    expected:
+      - "John Smith"
+
+  - question: "Який contractor?"
+    expected:
+      - "ERP Solutions"
+
+  - question: "Який customer у договорі?"
+    expected:
+      - "Alpha LLC"
