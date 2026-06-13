@@ -35,7 +35,7 @@ def setup_logging(log_level: str = "INFO", json_logs: bool = True) -> None:
         structlog.contextvars.merge_contextvars,
         structlog.stdlib.add_log_level,
         structlog.stdlib.add_logger_name,
-        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.TimeStamper(fmt="iso", utc=False,),
         add_app_context,
         structlog.processors.StackInfoRenderer(),
         structlog.processors.ExceptionRenderer(),
