@@ -6,7 +6,7 @@ with conditional routing, retry handling, and full observability.
 import json
 import time
 from typing import Any, Literal
-
+from uuid import UUID
 from langgraph.graph import END, START, StateGraph
 from tenacity import retry, stop_after_attempt, wait_exponential
 from typing import Any
@@ -29,7 +29,33 @@ from app.rag.retriever import Reranker, VectorRetriever
 
 logger = get_logger(__name__)
 
+REWRITE_MAP = {
+    "виконавець договору": [
+        "contractor",
+        "service provider",
+        "executor",
+    ],
 
+    "замовник договору": [
+        "customer",
+        "client",
+    ],
+
+    "номер договору": [
+        "contract number",
+        "agreement number",
+    ],
+
+    "працівник": [
+        "employee",
+        "worker",
+    ],
+
+    "наказ": [
+        "employee order",
+        "order",
+    ],
+}
 # =============================================================================
 # Agent Nodes
 # =============================================================================
@@ -50,13 +76,58 @@ class MemoryAgent:
         logger.info("memory_agent_start", session_id=state.session_id)
 
         try:
+            start_time = time.monotonic()
             history = await self._memory.get_history(state.session_id)
+            logger.warning(
+                "MEMORY_HISTORY",
+                count=len(history),
+                history=[
+                    {
+                        "type": type(m).__name__,
+                        "content": str(m.content)[:100],
+                    }
+                    for m in history
+                ]
+            )
+            logger.warning(
+                "MEMORY_DEBUG",
+                session_id=str(state.session_id),
+                count=len(history),
+                message_types=[
+                    type(m).__name__
+                    for m in history
+                ]
+            )
+            logger.warning(
+                "MEMORY_LAST_MESSAGES",
+                messages=[
+                    {
+                        "type": type(m).__name__,
+                        "content": str(m.content)[:100]
+                    }
+                    for m in history[-4:]
+                ]
+            )
+            latency = time.monotonic() - start_time
+            logger.info("_memory.get_history:", latency=latency)
             message_count = len(history)
+            logger.warning(
+                "FINAL_CONTEXT",
+                context=history[-4:]
+            )
 
+            logger.warning(
+                "FINAL_QUERY",
+                query=state.query
+            )
             summary = None
             if message_count >= self._settings.memory_summarization_threshold:
+                start = time.monotonic()
                 # Summarize to keep context window manageable
+
                 summary = await self._summarize_history(history)
+                latency = time.monotonic() - start_time
+                logger.info("_memory._summarize_history:", latency=latency)
                 # Keep only the last few messages after summarization
                 history = history[-4:]
 
@@ -78,7 +149,7 @@ class MemoryAgent:
             logger.info(
                 "AGENT_TIMING",
                 agent="memory",
-                latency_ms=latency_ms
+                latency_ms=round((time.monotonic() - start) * 1000, 2),
             )
             return updates
 
@@ -96,6 +167,7 @@ class MemoryAgent:
             "SUMMARIZER_PROMPT",
             context=conversation_text[:2000]
         )
+
         result = await chain.ainvoke({"conversation": conversation_text})
         return result.content
 
@@ -118,15 +190,24 @@ class RetrieverAgent:
         self._settings = get_settings()
 
     async def __call__(self, state: AgentState) -> dict:
-        start = time.monotonic()
         logger.info("retriever_agent_start", query=state.query[:60])
-
+        start = time.monotonic()
         try:
             # 1. Query rewriting
-            rewritten_query = state.query
+            rewritten_query = state.query.lower()
+
+            for ua, synonyms in REWRITE_MAP.items():
+                if ua in rewritten_query:
+                    rewritten_query += " " + " ".join(synonyms)
+
             if self._settings.query_rewrite_enabled:
                 start_time = time.monotonic()
                 rewritten_query = await self._rewrite_query(state)
+                logger.warning(
+                    "REWRITTEN_QUERY2",
+                    original=state.query,
+                    rewritten=rewritten_query,
+                )
                 latency = time.monotonic() - start_time
                 print("self._rewrite_query:", latency)
 
@@ -135,6 +216,18 @@ class RetrieverAgent:
             chunks = await self._retriever.retrieve(
                 query=rewritten_query,
                 document_ids=[str(d) for d in state.document_ids] or None,
+            )
+            logger.warning(
+                "RETRIEVED_RAW",
+                query=rewritten_query,
+                docs=[
+                    {
+                        "doc": c.document_name,
+                        "score": round(c.score, 3),
+                        "chunk": c.chunk_index,
+                    }
+                    for c in chunks
+                ],
             )
             logger.warning(
                 "retrieved_chunks",
@@ -150,11 +243,37 @@ class RetrieverAgent:
             # 3. Reranking
             start_time = time.monotonic()
             reranked = await self._reranker.rerank(rewritten_query, chunks)
+            logger.warning(
+                "RERANKED_CHUNKS",
+                chunks=[
+                    {
+                        "doc": c.document_name,
+                        "score": round(c.score, 3)
+                    }
+                    for c in reranked[:5]
+                ]
+            )
+            logger.warning(
+                "RERANK_OUTPUT",
+                docs=[
+                    {
+                        "doc": c.document_name,
+                        "score": round(c.score, 3),
+                    }
+                    for c in reranked
+                ]
+            )
             latency = time.monotonic() - start_time
             print("self._reranker.rerank:", latency)
             # 4. Analyze context sufficiency
+            start_time = time.monotonic()
             context_str = self._format_context(reranked)
+            latency = time.monotonic() - start_time
+            print("self._format_context:", latency)
+            start_time = time.monotonic()
             analysis = await self._analyze_context(state.query, context_str)
+            latency = time.monotonic() - start_time
+            print("ANALYZE_CONTEXT_TIME:", latency)
             analysis["has_sufficient_context"] = bool(reranked)
             analysis["needs_research"] = False
 
@@ -215,11 +334,7 @@ class RetrieverAgent:
             "QUERY_USED_FOR_SEARCH",
             query=state.query,
         )
-        logger.info(
-            "AGENT_TIMING",
-            agent="retriever",
-            latency_ms=latency_ms
-        )
+
         result = await chain.ainvoke({
             "query": state.query,
             "conversation_context": context[:3000],
@@ -228,7 +343,7 @@ class RetrieverAgent:
         rewritten = result.content.strip()
 
         logger.debug(
-            "query_rewritten",
+            "RETRIEVAL_QUERY",
             original=state.query,
             rewritten=rewritten,
         )
@@ -289,7 +404,16 @@ class ResearchAgent:
                 "history": state.messages[-6:],
                 "research_notes": "\n".join(state.research_notes),
             })
-
+            logger.warning(
+                "ROUTER_DECISION",
+                needs_research=state.needs_research,
+                query=state.query,
+            )
+            logger.info(
+                "AGENT_result",
+                agent="research_agent",
+                latency_ms=result
+            )
             latency_ms = round((time.monotonic() - start) * 1000, 2)
             logger.info(
                 "AGENT_TIMING",
@@ -307,6 +431,35 @@ class ResearchAgent:
             return {"errors": [f"ResearchAgent: {e}"], "execution_path": ["research"]}
 
 
+def build_citations(state: AgentState) -> list[Citation]:
+    citations = []
+    seen = set()
+
+    for chunk in state.reranked_chunks[:3]:
+        key = (
+            chunk.document_id,
+            chunk.page_number,
+            chunk.chunk_index,
+        )
+
+        if key in seen:
+            continue
+
+        seen.add(key)
+
+        citations.append(
+            Citation(
+                document_id=UUID(chunk.document_id),
+                document_name=chunk.document_name,
+                page_number=chunk.page_number,
+                chunk_content=chunk.content[:300],
+                relevance_score=chunk.score,
+                chunk_index=chunk.chunk_index,
+            )
+        )
+
+    return citations
+
 class SummarizerAgent:
     """
     Generates the final business-friendly answer with Markdown formatting.
@@ -319,10 +472,40 @@ class SummarizerAgent:
             "LLM_MODEL",
             model=getattr(self._llm, "model", "unknown")
         )
+
+
     async def __call__(self, state: AgentState) -> dict:
         start = time.monotonic()
         logger.info("summarizer_agent_start", query=state.query[:60])
+        logger.warning(
+            "SUMMARIZER_STATE_KEYS",
+            keys=list(state.model_dump().keys())
+        )
+        logger.warning(
+            "SUMMARIZER_RERANKED",
+            count=len(state.reranked_chunks or [])
+        )
 
+        logger.warning(
+            "SUMMARIZER_RERANKED_DOCS",
+            docs=[
+                {
+                    "doc": c.document_name,
+                    "score": c.score,
+                }
+                for c in state.reranked_chunks
+            ],
+        )
+
+        logger.warning(
+            "SUMMARIZER_CONTEXT_FULL",
+            context=state.context_str,
+        )
+
+        logger.warning(
+            "SUMMARIZER_QUERY",
+            query=state.query,
+        )
         try:
             logger.warning(
                 "summarizer_context",
@@ -383,6 +566,9 @@ class SummarizerAgent:
             )
             return {
                 "final_answer": answer,
+                "citations": build_citations(
+                    state
+                ),
                 "intermediate_answers": [answer],
                 "execution_path": ["summarizer"],
                 "agent_trace": {"summarizer": {
@@ -392,6 +578,7 @@ class SummarizerAgent:
                 "total_tokens": getattr(result, "usage_metadata", {}).get("total_tokens", 0),
             }
 
+
         except Exception as e:
 
             logger.error(
@@ -399,7 +586,6 @@ class SummarizerAgent:
                 error=str(e),
                 error_type=type(e).__name__,
             )
-            raise
             raise
 
 
@@ -417,84 +603,19 @@ class CitationAgent:
 
         start = time.monotonic()
 
-        try:
-            chunks_json = json.dumps([
-                {
-                    "chunk_id": c.chunk_id,
-                    "document_name": c.document_name,
-                    "page_number": c.page_number,
-                    "content": c.content[:400],
-                }
-                for c in state.reranked_chunks[:8]
-            ], indent=2)
-            logger.warning(
-                "CITATION_CHUNKS",
-                chunks=chunks_json[:2000],
-            )
-            chain = CITATION_EXTRACTION_TEMPLATE | self._llm
-            result = await chain.ainvoke({
-                "answer": state.final_answer[:2000],
-                "chunks": chunks_json,
-            })
-            logger.warning(
-                "CITATION_RAW_RESPONSE",
-                content=result.content,
-            )
-            citations = []
-            try:
-                raw_citations = json.loads(result.content)
-                seen = set()
-
-
-
-                for rc in raw_citations:
-                    chunk_id = rc.get("chunk_id")
-
-                    if chunk_id in seen:
-                        continue
-
-                    seen.add(chunk_id)
-                    # Find the corresponding chunk
-                    matching_chunk = next(
-                        (c for c in state.reranked_chunks if c.chunk_id == rc.get("chunk_id")),
-                        None,
-                    )
-                    logger.warning(
-                        "CITATION_RAW",
-                        content=result.content
-                    )
-                    if matching_chunk:
-                        import uuid as _uuid
-                        citations.append(Citation(
-                            document_id=_uuid.UUID(matching_chunk.document_id),
-                            document_name=matching_chunk.document_name,
-                            page_number=matching_chunk.page_number,
-                            chunk_content=matching_chunk.content[:300],
-                            relevance_score=rc.get("relevance_score", matching_chunk.score),
-                            chunk_index=matching_chunk.chunk_index,
-                        ))
-            except (json.JSONDecodeError, Exception) as e:
-                logger.warning("citation_parse_error", error=str(e))
-
-            latency_ms = round((time.monotonic() - start) * 1000, 2)
-
-            logger.info(
-                "AGENT_TIMING",
-                agent="citation",
-                latency_ms=latency_ms
-            )
-            return {
-                "citations": citations,
-                "execution_path": ["citation"],
-                "agent_trace": {"citation": {
-                    "citations_found": len(citations),
-                    "latency_ms": latency_ms,
-                }},
-            }
-
-        except Exception as e:
-            logger.error("citation_agent_error", error=str(e))
-            return {"citations": [], "errors": [f"CitationAgent: {e}"], "execution_path": ["citation"]}
+        return {
+            "citations": [
+                Citation(
+                    document_id=UUID(c.document_id),
+                    document_name=c.document_name,
+                    page_number=c.page_number,
+                    chunk_content=c.content[:300],
+                    relevance_score=c.score,
+                    chunk_index=c.chunk_index,
+                )
+                for c in state.reranked_chunks[:3]
+            ]
+        }
 
 
 # =============================================================================
@@ -549,14 +670,22 @@ class ERPAssistantGraph:
         builder.add_node("retriever", self._retriever_agent)
         builder.add_node("research", self._research_agent)
         builder.add_node("summarizer", self._summarizer_agent)
-        builder.add_node("citation", self._citation_agent)
+        # builder.add_node("citation", self._citation_agent)
 
         builder.add_edge(START, "memory")
         builder.add_edge("memory", "retriever")
-        builder.add_edge("retriever", "research")
+        # builder.add_edge("retriever", "research")
+        builder.add_conditional_edges(
+            "retriever",
+            self._route_after_retrieval,
+            {
+                "research": "research",
+                "summarizer": "summarizer",
+            },
+        )
         builder.add_edge("research", "summarizer")
-        builder.add_edge("summarizer", "citation")
-        builder.add_edge("citation", END)
+        # builder.add_edge("summarizer", "citation")
+        builder.add_edge("summarizer", END)
 
         return builder.compile()
 
@@ -585,11 +714,17 @@ class ERPAssistantGraph:
     @staticmethod
     def _route_after_retrieval(
         state: AgentState,
-    ) -> Literal["research", "summarize"]:
+    ) -> Literal["research", "summarizer"]:
+        logger.warning(
+            "ROUTER_RESULT",
+            state=state,
+            needs_research=state.needs_research,
+            has_sufficient_context=state.has_sufficient_context
+        )
         """Route to research if context is insufficient, else go straight to summarizer."""
         if state.needs_research and not state.has_sufficient_context:
             return "research"
-        return "summarize"
+        return "summarizer"
 
     async def run(self, state: AgentState) -> AgentState:
         """Execute the full agent graph for a query."""

@@ -86,6 +86,11 @@ class VectorStore:
         points: list[PointStruct] = []
 
         for chunk, embedding in zip(chunks, embeddings):
+            logger.warning(
+                "UPSERT_POINT",
+                document=document_name,
+                chunk_index=chunk.chunk_index,
+            )
             point_id = str(uuid.uuid4())
             point_ids.append(point_id)
 
@@ -179,9 +184,10 @@ class VectorRetriever:
         Returns:
             List of RetrievedChunk sorted by relevance score descending.
         """
-        
+
         start_time = time.monotonic()
         k = top_k or self._settings.rag_top_k
+
         threshold = score_threshold or self._settings.rag_score_threshold
         logger.warning(
             "RETRIEVER_CALLED",
@@ -247,6 +253,16 @@ class VectorRetriever:
                     score=hit.score,
                     chunk=hit.payload["content"][:200]
                 )
+                logger.warning(
+                    "QDRANT_RESULTS",
+                    docs=[
+                        {
+                            "doc": p.payload.get("document_name"),
+                            "score": p.score,
+                        }
+                        for p in results
+                    ]
+                )
             logger.warning(
                 "retrieval_debug",
                 found=len(results),
@@ -283,7 +299,11 @@ class VectorRetriever:
             top_score=chunks[0].score if chunks else 0,
         )
 
-
+        if query.lower().startswith("debug:"):
+            return {
+                "retrieved_chunks": chunks,
+                "execution_path": ["retriever"],
+            }
         return chunks
 
 
@@ -327,6 +347,16 @@ class Reranker:
             print("rerank.term_boost:", term_boost)
             return chunk.score + term_boost
 
+        logger.warning(
+            "rerank.chunks:",
+            chunks=[
+                {
+                    "doc": c.document_name,
+                    "score": round(c.score, 3)
+                }
+                for c in chunks
+            ]
+        )
         reranked = sorted(chunks, key=rerank_score, reverse=True)
         print("rerank.reranked:", reranked)
         return reranked[:k]

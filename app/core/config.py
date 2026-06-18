@@ -4,10 +4,11 @@ Uses pydantic-settings for type-safe environment variable management.
 """
 from functools import lru_cache
 from typing import Literal
-
+from app.core.logging import get_logger
 from pydantic import Field, computed_field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+logger = get_logger(__name__)
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -106,7 +107,7 @@ class Settings(BaseSettings):
     chunk_size: int = 1000
     chunk_overlap: int = 150
     rag_top_k: int = 10
-    rag_rerank_top_k: int = 5
+    rag_rerank_top_k: int = 10
     rag_score_threshold: float = 0
     query_rewrite_enabled: bool = True
     hybrid_search_enabled: bool = True
@@ -186,6 +187,12 @@ class Settings(BaseSettings):
 
 
 @lru_cache
-def get_settings() -> Settings:
-    """Cached settings instance — safe for use as a FastAPI dependency."""
-    return Settings()  # type: ignore[call-arg]
+def get_settings():
+    settings = Settings()
+
+    logger.warning(
+        "SETTINGS_DEBUG",
+        query_rewrite_enabled=settings.query_rewrite_enabled,
+    )
+
+    return settings

@@ -21,9 +21,10 @@ tests:
         "ERP Solutions",
         "ERP Solutions LLC"
     ]
-  - question: "Який номер договору?"
+  - question: "Який номер сервісного договору?"
     expected:
-      - "Який номер договору?"
+      - SC-2024-001
+
   - question: "Хто замовник договору?"
     expected:
       - "Ivan Petrenko"

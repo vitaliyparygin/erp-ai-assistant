@@ -1,2 +1,20 @@
 docker compose exec postgres psql -U erp_user -d erp_assistant
 
+docker compose logs backend -f
+
+curl http://host.docker.internal:11434/api/tags
+
+curl http://localhost:6333/collections
+curl http://localhost:6333/collections/erp_documents
+curl http://localhost:6333/collections/erp_documents/points
+curl -X DELETE http://localhost:6333/collections/erp_documents
+
+curl -X POST http://localhost:8000/api/v1/documents/upload \
+-F "file=@/Users/vitalijparigin/Downloads/1_квитанция.pdf"
+
+
+curl -X POST http://localhost:8000/api/v1/chat/ \
+-H "Content-Type: application/json" \
+-d '{"message":"what documents do you have?"}'
+
+

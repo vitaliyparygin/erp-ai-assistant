@@ -134,13 +134,30 @@ async def _ingest_document_async(
         vector_store = VectorStore(qdrant_client)
         await vector_store.ensure_collection()
 
+        logger.warning(
+            "DOCUMENT_CHUNKS",
+            document=document_name,
+            count=len(chunks),
+        )
+        for i, chunk in enumerate(chunks):
+            logger.warning(
+                "CHUNK",
+                document=document_name,
+                index=i,
+                content=chunk.content[:300]
+            )
         point_ids = await vector_store.upsert_chunks(
             chunks=chunks,
             embeddings=embeddings,
             document_id=document_id,
             document_name=document_name,
         )
-
+        logger.warning(
+            "QDRANT_UPSERT",
+            document=document_name,
+            chunks=len(chunks),
+            points=len(point_ids),
+        )
         await qdrant_client.close()
 
         # ---- Update DB ----
@@ -171,7 +188,11 @@ async def _ingest_document_async(
             pages=parsed_doc.total_pages,
             latency_s=round(latency, 2),
         )
-
+        logger.info(
+            "DOCUMENT_CHUNKS",
+            file=document_name,
+            chunks=len(chunks)
+        )
         return {
             "document_id": document_id,
             "status": "indexed",
