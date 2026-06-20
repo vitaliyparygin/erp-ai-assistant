@@ -1,0 +1,54 @@
+[
+  {
+    "question": "Хто виконавець договору?",
+    "expected_doc": "service_contract.pdf"
+  },
+  {
+    "question": "Який customer у договорі?",
+    "expected_doc": "service_contract.pdf"
+  },
+  {
+    "question": "Яка сума газового рахунку?",
+    "expected_doc": "gas_bill.pdf"
+  },
+  {
+    "question": "Який EIC код?",
+    "expected_doc": "electricity_bill.pdf"
+  },
+  {
+    "question": "Який тариф інтернету?",
+    "expected_doc": "internet_invoice.pdf"
+  },
+  {
+    "question": "Який номер сервісного договору?",
+    "expected_doc": "service_contract.pdf"
+  },
+  {
+    "question": "Хто замовник договору?",
+    "expected_doc": "service_contract.pdf"
+  },
+  {
+    "question": "Який contractor?",
+    "expected_doc": "service_contract.pdf"
+  },
+  {
+    "question": "До якого числа діє договір?",
+    "expected_doc": "service_contract.pdf"
+  },
+  {
+    "question": "Яка сума рахунку за газ?",
+    "expected_doc": "gas_bill.pdf"
+  },
+  {
+    "question": "Хто постачальник газу?",
+    "expected_doc": "gas_bill.pdf"
+  },
+  {
+    "question": "Яка посада працівника?",
+    "expected_doc": "employee_order.pdf"
+  },
+  {
+    "question": "Who is contractor?",
+    "expected_doc": "service_contract.pdf"
+  }
+]

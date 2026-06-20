@@ -1,0 +1,36 @@
+[
+  {
+    "name": "contract_followup",
+    "steps": [
+      {
+        "question": "Хто виконавець договору?",
+        "expected": "ERP Solutions LLC"
+      },
+      {
+        "question": "А замовник?",
+        "expected": "Alpha LLC"
+      },
+      {
+        "question": "А номер договору?",
+        "expected": "SC-2024-001"
+      },
+      {
+        "question": "Коли підписано?",
+        "expected": "2024-01-15"
+      }
+    ]
+  },
+  {
+    "name": "employee_followup",
+    "steps": [
+      {
+        "question": "Хто працівник у наказі?",
+        "expected": "John Smith"
+      },
+      {
+        "question": "Яка його посада?",
+        "expected": "Backend Developer"
+      }
+    ]
+  }
+]

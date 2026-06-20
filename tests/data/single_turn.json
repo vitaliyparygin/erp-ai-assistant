@@ -1,0 +1,87 @@
+[
+  {
+    "question": "Хто виконавець договору?",
+    "expected": "ERP 123 Solutions LLC",
+    "expected_doc": "service_contract.pdf"
+  },
+  {
+    "question": "Який customer у договорі?",
+    "expected": "Alpha LLC",
+    "expected_doc": "service_contract.pdf"
+  },
+  {
+    "question": "Який номер договору?",
+    "expected": "SC-2024-001",
+    "expected_doc": "service_contract.pdf"
+  },
+  {
+    "question": "Коли підписано договір?",
+    "expected": "2024-01-15",
+    "expected_doc": "service_contract.pdf"
+  },
+  {
+    "question": "Яка сума газового рахунку?",
+    "expected": "147.00",
+    "expected_doc": "gas_bill.pdf"
+  },
+  {
+    "question": "Хто платник газового рахунку?",
+    "expected": "Ivan Petrenko",
+    "expected_doc": "gas_bill.pdf"
+  },
+  {
+    "question": "Який EIC код?",
+    "expected": "62Z1234567890123",
+    "expected_doc": "electricity_bill.pdf"
+  },
+  {
+    "question": "Який тариф інтернету?",
+    "expected": "100 Mbps",
+    "expected_doc": "internet_invoice.pdf"
+  },
+  {
+    "question": "Який номер сервісного договору?",
+    "expected": "SC-2024-001",
+    "expected_doc": "service_contract.pdf"
+  },
+  {
+    "question": "Хто замовник договору?",
+    "expected": "Alpha LLC",
+    "expected_doc": "service_contract.pdf"
+  },
+  {
+    "question": "Який contractor?",
+    "expected": "ERP Solutions",
+    "expected_doc": "service_contract.pdf"
+  },
+  {
+    "question": "До якого числа діє договір?",
+    "expected": "2025-01-15",
+    "expected_doc": "service_contract.pdf"
+  },
+  {
+    "question": "Яка сума рахунку за газ?",
+    "expected": "147.00 UAH",
+    "expected_doc": "gas_bill.pdf"
+  },
+  {
+    "question": "Хто постачальник газу?",
+    "expected": "Dnipro Gas Distribution LLC",
+    "expected_doc": "gas_bill.pdf"
+  },
+  {
+    "question": "Яка посада працівника?",
+    "expected": "Backend Developer",
+    "expected_doc": "employee_order.pdf"
+  },
+  {
+    "question": "Who is contractor?",
+    "expected": "ERP Solutions LLC",
+    "expected_doc": "service_contract.pdf"
+  },
+  {
+    "question": "Хто виконавець?",
+    "expected": "ERP Solutions LLC",
+    "expected_doc": "service_contract.pdf"
+  }
+]

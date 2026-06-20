@@ -44,8 +44,6 @@ def ingest_document(
     This is an async task run in a sync Celery context.
     Uses asyncio.run() to execute the async pipeline.
     """
-    print("INGESTION TASK STARTED")
-    print("DOCUMENT ID:", document_id)
     import asyncio
     # loop = asyncio.new_event_loop()
     # asyncio.set_event_loop(loop)
@@ -119,13 +117,13 @@ async def _ingest_document_async(
         texts = [chunk.content for chunk in chunks]
         embeddings = await embedding_service.embed_batch(texts)
 
-        logger.warning(
+        logger.debug(
             "ingestion_debug",
             chunks=len(chunks),
             texts=len(texts),
         )
 
-        logger.warning(
+        logger.debug(
             "embedding_debug",
             embeddings=len(embeddings),
         )
@@ -134,13 +132,13 @@ async def _ingest_document_async(
         vector_store = VectorStore(qdrant_client)
         await vector_store.ensure_collection()
 
-        logger.warning(
+        logger.debug(
             "DOCUMENT_CHUNKS",
             document=document_name,
             count=len(chunks),
         )
         for i, chunk in enumerate(chunks):
-            logger.warning(
+            logger.debug(
                 "CHUNK",
                 document=document_name,
                 index=i,
@@ -152,7 +150,7 @@ async def _ingest_document_async(
             document_id=document_id,
             document_name=document_name,
         )
-        logger.warning(
+        logger.debug(
             "QDRANT_UPSERT",
             document=document_name,
             chunks=len(chunks),
@@ -181,14 +179,14 @@ async def _ingest_document_async(
         INGESTION_CHUNKS_CREATED.observe(len(chunks))
         INGESTION_LATENCY_SECONDS.observe(latency)
 
-        logger.info(
+        logger.debug(
             "ingestion_completed",
             document_id=document_id,
             chunks=len(chunks),
             pages=parsed_doc.total_pages,
             latency_s=round(latency, 2),
         )
-        logger.info(
+        logger.debug(
             "DOCUMENT_CHUNKS",
             file=document_name,
             chunks=len(chunks)
@@ -206,9 +204,6 @@ async def _ingest_document_async(
 
         # Update DB with error
         try:
-            # await db.rollback()
-            #
-            # raise
             from app.db.session import AsyncSessionLocal
             from app.models.orm import DocumentModel
             from sqlalchemy import select
@@ -223,7 +218,7 @@ async def _ingest_document_async(
                     doc.status = "failed"
                     doc.error_message = str(exc)[:500]
                     await db.commit()
-        except Exception as exc:
+        except Exception as e:
             logger.error(
                 "ingestion_worker. ",
                 error=str(e),

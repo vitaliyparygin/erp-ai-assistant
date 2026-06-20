@@ -1,0 +1,14 @@
+[
+  {
+    "question": "Який телефон замовника?",
+    "expected": "NOT_FOUND"
+  },
+  {
+    "question": "Яка адреса виконавця?",
+    "expected": "NOT_FOUND"
+  },
+  {
+    "question": "Який email працівника?",
+    "expected": "NOT_FOUND"
+  }
+]

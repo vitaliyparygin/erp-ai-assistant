@@ -56,6 +56,15 @@ REWRITE_MAP = {
         "order",
     ],
 }
+
+FIELD_PATTERNS = {
+    "платник": "Customer:",
+    "customer": "Customer:",
+    "замовник": "Customer:",
+    "contractor": "Contractor:",
+    "виконавець": "Contractor:",
+    "eic": "EIC:",
+}
 # =============================================================================
 # Agent Nodes
 # =============================================================================
@@ -78,7 +87,7 @@ class MemoryAgent:
         try:
             start_time = time.monotonic()
             history = await self._memory.get_history(state.session_id)
-            logger.warning(
+            logger.debug(
                 "MEMORY_HISTORY",
                 count=len(history),
                 history=[
@@ -89,7 +98,7 @@ class MemoryAgent:
                     for m in history
                 ]
             )
-            logger.warning(
+            logger.debug(
                 "MEMORY_DEBUG",
                 session_id=str(state.session_id),
                 count=len(history),
@@ -98,7 +107,7 @@ class MemoryAgent:
                     for m in history
                 ]
             )
-            logger.warning(
+            logger.debug(
                 "MEMORY_LAST_MESSAGES",
                 messages=[
                     {
@@ -109,14 +118,14 @@ class MemoryAgent:
                 ]
             )
             latency = time.monotonic() - start_time
-            logger.info("_memory.get_history:", latency=latency)
+            logger.debug("_memory.get_history:", latency=latency)
             message_count = len(history)
-            logger.warning(
+            logger.debug(
                 "FINAL_CONTEXT",
                 context=history[-4:]
             )
 
-            logger.warning(
+            logger.debug(
                 "FINAL_QUERY",
                 query=state.query
             )
@@ -127,7 +136,7 @@ class MemoryAgent:
 
                 summary = await self._summarize_history(history)
                 latency = time.monotonic() - start_time
-                logger.info("_memory._summarize_history:", latency=latency)
+                logger.debug("_memory._summarize_history:", latency=latency)
                 # Keep only the last few messages after summarization
                 history = history[-4:]
 
@@ -139,14 +148,14 @@ class MemoryAgent:
             if summary:
                 updates["conversation_summary"] = summary
 
-            logger.info(
+            logger.debug(
                 "memory_agent_done",
                 session_id=state.session_id,
                 history_len=message_count,
                 summarized=summary is not None,
                 latency_ms=round((time.monotonic() - start) * 1000, 2),
             )
-            logger.info(
+            logger.debug(
                 "AGENT_TIMING",
                 agent="memory",
                 latency_ms=round((time.monotonic() - start) * 1000, 2),
@@ -163,7 +172,7 @@ class MemoryAgent:
             f"{msg.type.upper()}: {msg.content}" for msg in history
         )
         chain = CONVERSATION_SUMMARY_TEMPLATE | self._llm
-        logger.warning(
+        logger.debug(
             "SUMMARIZER_PROMPT",
             context=conversation_text[:2000]
         )
@@ -190,7 +199,7 @@ class RetrieverAgent:
         self._settings = get_settings()
 
     async def __call__(self, state: AgentState) -> dict:
-        logger.info("retriever_agent_start", query=state.query[:60])
+        logger.debug("retriever_agent_start", query=state.query[:60])
         start = time.monotonic()
         try:
             # 1. Query rewriting
@@ -203,13 +212,14 @@ class RetrieverAgent:
             if self._settings.query_rewrite_enabled:
                 start_time = time.monotonic()
                 rewritten_query = await self._rewrite_query(state)
-                logger.warning(
+
+                latency = time.monotonic() - start_time
+                logger.debug(
                     "REWRITTEN_QUERY2",
                     original=state.query,
                     rewritten=rewritten_query,
+                    latency=latency
                 )
-                latency = time.monotonic() - start_time
-                print("self._rewrite_query:", latency)
 
             start_time = time.monotonic()
             # 2. Semantic retrieval
@@ -217,7 +227,7 @@ class RetrieverAgent:
                 query=rewritten_query,
                 document_ids=[str(d) for d in state.document_ids] or None,
             )
-            logger.warning(
+            logger.debug(
                 "RETRIEVED_RAW",
                 query=rewritten_query,
                 docs=[
@@ -229,21 +239,24 @@ class RetrieverAgent:
                     for c in chunks
                 ],
             )
-            logger.warning(
+            logger.debug(
                 "retrieved_chunks",
                 count=len(chunks),
             )
             if chunks:
-                logger.warning(
+                logger.debug(
                     "first_chunk",
                     text=chunks[0].content[:300],
                 )
             latency = time.monotonic() - start_time
-            print("self._retriever.retrieve:", latency)
+            logger.debug(
+                "self._retriever.retrieve:",
+                count=latency,
+            )
             # 3. Reranking
             start_time = time.monotonic()
             reranked = await self._reranker.rerank(rewritten_query, chunks)
-            logger.warning(
+            logger.debug(
                 "RERANKED_CHUNKS",
                 chunks=[
                     {
@@ -253,7 +266,7 @@ class RetrieverAgent:
                     for c in reranked[:5]
                 ]
             )
-            logger.warning(
+            logger.debug(
                 "RERANK_OUTPUT",
                 docs=[
                     {
@@ -264,29 +277,37 @@ class RetrieverAgent:
                 ]
             )
             latency = time.monotonic() - start_time
-            print("self._reranker.rerank:", latency)
+            logger.debug(
+                "RERANKED_CHUNKS",latency=latency)
+
             # 4. Analyze context sufficiency
             start_time = time.monotonic()
-            context_str = self._format_context(reranked)
+            context_str = self._format_context(reranked[:2])
             latency = time.monotonic() - start_time
-            print("self._format_context:", latency)
+            logger.debug(
+                "self._format_context:", latency=latency)
             start_time = time.monotonic()
             analysis = await self._analyze_context(state.query, context_str)
             latency = time.monotonic() - start_time
-            print("ANALYZE_CONTEXT_TIME:", latency)
+
+            logger.debug(
+                "ANALYZE_CONTEXT_TIME:", latency=latency)
             analysis["has_sufficient_context"] = bool(reranked)
             analysis["needs_research"] = False
 
             latency_ms = round((time.monotonic() - start) * 1000, 2)
 
-            logger.info(
+            logger.debug(
                 "retriever_agent_done",
                 retrieved=len(chunks),
                 reranked=len(reranked),
                 sufficient=analysis.get("has_sufficient_context", False),
                 latency_ms=latency_ms,
             )
-
+            logger.debug(
+                "FINAL_CONTEXT",
+                context=context_str,
+            )
             return {
                 "rewritten_query": rewritten_query,
                 "retrieved_chunks": chunks,
@@ -314,12 +335,6 @@ class RetrieverAgent:
 
     async def _rewrite_query(self, state: AgentState) -> str:
         """Rewrite the query for better retrieval."""
-        # logger.warning(
-        #     "QUERY_REWRITE_DISABLED",
-        #     query=state.query,
-        # )
-        #
-        # return state.query
         context = (
             "\n".join(
                 f"{m.type}: {m.content[:200]}"
@@ -330,7 +345,7 @@ class RetrieverAgent:
         )
 
         chain = QUERY_REWRITE_TEMPLATE | self._llm
-        logger.warning(
+        logger.debug(
             "QUERY_USED_FOR_SEARCH",
             query=state.query,
         )
@@ -357,7 +372,6 @@ class RetrieverAgent:
 
         chain = RETRIEVAL_ANALYSIS_TEMPLATE | self._llm
         result = await chain.ainvoke({"query": query, "context": context[:3000]})
-
 
         try:
             analysis = json.loads(result.content)
@@ -393,7 +407,7 @@ class ResearchAgent:
 
     async def __call__(self, state: AgentState) -> dict:
         start = time.monotonic()
-        logger.info("research_agent_start", query=state.query[:60])
+        logger.debug("research_agent_start", query=state.query[:60])
 
         try:
             chain = RESEARCH_TEMPLATE | self._llm
@@ -404,18 +418,18 @@ class ResearchAgent:
                 "history": state.messages[-6:],
                 "research_notes": "\n".join(state.research_notes),
             })
-            logger.warning(
+            logger.debug(
                 "ROUTER_DECISION",
                 needs_research=state.needs_research,
                 query=state.query,
             )
-            logger.info(
+            logger.debug(
                 "AGENT_result",
                 agent="research_agent",
                 latency_ms=result
             )
             latency_ms = round((time.monotonic() - start) * 1000, 2)
-            logger.info(
+            logger.debug(
                 "AGENT_TIMING",
                 agent="research_agent",
                 latency_ms=latency_ms
@@ -476,17 +490,17 @@ class SummarizerAgent:
 
     async def __call__(self, state: AgentState) -> dict:
         start = time.monotonic()
-        logger.info("summarizer_agent_start", query=state.query[:60])
-        logger.warning(
+        logger.debug("summarizer_agent_start", query=state.query[:60])
+        logger.debug(
             "SUMMARIZER_STATE_KEYS",
             keys=list(state.model_dump().keys())
         )
-        logger.warning(
+        logger.debug(
             "SUMMARIZER_RERANKED",
             count=len(state.reranked_chunks or [])
         )
 
-        logger.warning(
+        logger.debug(
             "SUMMARIZER_RERANKED_DOCS",
             docs=[
                 {
@@ -497,35 +511,31 @@ class SummarizerAgent:
             ],
         )
 
-        logger.warning(
+        logger.debug(
             "SUMMARIZER_CONTEXT_FULL",
             context=state.context_str,
         )
 
-        logger.warning(
+        logger.debug(
             "SUMMARIZER_QUERY",
             query=state.query,
         )
         try:
-            logger.warning(
+            logger.debug(
                 "summarizer_context",
                 context_len=len(state.context_str),
-            )
-
-            logger.warning(
-                "summarizer_context_preview",
                 preview=state.context_str[:500],
             )
             chain = SUMMARIZER_TEMPLATE | self._llm
 
-            logger.warning(
+            logger.debug(
                 "SUMMARIZER_INPUT",
                 query=state.query,
                 context=state.context_str[:2000],
                 hustory=state.messages[-6:],
                 research_notes = "\n".join(state.research_notes)
             )
-            logger.warning(
+            logger.debug(
                 "HISTORY_DEBUG",
                 count=len(state.messages),
                 data=str(state.messages[-6:])[:3000]
@@ -539,28 +549,28 @@ class SummarizerAgent:
 
             answer = result.content
             latency_ms = round((time.monotonic() - start) * 1000, 2)
-            logger.warning(
+            logger.debug(
                 "OLLAMA_RESPONSE",
                 seconds=latency_ms,
                 answer_len=len(result.content),
             )
-            logger.warning(
+            logger.debug(
                 "CONTEXT_STATS",
                 context_len=len(state.context_str),
                 history_len=len(state.messages),
                 research_len=len("\n".join(state.research_notes)),
             )
-            logger.info(
+            logger.debug(
                 "summarizer_agent_done",
                 answer_len=len(answer),
                 latency_ms=latency_ms,
             )
-            logger.info(
+            logger.debug(
                 "AGENT_TIMING",
                 agent="summarier",
                 latency_ms=latency_ms
             )
-            logger.warning(
+            logger.debug(
                 "SUMMARIZER_MODEL",
                 model=self._llm.__class__.__name__,
             )
@@ -601,8 +611,6 @@ class CitationAgent:
         if not state.final_answer or not state.reranked_chunks:
             return {"citations": [], "execution_path": ["citation"]}
 
-        start = time.monotonic()
-
         return {
             "citations": [
                 Citation(
@@ -637,7 +645,7 @@ class ERPAssistantGraph:
         memory_store: Any,
     ) -> None:
         settings = get_settings()
-        logger.warning(
+        logger.debug(
             "ACTIVE_SETTINGS",
             model=settings.ollama_model,
             base_url=settings.ollama_base_url,
@@ -649,7 +657,6 @@ class ERPAssistantGraph:
             request_timeout = settings.ollama_request_timeout,
         )
 
-
         self._memory_agent = MemoryAgent(self._llm, memory_store)
         self._retriever_agent = RetrieverAgent(self._llm, retriever, reranker)
         self._research_agent = ResearchAgent(self._llm)
@@ -657,10 +664,7 @@ class ERPAssistantGraph:
         self._citation_agent = CitationAgent(self._llm)
 
         self._graph = self._build_graph()
-        # result = await _graph.invoke(
-        #     message=request.message,
-        #     session_id=request.session_id,
-        # )
+
 
     def _build_graph(self) -> Any:
         """Construct and compile the LangGraph state machine."""
@@ -715,7 +719,7 @@ class ERPAssistantGraph:
     def _route_after_retrieval(
         state: AgentState,
     ) -> Literal["research", "summarizer"]:
-        logger.warning(
+        logger.debug(
             "ROUTER_RESULT",
             state=state,
             needs_research=state.needs_research,
@@ -728,7 +732,7 @@ class ERPAssistantGraph:
 
     async def run(self, state: AgentState) -> AgentState:
         """Execute the full agent graph for a query."""
-        logger.info(
+        logger.debug(
             "graph_execution_start",
             session_id=state.session_id,
             query=state.query[:60],
@@ -736,11 +740,11 @@ class ERPAssistantGraph:
         try:
             result = await self._graph.ainvoke(state)
 
-            logger.warning(
+            logger.debug(
                 "GRAPH_RESULT",
                 result_type=type(result).__name__,
             )
-            logger.warning(
+            logger.debug(
                 "GRAPH_RESULT_DEBUG",
                 type=type(result).__name__,
                 keys=list(result.keys()) if isinstance(result, dict) else None,
@@ -748,19 +752,12 @@ class ERPAssistantGraph:
             return AgentState(**result)
 
         except Exception as e:
-            print("GRAPH FAILED")
-            print(type(e))
-            print(str(e))
+            logger.debug(
+                "GRAPH FAILED",
+                type=type(e),
+                str =str(e)
+            )
             raise
-        logger.info(
-            "graph_execution_complete",
-            session_id=state.session_id,
-            path=result.get("execution_path", []),
-            citations=len(result.get("citations", [])),
-            has_answer=bool(result.get("final_answer")),
-        )
-
-        return AgentState(**result)
 
     async def stream(self, state: AgentState):
         """Stream graph execution events for real-time UI updates."""

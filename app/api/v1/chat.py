@@ -37,7 +37,7 @@ from app.services.llm_service import LLMService
 from qdrant_client import AsyncQdrantClient
 router = APIRouter()
 logger = get_logger(__name__)
-
+from sqlalchemy import select
 
 # =============================================================================
 # Dependency: build the agent graph per request
@@ -64,7 +64,7 @@ async def _get_or_create_session(
     db: AsyncSession,
 ) -> tuple[str, uuid.UUID]:
     """Return (session_id, conversation_db_id), creating a new record if needed."""
-    from sqlalchemy import select
+
 
     new_session_id = session_id or str(uuid.uuid4())
 
@@ -156,15 +156,9 @@ async def chat(
     qdrant: QdrantDep,
 ) -> ChatResponse:
 
-    print("CHAT ENDPOINT START")
+    logger.debug("CHAT ENDPOINT START")
     start_time = time.monotonic()
-    # return ChatResponse(
-    #     session_id=str(uuid4()),
-    #     message_id=str(uuid4()),
-    #     answer="Hello from AI ERP Assistant",
-    # )
 
-    # Session setup
     session_id, conversation_id = await _get_or_create_session(request.session_id, db)
     memory_store = RedisMemoryStore(redis_client=redis)
     await memory_store.add_user_message(session_id, request.message)
@@ -187,7 +181,7 @@ async def chat(
 
     latency_ms = round((time.monotonic() - start_time) * 1000, 2)
     GRAPH_LATENCY_SECONDS.observe(latency_ms / 1000)
-    logger.warning(
+    logger.debug(
         "RESULT_STATE_DEBUG",
         type=type(result_state).__name__,
         value=str(result_state)[:5000],
@@ -210,7 +204,7 @@ async def chat(
         model=settings.ollama_model,
     )
 
-    logger.info(
+    logger.debug(
         "chat_response_sent",
         session_id=session_id,
         latency_ms=latency_ms,
@@ -325,7 +319,7 @@ async def chat_stream(
                 await memory_store.add_ai_message(resolved_session_id, full_answer)
 
         except asyncio.CancelledError:
-            logger.info("stream_cancelled", session_id=resolved_session_id)
+            logger.error("stream_cancelled", session_id=resolved_session_id)
         except Exception as e:
             logger.error("stream_error", session_id=resolved_session_id, error=str(e))
             yield {

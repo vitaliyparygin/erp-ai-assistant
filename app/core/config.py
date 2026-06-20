@@ -108,7 +108,7 @@ class Settings(BaseSettings):
     chunk_overlap: int = 150
     rag_top_k: int = 10
     rag_rerank_top_k: int = 10
-    rag_score_threshold: float = 0
+    rag_score_threshold: float = 0.45
     query_rewrite_enabled: bool = True
     hybrid_search_enabled: bool = True
     hybrid_alpha: float = 0.7

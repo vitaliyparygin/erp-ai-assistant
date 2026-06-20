@@ -49,7 +49,7 @@ class EmbeddingService:
         self._base_url = self._settings.ollama_base_url
         self._model = self._settings.ollama_embedding_model
         self._dimensions = self._settings.ollama_embedding_dimensions
-        logger.warning(
+        logger.debug(
             "OLLAMA_CONFIG",
             base_url=self._settings.ollama_base_url,
             llm_model=self._settings.ollama_model,
@@ -65,12 +65,13 @@ class EmbeddingService:
                     "input": text,
                 },
             )
-        print('self._model in embed_text = ',self._model)
         response.raise_for_status()
-
         data = response.json()
-        print('data["embeddings"]')
-        print(data)
+        logger.debug(
+            "data[embeddings]",
+            data=data,
+            model=self._model
+        )
         embeddings = data["embeddings"]
 
         if not embeddings:
@@ -102,10 +103,11 @@ class EmbeddingService:
         else:
             uncached_indices = list(range(len(texts)))
             uncached_texts = texts
-
-        print("INPUT TEXTS:", len(texts))
-        print("OUTPUT EMBEDDINGS:", len(embeddings))
-
+        logger.debug(
+            "embed_batch lens",
+            len_texts=len(texts),
+            model_embeddings=len(embeddings)
+        )
 
         # Process uncached texts in batches
         if uncached_texts:
@@ -118,8 +120,12 @@ class EmbeddingService:
             if self._redis:
                 for text, embedding in zip(uncached_texts, new_embeddings):
                     await self._cache_embedding(text, embedding)
-        print("OUTPUT new_embeddings:", len(new_embeddings))
-        print("OUTPUT embeddings2:", len(embeddings))
+
+        logger.debug(
+            "embed_batch lens",
+            new_embeddings_len=len(new_embeddings),
+            embeddings_len=len(embeddings)
+        )
         return [e for e in embeddings if e is not None]
 
     async def _embed_in_batches(self, texts: list[str]) -> list[list[float]]:

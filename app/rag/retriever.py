@@ -6,7 +6,7 @@ and cross-encoder reranking.
 import time
 import uuid
 from typing import Any
-
+import re
 from qdrant_client import AsyncQdrantClient, models
 from qdrant_client.models import (
     Distance,
@@ -28,6 +28,39 @@ from app.rag.embeddings import EmbeddingService
 
 logger = get_logger(__name__)
 
+TERM_EXPANSIONS = {
+    "executor": {"contractor", "service provider"},
+    "contractor": {"executor"},
+    "customer": {"client"},
+}
+STOP_WORDS = {
+    "the", "is", "with", "which",
+    "a", "an", "of", "to", "in"
+}
+IMPORTANT_TERMS = {
+    "contract",
+    "contractor",
+    "executor",
+    "customer",
+    "agreement",
+}
+
+DOCUMENT_HINTS = {
+    "договір": {
+        "service agreement",
+        "contract number",
+        "contractor",
+    },
+    "наказ": {
+        "employee order",
+        "employee",
+    },
+    "рахунок": {
+        "invoice",
+        "amount",
+        "customer",
+    },
+}
 
 class VectorStore:
     """
@@ -73,7 +106,7 @@ class VectorStore:
         Returns the list of point IDs created.
         """
 
-        logger.warning(
+        logger.debug(
             "upsert_debug",
             chunks=len(chunks),
             embeddings=len(embeddings),
@@ -86,7 +119,7 @@ class VectorStore:
         points: list[PointStruct] = []
 
         for chunk, embedding in zip(chunks, embeddings):
-            logger.warning(
+            logger.debug(
                 "UPSERT_POINT",
                 document=document_name,
                 chunk_index=chunk.chunk_index,
@@ -117,7 +150,7 @@ class VectorStore:
                 points=points,
                 wait=True,
             )
-            logger.info(
+            logger.debug(
                 "chunks_upserted",
                 document_id=document_id,
                 count=len(points),
@@ -189,21 +222,20 @@ class VectorRetriever:
         k = top_k or self._settings.rag_top_k
 
         threshold = score_threshold or self._settings.rag_score_threshold
-        logger.warning(
+        logger.debug(
             "RETRIEVER_CALLED",
             query=query,
         )
         # Generate query embedding
         query_embedding = await self._embedder.embed_text(query)
 
-        print(type(query_embedding))
-        print(len(query_embedding))
-        print(type(query_embedding[0]))
-        logger.warning(
+        logger.debug(
             "query_embedding_debug",
-            dim=len(query_embedding),
+            len=len(query_embedding),
+            type=type(query_embedding),
+            type_first_item=type(query_embedding[0])
         )
-        logger.warning(
+        logger.debug(
             "QUERY_EMBEDDING",
             dim=len(query_embedding),
             first=query_embedding[:10],
@@ -221,39 +253,44 @@ class VectorRetriever:
             )
 
         try:
-            logger.warning(
+            logger.debug(
                 "query_embedding_type",
                 type=str(type(query_embedding)),
             )
 
-            logger.warning(
+            logger.debug(
                 "query_embedding_len",
-                len=len(query_embedding),
+                len=len(query_embedding)
             )
-
-            logger.warning(
+            logger.debug(
+                "query_embedding_threshold",
+                threshold=threshold
+            )
+            logger.debug(
                 "query_embedding_first",
                 value=query_embedding[:5],
             )
-            print('threshold:', threshold)
             response = await self._client.query_points(
                 collection_name=self._collection,
                 query=query_embedding,
                 limit=k,
                 query_filter=search_filter,
-                #score_threshold=threshold,
+                score_threshold=threshold,
                 with_payload=True,
             )
-            print("RAW RESPONSE: ", response)
 
+            logger.debug(
+                "RAW RESPONSE:",
+                response=response,
+            )
             results = response.points
             for hit in results:
-                logger.warning(
+                logger.debug(
                     "retrieved_doc",
                     score=hit.score,
                     chunk=hit.payload["content"][:200]
                 )
-                logger.warning(
+                logger.debug(
                     "QDRANT_RESULTS",
                     docs=[
                         {
@@ -263,14 +300,18 @@ class VectorRetriever:
                         for p in results
                     ]
                 )
-            logger.warning(
+            logger.debug(
                 "retrieval_debug",
                 found=len(results),
             )
             count = await self._client.count(
                 collection_name="erp_documents"
             )
-            print('count erp_documents:', count)
+            logger.debug(
+                "count erp_documents",
+                found=count,
+            )
+
 
         except Exception as e:
             raise RetrievalError(f"Qdrant search failed: {e}") from e
@@ -291,7 +332,7 @@ class VectorRetriever:
             for result in results
         ]
 
-        logger.info(
+        logger.debug(
             "retrieval_completed",
             query_preview=query[:60],
             retrieved=len(chunks),
@@ -327,27 +368,97 @@ class Reranker:
         Uses a simple relevance scoring approach; swap in a cross-encoder
         (e.g. Cohere Rerank) for production-grade reranking.
         """
-        print("rerank start")
         start_time = time.monotonic()
         k = top_k or self._settings.rag_rerank_top_k
-        print("k:", k)
+        logger.debug(
+            "rerank start",
+            chunks=chunks,
+            query=query,
+            top_k=top_k,
+            k=k
+        )
 
         if not chunks:
             return []
 
         # Score-based reranking: boost chunks where query terms appear
-        query_terms = set(query.lower().split())
-        print("rerank.query_terms:", query_terms)
+        query_terms = {
+            t
+            for t in re.findall(r"\w+", query.lower())
+            if t not in STOP_WORDS
+        }
+        expanded_terms = set(query_terms)
+
+        for term in list(query_terms):
+            expanded_terms.update(
+                TERM_EXPANSIONS.get(term, set())
+            )
+        logger.debug(
+            "rerank query_terms",
+            query_terms=query_terms
+        )
+
         def rerank_score(chunk: RetrievedChunk) -> float:
             content_lower = chunk.content.lower()
-            print("rerank.content_lower:", content_lower)
-            term_matches = sum(1 for term in query_terms if term in content_lower)
-            print("rerank.term_matches:", term_matches)
-            term_boost = min(term_matches / max(len(query_terms), 1), 0.2)
-            print("rerank.term_boost:", term_boost)
-            return chunk.score + term_boost
 
-        logger.warning(
+            score = chunk.score
+
+            content_terms = set(
+                re.findall(r"\w+", content_lower)
+            )
+
+            # common coincidences of terms
+            term_matches = len(expanded_terms & content_terms)
+            score += min(
+                term_matches / max(len(expanded_terms), 1),
+                0.2,
+            )
+
+            # spec ERP-field
+            if "customer" in expanded_terms:
+                if "customer:" in content_lower:
+                    score += 0.25
+
+            if {"contractor", "executor"} & expanded_terms:
+                if "contractor:" in content_lower:
+                    score += 0.35
+
+            if "contract" in expanded_terms:
+                if "service agreement" in content_lower:
+                    score += 0.50
+
+                if "contract number" in content_lower:
+                    score += 0.30
+
+                if "contractor:" in content_lower:
+                    score += 0.20
+
+                if "customer:" in content_lower:
+                    score += 0.10
+
+                if "invoice" in content_lower:
+                    score -= 0.20
+
+            # extra weight for important terms
+            for term in expanded_terms:
+                if term in content_terms:
+                    score += 0.05
+
+                    if term in IMPORTANT_TERMS:
+                        score += 0.15
+                for hint in DOCUMENT_HINTS.get(term, []):
+                    if hint in content_lower:
+                        score += 0.2
+            logger.debug(
+                "rerank document_name+score",
+                document_name=chunk.document_name,
+                score=score,
+                chunk_score=chunk.score
+            )
+
+            return score
+
+        logger.debug(
             "rerank.chunks:",
             chunks=[
                 {
@@ -358,5 +469,10 @@ class Reranker:
             ]
         )
         reranked = sorted(chunks, key=rerank_score, reverse=True)
-        print("rerank.reranked:", reranked)
+        logger.debug(
+            "rerank reranked",
+            reranked=reranked,
+            reranked_k=reranked[:k]
+        )
+
         return reranked[:k]

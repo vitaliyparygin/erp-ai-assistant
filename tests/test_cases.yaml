@@ -27,7 +27,7 @@ tests:
 
   - question: "Хто замовник договору?"
     expected:
-      - "Ivan Petrenko"
+      - "Alpha LLC"
 
   - question: "Хто працівник у наказі?"
     expected:
@@ -40,3 +40,47 @@ tests:
   - question: "Який customer у договорі?"
     expected:
       - "Alpha LLC"
+
+  - question: "Який номер договору?"
+    expected:
+      - "SC-2024-001"
+
+  - question: "Коли підписано договір?"
+    expected:
+      - "2024-01-15"
+
+  - question: "До якого числа діє договір?"
+    expected:
+      - "2025-01-15"
+
+  - question: "Яка сума рахунку за газ?"
+    expected:
+      - "147.00 UAH"
+
+  - question: "Хто постачальник газу?"
+    expected:
+      - "Dnipro Gas Distribution LLC"
+
+  - question: "Яка посада працівника?"
+    expected:
+      - "Backend Developer"
+
+  - question: "Who is contractor?"
+    expected:
+      - "ERP Solutions LLC"
+
+  - question: "Who is executor?"
+    expected:
+      - "ERP Solutions LLC"
+
+  - question: "Хто виконавець?"
+    expected:
+      - "ERP Solutions LLC"
+
+  - question: "Який телефон замовника?"
+    expected:
+      - "NOT_FOUND"
+
+  - question: "Яка адреса виконавця?"
+    expected:
+      - "NOT_FOUND"
