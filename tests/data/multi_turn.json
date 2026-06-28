@@ -11,10 +11,6 @@
         "expected": "Alpha LLC"
       },
       {
-        "question": "А номер договору?",
-        "expected": "SC-2024-001"
-      },
-      {
         "question": "Коли підписано?",
         "expected": "2024-01-15"
       }

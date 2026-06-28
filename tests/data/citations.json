@@ -1,13 +1,5 @@
 [
   {
-    "question": "Хто виконавець договору?",
-    "expected_doc": "service_contract.pdf"
-  },
-  {
-    "question": "Який customer у договорі?",
-    "expected_doc": "service_contract.pdf"
-  },
-  {
     "question": "Яка сума газового рахунку?",
     "expected_doc": "gas_bill.pdf"
   },
@@ -16,39 +8,163 @@
     "expected_doc": "electricity_bill.pdf"
   },
   {
-    "question": "Який тариф інтернету?",
-    "expected_doc": "internet_invoice.pdf"
-  },
-  {
-    "question": "Який номер сервісного договору?",
-    "expected_doc": "service_contract.pdf"
-  },
-  {
-    "question": "Хто замовник договору?",
-    "expected_doc": "service_contract.pdf"
-  },
-  {
-    "question": "Який contractor?",
-    "expected_doc": "service_contract.pdf"
-  },
-  {
-    "question": "До якого числа діє договір?",
-    "expected_doc": "service_contract.pdf"
-  },
-  {
-    "question": "Яка сума рахунку за газ?",
-    "expected_doc": "gas_bill.pdf"
-  },
-  {
     "question": "Хто постачальник газу?",
     "expected_doc": "gas_bill.pdf"
   },
   {
-    "question": "Яка посада працівника?",
-    "expected_doc": "employee_order.pdf"
+    "question": "Скільки overtime?",
+    "expected_doc": "Timesheet.pdf"
   },
   {
-    "question": "Who is contractor?",
-    "expected_doc": "service_contract.pdf"
+    "question": "Який EIC код?",
+    "expected_doc": "electricity_bill.pdf"
+  },
+  {
+    "question": "Який vendor id",
+    "expected_doc": "Vendor Profile.pdf"
+  },
+  {
+    "question": "phone vendor?",
+    "expected_doc": "Vendor Profile.pdf"
+  },
+  {
+    "question": "Email vendor?",
+    "expected_doc": "Vendor Profile.pdf"
+  },
+  {
+    "question": "Agreement Number?",
+    "expected_doc": "Vendor Agreement.pdf"
+  },
+  {
+    "question": "Agreement Valid Until?",
+    "expected_doc": "Vendor Agreement.pdf"
+  },
+  {
+    "question": "Ticket Number?",
+    "expected_doc": "Service Ticket.pdf"
+  },
+
+  {
+    "question": "хто займався тікетом TKT-1001?",
+    "expected_doc": "Service Ticket.pdf"
+  },
+  {
+    "question": "яка зарплата у John Smith?",
+    "expected_doc": "Salary Statement.pdf"
+  },
+  {
+    "question": "коли була остання зарплата для John Smith?",
+    "expected_doc": "Salary Statement.pdf"
+  },
+  {
+    "question": "кому здає квартиру Коваленко Олександр Петрович?",
+    "expected_doc": "RENTAL AGREEMENT.pdf"
+  },
+  {
+    "question": "номер паспорту Коваленка Олександра Петровича?",
+    "expected_doc": "RENTAL AGREEMENT.pdf"
+  },
+  {
+    "question": "номер паспорту Петренко Марії Іванівни?",
+    "expected_doc": "RENTAL AGREEMENT.pdf"
+  },
+  {
+    "question": "за скільки орендує квартиру Петренко Марія Іванівна?",
+    "expected_doc": "RENTAL AGREEMENT.pdf"
+  },
+  {
+    "question": "яка адреса квартири Коваленко Олександра Петровича?",
+    "expected_doc": "RENTAL AGREEMENT.pdf"
+  },
+  {
+    "question": "на яку суму purchare order PO-2024-001?",
+    "expected_doc": "Purchase Order.pdf"
+  },
+  {
+    "question": "коли був purchare order PO-2024-001?",
+    "expected_doc": "Purchase Order.pdf"
+  },
+  {
+    "question": "коли був purchare order P00019?",
+    "expected_doc": "Purchase Order - P00019.pdf"
+  },
+  {
+    "question": "яка кількість товару вказана в P00019?",
+    "expected_doc": "Purchase Order - P00019.pdf"
+  },
+  {
+    "question": "хто керівник Wdrożenie Platformy E-Commerce проекту?",
+    "expected_doc": "PROJECT STATUS REPORT.pdf"
+  },
+  {
+    "question": "на скільки завершений проект Wdrożenie Platformy E-Commerce?",
+    "expected_doc": "PROJECT STATUS REPORT.pdf"
+  },
+  {
+    "question": "хто ПМ на ERP Rollout?",
+    "expected_doc": "Project Charter.pdf"
+  },
+  {
+    "question": "who customer ERP Rollout?",
+    "expected_doc": "Project Charter.pdf"
+  },
+  {
+    "question": "то робив Procurement Request?",
+    "expected_doc": "Procurement Request.pdf"
+  },
+  {
+    "question": "яка сума вказана в Procurement Request?",
+    "expected_doc": "Procurement Request.pdf"
+  },
+  {
+    "question": "коли був підписаний NDA Agreement?",
+    "expected_doc": "NDA Agreement.pdf"
+  },
+  {
+    "question": "з ким підписали NDA Agreement Alpha LLC?",
+    "expected_doc": "NDA Agreement.pdf"
+  },
+  {
+    "question": "хто був на мітингу по Оновленню мобільного додатку?",
+    "expected_doc": "MEETING MINUTES.pdf"
+  },
+  {
+    "question": "хто Lead iOS Developer на проекті?",
+    "expected_doc": "MEETING MINUTES.pdf"
+  },
+  {
+    "question": "дата контракту MC-2026-4402?",
+    "expected_doc": "Maintenance Contract.pdf"
+  },  {
+    "question": "хто звільняється?",
+    "expected_doc": "Leave Order.pdf"
+  },
+  {
+    "question": "коли остарній день роботи Jane Doe?",
+    "expected_doc": "Leave Order.pdf"
+  },
+  {
+    "question": "на яку суму інвойс INV-2024-777?",
+    "expected_doc": "Invoice.pdf"
+  },
+  {
+    "question": "статус інвойсу INV-2024-777?",
+    "expected_doc": "Invoice.pdf"
+  },
+  {
+    "question": "яка сума в інвойсі INT-2024-555?",
+    "expected_doc": "internet_invoice.pdf"
+  },
+  {
+    "question": "дата підписання страховий поліс GAP-2026-88319?",
+    "expected_doc": "INSURANCE POLICY.pdf"
+  },
+  {
+    "question": "який номер телеграмм підтримки вказано у страховому полісі",
+    "expected_doc": "INSURANCE POLICY.pdf"
+  },
+  {
+    "question": "який бюджет зазначено в контракті ERP-2026-001?",
+    "expected_doc": "erp_master_contract.pdf"
   }
 ]

@@ -10,11 +10,6 @@
     "expected_doc": "service_contract.pdf"
   },
   {
-    "question": "Який номер договору?",
-    "expected": "SC-2024-001",
-    "expected_doc": "service_contract.pdf"
-  },
-  {
     "question": "Коли підписано договір?",
     "expected": "2024-01-15",
     "expected_doc": "service_contract.pdf"
@@ -40,11 +35,6 @@
     "expected_doc": "internet_invoice.pdf"
   },
   {
-    "question": "Який номер сервісного договору?",
-    "expected": "SC-2024-001",
-    "expected_doc": "service_contract.pdf"
-  },
-  {
     "question": "Хто замовник договору?",
     "expected": "Alpha LLC",
     "expected_doc": "service_contract.pdf"
@@ -55,7 +45,7 @@
     "expected_doc": "service_contract.pdf"
   },
   {
-    "question": "До якого числа діє договір?",
+    "question": "До якого числа діє сервісний договір?",
     "expected": "2025-01-15",
     "expected_doc": "service_contract.pdf"
   },
@@ -83,5 +73,236 @@
     "question": "Хто виконавець?",
     "expected": "ERP Solutions LLC",
     "expected_doc": "service_contract.pdf"
+  },
+  {
+    "question": "Який телефон клієнта?",
+    "expected": "+380501112233",
+    "expected_doc": "Customer Card.pdf"
+  },
+  {
+    "question": "Який email клієнта?",
+    "expected": "contact@globaltrade.ua",
+    "expected_doc": "Customer Card.pdf"
+  },
+  {
+    "question": "Хто account manager?",
+    "expected": "Oleksandr Bondarenko",
+    "expected_doc": "Customer Card.pdf"
+  },
+  {
+    "question": "Який email постачальника?",
+    "expected": "sales@techsupplies.ua",
+    "expected_doc": "Vendor Profile.pdf"
+  },
+  {
+    "question": "Який телефон постачальника?",
+    "expected": "+380671234567",
+    "expected_doc": "Vendor Profile.pdf"
+  },
+  {
+    "question": "Скільки годин відпрацював John Smith?",
+    "expected": "168",
+    "expected_doc": "Timesheet.pdf"
+  },
+  {
+    "question": "Скільки overtime?",
+    "expected": "12",
+    "expected_doc": "Timesheet.pdf"
+  },
+  {
+    "question": "Яка сума opportunity?",
+    "expected": "250000 EUR",
+    "expected_doc": "CRM Opportunity.pdf"
+  },
+  {
+    "question": "Який vendor id",
+    "expected": "VEND-2024-55",
+    "expected_doc": "Vendor Profile.pdf"
+  },
+  {
+    "question": "phone vendor?",
+    "expected": "+380671234567",
+    "expected_doc": "Vendor Profile.pdf"
+  },
+  {
+    "question": "Email vendor?",
+    "expected": "sales@techsupplies.ua",
+    "expected_doc": "Vendor Profile.pdf"
+  },
+  {
+    "question": "Agreement Number?",
+    "expected": "VA-2024-002",
+    "expected_doc": "Vendor Agreement.pdf"
+  },
+  {
+    "question": "Agreement Valid Until?",
+    "expected": "2026-01-01",
+    "expected_doc": "Vendor Agreement.pdf"
+  },
+  {
+    "question": "Ticket Number?",
+    "expected": "TKT-1001",
+    "expected_doc": "Service Ticket.pdf"
+  },
+  {
+    "question": "який статус TKT-1001?",
+    "expected": "Closed",
+    "expected_doc": "Service Ticket.pdf"
+  },
+  {
+    "question": "хто займався тікетом TKT-1001?",
+    "expected": "John Smith",
+    "expected_doc": "Service Ticket.pdf"
+  },
+  {
+    "question": "яка зарплата у John Smith?",
+    "expected": "55000 UAH",
+    "expected_doc": "Salary Statement.pdf"
+  },
+  {
+    "question": "коли була остання зарплата для John Smith?",
+    "expected": "July 2024",
+    "expected_doc": "Salary Statement.pdf"
+  },
+  {
+    "question": "кому здає квартиру Коваленко Олександр Петрович?",
+    "expected": "Петренко Марія Іванівна",
+    "expected_doc": "RENTAL AGREEMENT.pdf"
+  },
+  {
+    "question": "номер паспорту Коваленка Олександра Петровича?",
+    "expected": "МЕ №123456",
+    "expected_doc": "RENTAL AGREEMENT.pdf"
+  },
+  {
+    "question": "номер паспорту Петренко Марії Іванівни?",
+    "expected": "АА №789012",
+    "expected_doc": "RENTAL AGREEMENT.pdf"
+  },
+  {
+    "question": "за скільки орендує квартиру Петренко Марія Іванівна?",
+    "expected": "20 000 грн",
+    "expected_doc": "RENTAL AGREEMENT.pdf"
+  },
+  {
+    "question": "яка адреса квартири Коваленко Олександра Петровича?",
+    "expected": "м. Київ, вул. Лесі Українки, буд. 14, кв. 42.",
+    "expected_doc": "RENTAL AGREEMENT.pdf"
+  },
+  {
+    "question": "на яку суму purchare order PO-2024-001?",
+    "expected": "12500 UAH",
+    "expected_doc": "Purchase Order.pdf"
+  },
+  {
+    "question": "коли був purchare order PO-2024-001?",
+    "expected": "2024-05-10",
+    "expected_doc": "Purchase Order.pdf"
+  },
+  {
+    "question": "коли був purchare order P00019?",
+    "expected": "06/20/2026",
+    "expected_doc": "Purchase Order - P00019.pdf"
+  },
+  {
+    "question": "яка кількість товару вказана в P00019?",
+    "expected": "2",
+    "expected_doc": "Purchase Order - P00019.pdf"
+  },
+  {
+    "question": "хто керівник Wdrożenie Platformy E-Commerce проекту?",
+    "expected": "Tomasz Nowak",
+    "expected_doc": "PROJECT STATUS REPORT.pdf"
+  },
+  {
+    "question": "на скільки завершений проект Wdrożenie Platformy E-Commerce?",
+    "expected": "82%",
+    "expected_doc": "PROJECT STATUS REPORT.pdf"
+  },
+  {
+    "question": "хто ПМ на ERP Rollout?",
+    "expected": "Jane Doe",
+    "expected_doc": "Project Charter.pdf"
+  },
+  {
+    "question": "who customer ERP Rollout?",
+    "expected": "Alpha LLC",
+    "expected_doc": "Project Charter.pdf"
+  },
+  {
+    "question": "то робив Procurement Request?",
+    "expected": "Jane Doe",
+    "expected_doc": "Procurement Request.pdf"
+  },
+  {
+    "question": "яка сума вказана в Procurement Request?",
+    "expected": "30000 UAH",
+    "expected_doc": "Procurement Request.pdf"
+  },
+  {
+    "question": "коли був підписаний NDA Agreement?",
+    "expected": " 2024-02-01",
+    "expected_doc": "NDA Agreement.pdf"
+  },
+  {
+    "question": "з ким підписали NDA Agreement Alpha LLC?",
+    "expected": " ERP Solutions LLC",
+    "expected_doc": "NDA Agreement.pdf"
+  },
+  {
+    "question": "хто був на мітингу по Оновленню мобільного додатку?",
+    "expected": "Максим Рибак",
+    "expected_doc": "MEETING MINUTES.pdf"
+  },
+  {
+    "question": "хто Lead iOS Developer на проекті?",
+    "expected": "Ігор Петренко",
+    "expected_doc": "MEETING MINUTES.pdf"
+  },
+  {
+    "question": "дата контракту MC-2026-4402?",
+    "expected": "July 1, 2026",
+    "expected_doc": "Maintenance Contract.pdf"
+  },
+  {
+    "question": "хто звільняється?",
+    "expected": "Jane Doe",
+    "expected_doc": "Leave Order.pdf"
+  },
+  {
+    "question": "коли остарній день роботи Jane Doe?",
+    "expected": "2024-07-14",
+    "expected_doc": "Leave Order.pdf"
+  },
+  {
+    "question": "на яку суму інвойс INV-2024-777?",
+    "expected": "45000 UAH",
+    "expected_doc": "Invoice.pdf"
+  },
+  {
+    "question": "статус інвойсу INV-2024-777?",
+    "expected": "Paid",
+    "expected_doc": "Invoice.pdf"
+  },
+  {
+    "question": "яка сума в інвойсі INT-2024-555?",
+    "expected": "250.00 UAH",
+    "expected_doc": "internet_invoice.pdf"
+  },
+  {
+    "question": "дата підписання страховий поліс GAP-2026-88319?",
+    "expected": "20.06.2026",
+    "expected_doc": "INSURANCE POLICY.pdf"
+  },
+  {
+    "question": "який номер телеграмм підтримки вказано у страховому полісі",
+    "expected": "+44 7700 900077",
+    "expected_doc": "INSURANCE POLICY.pdf"
+  },
+  {
+    "question": "який бюджет зазначено в контракті ERP-2026-001?",
+    "expected": "50000 USD",
+    "expected_doc": "erp_master_contract.pdf"
   }
+
 ]

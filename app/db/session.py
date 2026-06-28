@@ -7,7 +7,7 @@ engine = create_async_engine(
     settings.database_url,
     pool_size=settings.database_pool_size,
     max_overflow=settings.database_max_overflow,
-    echo=settings.debug,
+    echo=False,
 )
 
 AsyncSessionLocal = async_sessionmaker(
@@ -18,3 +18,16 @@ async def create_tables() -> None:
     from app.models.orm import Base
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+
+def get_sessionmaker():
+    engine = create_async_engine(
+        settings.database_url,
+        pool_pre_ping=True,
+    )
+
+    return async_sessionmaker(
+        engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+    )

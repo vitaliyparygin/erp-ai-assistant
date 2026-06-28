@@ -31,7 +31,9 @@ dependencies = [
     "pdfplumber",
     "langchain_text_splitters",
     "langchain-ollama",
-    "ollama"
+    "ollama",
+    "qdrant_client",
+    "green"
 ]
 
 [project.optional-dependencies]

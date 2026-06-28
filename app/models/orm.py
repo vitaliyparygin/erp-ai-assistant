@@ -100,6 +100,9 @@ class DocumentChunkModel(Base, TimestampMixin):
     qdrant_point_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
     chunk_metadata: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
 
+    embedding_model = mapped_column(String(100), nullable=True)
+    embedding_version = mapped_column(Integer, default=1)
+
     # Relationships
     document: Mapped["DocumentModel"] = relationship("DocumentModel", back_populates="chunks")
 

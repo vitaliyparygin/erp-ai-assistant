@@ -19,3 +19,18 @@ curl -X POST http://localhost:8000/api/v1/chat/ \
 #scripts
 python3 scripts/upload_dataset.py
 
+#db
+docker compose exec postgres psql -U erp_user -d erp_assistant
+
+select status,count(*)
+from documents
+group by status;
+
+select
+    count(*)
+from documents
+where status='pending' and original_filename='gas_bill.pdf';
+
+select status, count(*)
+erp_assistant-# from documents
+erp_assistant-# group by status;

@@ -15,6 +15,8 @@ from app.core.config import get_settings
 from app.core.exceptions import DocumentIngestionError, UnsupportedFileTypeError
 from app.core.logging import get_logger
 
+from app.ingestion.metadata_extractor import MetadataExtractor
+
 logger = get_logger(__name__)
 
 
@@ -176,7 +178,24 @@ class DocumentChunker:
         """Split a parsed document into chunks."""
         chunks: list[TextChunk] = []
         chunk_index = 0
-
+        logger.warning(
+            "CHUNKER_METHOD_ENTERED",
+        )
+        full_text = "\n".join(
+            page["text"]
+            for page in document.pages
+        )
+        # print(f"(full_text)> {full_text}")
+        logger.debug(
+            "document_debug",
+            document=document,
+            file_path=document.file_path
+        )
+        document_metadata = MetadataExtractor.extract(
+            full_text,
+            Path(document.file_path).name,
+        )
+        print(f"(document_metadata)> {document_metadata}")
         for page in document.pages:
             page_text = page["text"]
             page_number = page.get("page_number")
@@ -198,11 +217,16 @@ class DocumentChunker:
                         "document_id": document_id,
                         "file_path": document.file_path,
                         "mime_type": document.mime_type,
+                        **document_metadata,
                         **page.get("metadata", {}),
                     },
                 )
+                print('print(chunk.metadata)')
+                print(chunk.metadata)
                 chunks.append(chunk)
                 chunk_index += 1
+
+
 
         logger.info(
             "document_chunked",

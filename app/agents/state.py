@@ -77,7 +77,8 @@ class AgentState(BaseModel):
     needs_research: bool = False
     has_sufficient_context: bool = False
     requires_clarification: bool = False
-
+    
+    disambiguated: bool = False
     class Config:
         arbitrary_types_allowed = True
 

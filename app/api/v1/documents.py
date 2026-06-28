@@ -42,6 +42,9 @@ async def upload_document(
 ) -> DocumentUploadResponse:
     if not file.filename:
         raise HTTPException(status_code=400, detail="Filename required")
+    print(f"1111-upload_document-111")
+    print(f"{file.filename}")
+    print(f"{file}")
 
     extension = Path(file.filename).suffix.lstrip(".").lower()
     if extension not in settings.allowed_extensions:
@@ -77,6 +80,7 @@ async def upload_document(
 
     tag_list = [t.strip() for t in tags.split(",") if t.strip()] if tags else []
 
+
     doc = DocumentModel(
         id=document_id,
         filename=safe_filename,
@@ -100,6 +104,7 @@ async def upload_document(
             "file_path": str(file_path),
             "mime_type": mime_type,
             "document_name": file.filename,
+            "original_filename": file.filename,
         },
     )
 

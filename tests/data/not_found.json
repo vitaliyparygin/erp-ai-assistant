@@ -1,14 +1,74 @@
 [
   {
-    "question": "Який телефон замовника?",
-    "expected": "NOT_FOUND"
+    "question": "Який VIN номер автомобіля?"
   },
   {
-    "question": "Яка адреса виконавця?",
-    "expected": "NOT_FOUND"
+    "question": "Який номер банківської карти клієнта?"
   },
   {
-    "question": "Який email працівника?",
-    "expected": "NOT_FOUND"
+    "question": "Який IBAN рахунок постачальника?"
+  },
+  {
+    "question": "Який серійний номер ноутбука директора?"
+  },
+  {
+    "question": "Який номер закордонного паспорта John Smith?"
+  },
+  {
+    "question": "Який пароль від ERP системи?"
+  },
+  {
+    "question": "Який номер водійського посвідчення співробітника?"
+  },
+  {
+    "question": "Яка марка автомобіля клієнта?"
+  },
+  {
+    "question": "Яка площа офісу компанії?"
+  },
+  {
+    "question": "Яка температура в серверній кімнаті?"
+  },
+  {
+    "question": "vendor address?"
+  },
+  {
+    "question": "дата підписання VA-2024-002?"
+  },
+  {
+    "question": "який статус тікета TKT-1002?"
+  },
+  {
+    "question": "у кого зарплата 55500 UAH?"
+  },
+  {
+    "question": "якого кольору авто у Коваленко Олександра Петровича?"
+  },
+  {
+    "question": "яка сумма вказана в PO-2024-003?"
+  },
+  {
+    "question": "яка сумма вказана в P00018?"
+  },
+  {
+    "question": "хто дизайнер на Wdrożenie Platformy E-Commerce?"
+  },
+  {
+    "question": "який статус ERP Rollout?"
+  },
+  {
+    "question": "коли був Procurement Request?"
+  },
+  {
+    "question": "де був підписаний NDA Agreement?"
+  },
+  {
+    "question": "devops на мітингу?"
+  },
+  {
+    "question": "коли було звільнено John Smith?"
+  },
+  {
+    "question": "статус інвойсу INV-2024-767?"
   }
 ]

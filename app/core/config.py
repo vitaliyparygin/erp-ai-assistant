@@ -135,7 +135,7 @@ class Settings(BaseSettings):
     # -------------------------------------------------------------------------
     celery_broker_url: str = "redis://redis:6379/1"
     celery_result_backend: str = "redis://redis:6379/2"
-    celery_concurrency: int = 4
+    celery_concurrency: int = 1
 
     # -------------------------------------------------------------------------
     # File Storage
@@ -147,8 +147,8 @@ class Settings(BaseSettings):
     # -------------------------------------------------------------------------
     # Rate Limiting
     # -------------------------------------------------------------------------
-    rate_limit_enabled: bool = True
-    rate_limit_requests: int = 60
+    rate_limit_enabled: bool = False
+    rate_limit_requests: int = 220
     rate_limit_window: int = 60
 
     # -------------------------------------------------------------------------

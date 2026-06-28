@@ -1,0 +1,14 @@
+[
+  {
+    "question": "Хто виконавець договору?",
+    "must_retrieve": "service_contract.pdf"
+  },
+  {
+    "question": "Який EIC код?",
+    "must_retrieve": "electricity_bill.pdf"
+  },
+  {
+    "question": "Хто працівник у наказі?",
+    "must_retrieve": "employee_order.pdf"
+  }
+]

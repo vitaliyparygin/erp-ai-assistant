@@ -1,0 +1,14 @@
+[
+  {
+    "question": "Who is the customer?",
+    "expected": "Alpha LLC"
+  },
+  {
+    "question": "Хто customer?",
+    "expected": "Alpha LLC"
+  },
+  {
+    "question": "Who is contractor?",
+    "expected": "ERP Solutions LLC"
+  }
+]

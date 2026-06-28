@@ -1,0 +1,22 @@
+[
+  {
+    "question": "Хто виконавець договору?",
+    "expected": "ERP Solutions LLC"
+  },
+  {
+    "question": "Який customer у договорі?",
+    "expected": "Alpha LLC"
+  },
+  {
+    "question": "Хто замовник договору?",
+    "expected": "Alpha LLC"
+  },
+  {
+    "question": "Який номер договору?",
+    "expected": "SC-2024-001"
+  },
+  {
+    "question": "Хто виконавець?",
+    "expected": "ERP Solutions LLC"
+  }
+]

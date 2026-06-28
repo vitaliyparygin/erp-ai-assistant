@@ -7,6 +7,8 @@ import time
 import uuid
 from typing import Any
 import re
+
+from dotenv.cli import unset
 from qdrant_client import AsyncQdrantClient, models
 from qdrant_client.models import (
     Distance,
@@ -30,8 +32,42 @@ logger = get_logger(__name__)
 
 TERM_EXPANSIONS = {
     "executor": {"contractor", "service provider"},
-    "contractor": {"executor"},
-    "customer": {"client"},
+    "угода": {
+        "contract",
+        "agreement",
+        "opportunity",
+        "stage",
+    },
+    "стадія": {
+        "stage",
+        "status",
+        "phase",
+    },
+    "stage": [
+        "стадія",
+        "status",
+        "етап",
+        "phase",
+    ],
+
+    "customer": [
+        "замовник",
+        "клієнт",
+        "customer",
+        "executor"
+    ],
+
+    "contractor": [
+        "виконавець",
+        "підрядник",
+        "contractor",
+    ],
+
+    "opportunity": [
+        "угода",
+        "deal",
+        "opportunity",
+    ],
 }
 STOP_WORDS = {
     "the", "is", "with", "which",
@@ -46,19 +82,25 @@ IMPORTANT_TERMS = {
 }
 
 DOCUMENT_HINTS = {
-    "договір": {
-        "service agreement",
-        "contract number",
-        "contractor",
+    "customer": {
+        "service_contract.pdf": 0.40,
+        "Customer Card.pdf": 0.30,
     },
-    "наказ": {
-        "employee order",
-        "employee",
+
+    "contractor": {
+        "service_contract.pdf": 0.50,
     },
-    "рахунок": {
-        "invoice",
-        "amount",
-        "customer",
+
+    "eic": {
+        "electricity_bill.pdf": 0.80,
+    },
+
+    "stage": {
+        "CRM Opportunity.pdf": 0.80,
+    },
+
+    "opportunity": {
+        "CRM Opportunity.pdf": 0.80,
     },
 }
 
@@ -100,6 +142,7 @@ class VectorStore:
         embeddings: list[list[float]],
         document_id: str,
         document_name: str,
+        original_filename: str
     ) -> list[str]:
         """
         Upsert document chunks with their embeddings into Qdrant.
@@ -110,6 +153,7 @@ class VectorStore:
             "upsert_debug",
             chunks=len(chunks),
             embeddings=len(embeddings),
+            original_filename=original_filename
         )
 
         if len(chunks) != len(embeddings):
@@ -122,7 +166,7 @@ class VectorStore:
             logger.debug(
                 "UPSERT_POINT",
                 document=document_name,
-                chunk_index=chunk.chunk_index,
+                chunk_index=chunk.chunk_index
             )
             point_id = str(uuid.uuid4())
             point_ids.append(point_id)
@@ -133,9 +177,13 @@ class VectorStore:
                 "content": chunk.content,
                 "chunk_index": chunk.chunk_index,
                 "page_number": chunk.page_number,
+                "original_filename": original_filename,
                 "chunk_metadata": chunk.metadata,
             }
-
+            logger.debug(
+                "UPSERT_POINT payload",
+                payload=payload
+            )
             points.append(
                 PointStruct(
                     id=point_id,
@@ -270,6 +318,10 @@ class VectorRetriever:
                 "query_embedding_first",
                 value=query_embedding[:5],
             )
+            logger.warning(
+                "RETRIEVER_QUERY",
+                query=query
+            )
             response = await self._client.query_points(
                 collection_name=self._collection,
                 query=query_embedding,
@@ -318,20 +370,51 @@ class VectorRetriever:
 
         latency_ms = (time.monotonic() - start_time) * 1000
 
-        chunks = [
-            RetrievedChunk(
-                chunk_id=str(result.id),
-                document_id=result.payload.get("document_id", ""),
-                document_name=result.payload.get("document_name", ""),
-                content=result.payload.get("content", ""),
-                page_number=result.payload.get("page_number"),
-                score=result.score,
-                chunk_index=result.payload.get("chunk_index", 0),
-                metadata=result.payload.get("chunk_metadata", {}),
-            )
-            for result in results
-        ]
+        # chunks = [
+        #     RetrievedChunk(
+        #         chunk_id=str(result.id),
+        #         document_id=result.payload.get("document_id", ""),
+        #         document_name=result.payload.get("document_name", ""),
+        #         content=result.payload.get("content", ""),
+        #         page_number=result.payload.get("page_number"),
+        #         score=result.score,
+        #         chunk_index=result.payload.get("chunk_index", 0),
+        #         metadata=result.payload.get("chunk_metadata", {}),
+        #     )
+        #
+        #     for result in results
+        # ]
+        chunks = []
 
+        for result in results:
+            logger.warning(
+                "RAW_QDRANT_PAYLOAD",
+                payload=result.payload,
+            )
+
+            chunks.append(
+                RetrievedChunk(
+                    chunk_id=str(result.id),
+                    document_id=result.payload.get("document_id", ""),
+                    document_name=result.payload.get("document_name", ""),
+                    content=result.payload.get("content", ""),
+                    page_number=result.payload.get("page_number"),
+                    score=result.score,
+                    chunk_index=result.payload.get("chunk_index", 0),
+                    metadata=result.payload.get("chunk_metadata", {}),
+                )
+            )
+        logger.warning(
+            "RETRIEVER_RESULTS",
+            docs=[
+                {
+                    "name": c.metadata.get("document_name"),
+                    "type": c.metadata.get("document_type"),
+                    "score": c.score,
+                }
+                for c in chunks[:10]
+            ]
+        )
         logger.debug(
             "retrieval_completed",
             query_preview=query[:60],
@@ -346,6 +429,39 @@ class VectorRetriever:
                 "execution_path": ["retriever"],
             }
         return chunks
+
+    async def get_contract_documents(self):
+        logger.debug(
+            "get_contract_documents started"
+        )
+        points, _ = await (self._client.scroll(
+            collection_name=self._collection,
+            limit=100,
+            with_payload=True,
+        ))
+        print("GET_CONTRACT_DOCUMENTS CALLED")
+        contracts = {}
+
+        for point in points:
+
+            md = point.payload
+
+            if md.get("document_type") != "contract":
+                continue
+
+            contracts[
+                md["document_name"]
+            ] = {
+                "document_name": md["document_name"],
+                "contract_number": md.get("contract_number"),
+                "valid_until": md.get("valid_until"),
+            }
+        logger.debug(
+            "get_contract_documents:",
+            len_contracts=len(contracts)
+        )
+        return list(contracts.values())
+
 
 
 class Reranker:
@@ -399,10 +515,29 @@ class Reranker:
         )
 
         def rerank_score(chunk: RetrievedChunk) -> float:
+            FIELD_HINTS = {
+                "customer": ["customer:"],
+                "contractor": ["contractor:"],
+                "executor": ["contractor:"],
+                "eic": ["eic"],
+                "stage": ["stage:"],
+                "status": ["status:"],
+            }
             content_lower = chunk.content.lower()
 
             score = chunk.score
+            for term in expanded_terms:
 
+                if term not in FIELD_HINTS:
+                    continue
+
+                markers = FIELD_HINTS[term]
+
+                for marker in markers:
+
+                    if marker in content_lower:
+                        score += 1.0
+                        break
             content_terms = set(
                 re.findall(r"\w+", content_lower)
             )
@@ -415,13 +550,17 @@ class Reranker:
             )
 
             # spec ERP-field
+            if "eic" in expanded_terms:
+                if "eic" in content_lower:
+                    score += 0.50
+
             if "customer" in expanded_terms:
                 if "customer:" in content_lower:
-                    score += 0.25
+                    score += 0.40
 
             if {"contractor", "executor"} & expanded_terms:
                 if "contractor:" in content_lower:
-                    score += 0.35
+                    score += 0.40
 
             if "contract" in expanded_terms:
                 if "service agreement" in content_lower:
@@ -438,7 +577,9 @@ class Reranker:
 
                 if "invoice" in content_lower:
                     score -= 0.20
-
+            if "stage" in expanded_terms:
+                if "stage:" in content_lower:
+                    score += 0.40
             # extra weight for important terms
             for term in expanded_terms:
                 if term in content_terms:
@@ -446,9 +587,11 @@ class Reranker:
 
                     if term in IMPORTANT_TERMS:
                         score += 0.15
-                for hint in DOCUMENT_HINTS.get(term, []):
-                    if hint in content_lower:
-                        score += 0.2
+                if term in DOCUMENT_HINTS:
+                    boosts = DOCUMENT_HINTS[term]
+
+                    if chunk.document_name in boosts:
+                        score += boosts[chunk.document_name]
             logger.debug(
                 "rerank document_name+score",
                 document_name=chunk.document_name,
