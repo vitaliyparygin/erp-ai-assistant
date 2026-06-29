@@ -173,12 +173,16 @@ class VectorStore:
 
             payload = {
                 "document_id": document_id,
-                "document_name": document_name,
+                "document_name": original_filename,
+                "original_filename": original_filename,
+                "stored_filename": document_name,
                 "content": chunk.content,
                 "chunk_index": chunk.chunk_index,
                 "page_number": chunk.page_number,
-                "original_filename": original_filename,
                 "chunk_metadata": chunk.metadata,
+                **chunk.metadata,
+
+
             }
             logger.debug(
                 "UPSERT_POINT payload",
@@ -252,6 +256,7 @@ class VectorRetriever:
         top_k: int | None = None,
         document_ids: list[str] | None = None,
         score_threshold: float | None = None,
+        query_metadata: dict | None = None,
     ) -> list[RetrievedChunk]:
         """
         Perform semantic vector search against the document collection.
@@ -289,16 +294,8 @@ class VectorRetriever:
             first=query_embedding[:10],
         )
         # Build optional document filter
-        search_filter: Filter | None = None
-        if document_ids:
-            search_filter = Filter(
-                must=[
-                    FieldCondition(
-                        key="document_id",
-                        match=MatchAny(any=document_ids),
-                    )
-                ]
-            )
+
+        search_filter = self.get_filter_condition( query_metadata, document_ids)
 
         try:
             logger.debug(
@@ -320,7 +317,8 @@ class VectorRetriever:
             )
             logger.warning(
                 "RETRIEVER_QUERY",
-                query=query
+                query=query,
+                query_filter=search_filter,
             )
             response = await self._client.query_points(
                 collection_name=self._collection,
@@ -396,12 +394,12 @@ class VectorRetriever:
                 RetrievedChunk(
                     chunk_id=str(result.id),
                     document_id=result.payload.get("document_id", ""),
-                    document_name=result.payload.get("document_name", ""),
+                    document_name=result.payload.get("original_filename", ""),
                     content=result.payload.get("content", ""),
                     page_number=result.payload.get("page_number"),
                     score=result.score,
                     chunk_index=result.payload.get("chunk_index", 0),
-                    metadata=result.payload.get("chunk_metadata", {}),
+                    metadata=result.payload,
                 )
             )
         logger.warning(
@@ -461,6 +459,37 @@ class VectorRetriever:
             len_contracts=len(contracts)
         )
         return list(contracts.values())
+
+    def get_filter_condition(self, query_metadata=None, document_ids=None):
+
+        must = []
+
+        if document_ids:
+            must.append(
+                FieldCondition(
+                    key="document_id",
+                    match=MatchAny(any=document_ids),
+                )
+            )
+
+        if query_metadata:
+            for key, value in query_metadata.items():
+
+                if key == "intent":
+                    continue
+
+                must.append(
+                    FieldCondition(
+                        key=f"{key}",
+                        match=MatchValue(value=value),
+                    )
+                )
+
+        if not must:
+            return None
+
+        return Filter(must=must)
+
 
 
 

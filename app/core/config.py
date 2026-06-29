@@ -104,8 +104,8 @@ class Settings(BaseSettings):
     # -------------------------------------------------------------------------
     # RAG
     # -------------------------------------------------------------------------
-    chunk_size: int = 1000
-    chunk_overlap: int = 150
+    chunk_size: int = 400
+    chunk_overlap: int = 100
     rag_top_k: int = 10
     rag_rerank_top_k: int = 10
     rag_score_threshold: float = 0.45

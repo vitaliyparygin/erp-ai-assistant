@@ -1,11 +1,19 @@
 import re
+from app.parsers.field_dictionary import FIELD_DEFINITIONS
 
+# PASSPORT_PATTERNS = [
+#     r"passport\s*(?:id|number|no\.?)?\s*[:#]?\s*([A-Z]{2}\d{6})",
+#
+#     r"паспорт\s*(?:серії)?\s*([А-ЯІЇЄ]{2})\s*№?\s*(\d{6})",
+#
+#     r"серії\s*([А-ЯІЇЄ]{2})\s*№?\s*(\d{6})",
+# ]
 
 class MetadataExtractor:
 
     @staticmethod
     def extract(text: str, filename: str) -> dict:
-        print(f"MetadataExtractor start {filename}" )
+        print(f"MetadataExtractor start " )
 
         metadata = {
             "document_name": filename,
@@ -24,89 +32,36 @@ class MetadataExtractor:
             or "договор" in text_lower
         ):
             metadata["document_type"] = "contract"
+        elif "invoice" in text_lower:
+            metadata["document_type"] = "invoice"
 
+        elif "opportunity" in text_lower:
+            metadata["document_type"] = "opportunity"
 
+        for field, definition in FIELD_DEFINITIONS.items():
 
-        #
-        # document type
-        #
+            for pattern in definition["patterns"]:
 
-        # if "contract" in lower_name:
-        #     metadata["document_type"] = "contract"
-        #
-        # elif "agreement" in lower_name:
-        #     metadata["document_type"] = "contract"
-        #
-        # elif "invoice" in lower_name:
-        #     metadata["document_type"] = "invoice"
-        #
-        # elif "opportunity" in lower_name:
-        #     metadata["document_type"] = "opportunity"
+                m = re.search(
+                    pattern,
+                    text,
+                    re.IGNORECASE | re.MULTILINE,
+                )
 
-        #
-        # contract number
-        #
+                if not m:
+                    continue
 
-        m = re.search(
-            r"Contract Number:\s*([A-Z0-9\-]+)",
-            text,
-            re.IGNORECASE,
-        )
+                # якщо є група захоплення
+                if m.lastindex:
+                    value = m.group(1)
 
-        if m:
-            metadata["contract_number"] = m.group(1)
+                else:
+                    value = m.group(0)
 
-        #
-        # valid until
-        #
+                metadata[field] = value.strip()
 
-        m = re.search(
-            r"Valid Until:\s*([0-9\-]+)",
-            text,
-            re.IGNORECASE,
-        )
+                break
 
-        if m:
-            metadata["valid_until"] = m.group(1)
-
-        #
-        # customer
-        #
-
-        m = re.search(
-            r"Customer:\s*(.+)",
-            text,
-            re.IGNORECASE,
-        )
-
-        if m:
-            metadata["customer"] = m.group(1).strip()
-
-        #
-        # contractor
-        #
-
-        m = re.search(
-            r"Contractor:\s*(.+)",
-            text,
-            re.IGNORECASE,
-        )
-
-        if m:
-            metadata["contractor"] = m.group(1).strip()
-
-        #
-        # CRM stage
-        #
-
-        m = re.search(
-            r"Stage:\s*(.+)",
-            text,
-            re.IGNORECASE,
-        )
-
-        if m:
-            metadata["stage"] = m.group(1).strip()
         print('MetadataExtractor.metadata:')
         print(metadata)
         return metadata

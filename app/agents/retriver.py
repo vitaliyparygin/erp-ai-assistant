@@ -14,6 +14,7 @@ from app.rag.prompts import (
 )
 from app.rag.retriever import Reranker, VectorRetriever
 import traceback
+from app.ingestion.query_metadata import extract_query_metadata
 
 logger = get_logger(__name__)
 
@@ -234,10 +235,22 @@ class RetrieverAgent:
                 retrieval_query=rewritten_query,
             )
             start_time = time.monotonic()
+
+            query_metadata = extract_query_metadata(rewritten_query)
+            logger.warning(
+                "query_metadata",
+                query_metadata=query_metadata,
+            )
+            # results = metadata_boost(
+            #     results,
+            #     query_metadata,
+            # )
             # 2. Semantic retrieval
+
             chunks = await self._retriever.retrieve(
                 query=rewritten_query,
                 document_ids=[str(d) for d in state.document_ids] or None,
+                query_metadata=query_metadata,
             )
             logger.debug(
                 "RETRIEVED_RAW",
