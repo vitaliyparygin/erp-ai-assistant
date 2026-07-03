@@ -179,6 +179,7 @@ async def _ingest_document_async(
                 content=chunk.content[:300]
             )
 
+
         point_ids = await vector_store.upsert_chunks(
             chunks=chunks,
             embeddings=embeddings,

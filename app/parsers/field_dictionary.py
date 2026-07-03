@@ -106,8 +106,8 @@ FIELD_DEFINITIONS = {
             "Ticket Number",
         ],
         "patterns": [
-            r"tkt-\d+",
             r"ticket\s*number\s*:\s*(tkt-\d+)",
+            r"\b(tkt-\d+)\b",
         ],
     },
 
@@ -116,7 +116,7 @@ FIELD_DEFINITIONS = {
             "Invoice Number",
         ],
         "patterns": [
-            r"INV-\d+",
+            r"\bINV-\d+\b",
         ],
     },
 
@@ -196,4 +196,33 @@ FIELD_DEFINITIONS = {
             r"AGR-\d+",
         ],
     },
+
+    "hours": {
+        "aliases": [
+            "Hours",
+        ],
+        "patterns": [
+            r"Hours:\s*(\d+)",
+        ],
+    },
+    "overtime": {
+        "aliases": [
+            "Overtime",
+        ],
+        "patterns": [
+            r"Overtime:\s*(\d+)",
+        ],
+    },
+    "purchase_order": {
+        "aliases": [
+            "Purchase Order",
+            "Purchase Order #",
+            "Order Number",
+        ],
+        "patterns": [
+            r"Purchase\s+Order\s*#?\s*(P\d+)",
+            r"Order\s+Number\s*#?\s*(P\d+)",
+            r"\bP\d+\b",
+        ],
+    }
 }

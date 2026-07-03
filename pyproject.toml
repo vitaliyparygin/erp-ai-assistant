@@ -33,7 +33,8 @@ dependencies = [
     "langchain-ollama",
     "ollama",
     "qdrant_client",
-    "green"
+    "green",
+    "rank_bm25"
 ]
 
 [project.optional-dependencies]

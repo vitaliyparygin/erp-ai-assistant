@@ -79,7 +79,17 @@ class SummarizerAgent:
                 for c in state.reranked_chunks
             ],
         )
-
+        logger.warning(
+            "SUMMARIZER_CONTEXT",
+            docs=[
+                {
+                    "doc": d.metadata["document_name"],
+                    "page": d.metadata["page_number"],
+                    "score": d.metadata.get("score")
+                }
+                for d in state.retrieved_chunks
+            ]
+        )
         logger.debug(
             "SUMMARIZER_CONTEXT_FULL",
             context=state.context_str,
@@ -90,6 +100,16 @@ class SummarizerAgent:
             query=state.query,
         )
         try:
+            if (
+                    not state.retrieved_chunks
+                    or not state.has_sufficient_context
+            ):
+                return {
+                    "final_answer": (
+                        "Я не знайшов інформації у проіндексованих документах."
+                    ),
+                    "citations": [],
+                }
             # ambiguity_answer = build_disambiguation_answer(
             #     query=state.query,
             #     chunks=state.retrieved_chunks,

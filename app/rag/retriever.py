@@ -27,6 +27,8 @@ from app.core.logging import get_logger
 from app.models.schemas import RetrievedChunk
 from app.rag.chunker import TextChunk
 from app.rag.embeddings import EmbeddingService
+from app.rag.query_expansion import expand_query
+from app.rag.bm25_reranker import BM25Reranker
 
 logger = get_logger(__name__)
 
@@ -103,6 +105,45 @@ DOCUMENT_HINTS = {
         "CRM Opportunity.pdf": 0.80,
     },
 }
+keywords = {
+    "telegram",
+    "whatsapp",
+    "viber",
+    "assistance",
+    "insurance",
+    "policy"
+}
+FILTER_FIELDS = {
+    "ticket_number",
+    "purchase_order",
+    "invoice_number",
+    "employee_name",
+    "customer",
+    "contract_number",
+    "policy_number",
+    "agreement_number",
+    "project",
+    "department",
+    "asset",
+    "project_name",
+    "original_filename"
+}
+IDENTIFIER_RE = re.compile(
+    r"""
+    \b(
+        PO-\d{4}-\d+|
+        INV-\d{4}-\d+|
+        SC-\d{4}-\d+|
+        ERP-\d{4}-\d+|
+        VEND-\d{4}-\d+|
+        DN-\d{4}-\d+
+    )\b
+    """,
+    re.I | re.X,
+)
+
+def has_identifier(query: str):
+    return bool(IDENTIFIER_RE.search(query))
 
 class VectorStore:
     """
@@ -249,6 +290,7 @@ class VectorRetriever:
         self._embedder = embedding_service
         self._settings = get_settings()
         self._collection = self._settings.qdrant_collection_name
+        self.bm25 = BM25Reranker()
 
     async def retrieve(
         self,
@@ -280,8 +322,22 @@ class VectorRetriever:
             query=query,
         )
         # Generate query embedding
-        query_embedding = await self._embedder.embed_text(query)
+        if has_identifier(query):
+            q = query
+        else:
+            q = expand_query(query)
 
+
+        logger.debug(
+            "expand_query(query)",
+            query=query,
+            q=q
+        )
+        query_embedding = await self._embedder.embed_text(q)
+        logger.warning(
+            "EMBEDDING_HASH",
+            hash=hash(tuple(round(x, 5) for x in query_embedding[:100])),
+        )
         logger.debug(
             "query_embedding_debug",
             len=len(query_embedding),
@@ -294,7 +350,15 @@ class VectorRetriever:
             first=query_embedding[:10],
         )
         # Build optional document filter
-
+        logger.debug(
+            "query_metadata before self.get_filter_condition",
+            query_metadata=query_metadata,
+        )
+        logger.warning(
+            "CALL",
+            query_metadata=id(query_metadata),
+            value=query_metadata,
+        )
         search_filter = self.get_filter_condition( query_metadata, document_ids)
 
         try:
@@ -328,12 +392,48 @@ class VectorRetriever:
                 score_threshold=threshold,
                 with_payload=True,
             )
+            logger.warning(
+                "RAW_QDRANT_RESULTS",
+                docs=[
+                    {
+                        "doc": p.payload.get("original_filename"),
+                        "score": p.score,
+                        "text": p.payload.get("content", "")[:150],
+                    }
+                    for p in response.points
+                ],
+            )
+            if not response and search_filter is not None:
+                logger.warning(
+                    "FILTER_EMPTY_FALLBACK",
+                    filter=search_filter,
+                )
+
+                response = await self._client.query_points(
+                    collection_name=self._collection,
+                    query=query_embedding,
+                    limit=30,
+                    query_filter=None,
+                    score_threshold=threshold,
+                    with_payload=True,
+                )
 
             logger.debug(
                 "RAW RESPONSE:",
                 response=response,
             )
             results = response.points
+
+            results = self.bm25.rerank(
+                query,
+                results,
+            )
+
+            logger.debug(
+                "bm25",
+                bm25=results,
+            )
+
             for hit in results:
                 logger.debug(
                     "retrieved_doc",
@@ -460,10 +560,20 @@ class VectorRetriever:
         )
         return list(contracts.values())
 
+
     def get_filter_condition(self, query_metadata=None, document_ids=None):
-
+        print(id(query_metadata), query_metadata)
         must = []
+        print(f"get_filter_condition started query_metadata={query_metadata}")
 
+
+        if query_metadata:
+            query_metadata.pop("person", None)
+            must = self.build_qdrant_filter(query_metadata)
+        logger.warning(
+            "get_filter_condition",
+            must=must,
+        )
         if document_ids:
             must.append(
                 FieldCondition(
@@ -471,26 +581,32 @@ class VectorRetriever:
                     match=MatchAny(any=document_ids),
                 )
             )
-
-        if query_metadata:
-            for key, value in query_metadata.items():
-
-                if key == "intent":
-                    continue
-
-                must.append(
-                    FieldCondition(
-                        key=f"{key}",
-                        match=MatchValue(value=value),
-                    )
-                )
-
         if not must:
             return None
 
         return Filter(must=must)
 
+    def build_qdrant_filter(self, query_metadata: dict) -> dict | None:
+        conditions = []
 
+        for key, value in query_metadata.items():
+            if key in FILTER_FIELDS and value:
+                if key == "intent":
+                    continue
+                conditions.append(
+                    FieldCondition(
+                        key=key,
+                        match=MatchValue(value=value),
+                    )
+                )
+        logger.warning(
+            "build_qdrant_filter",
+            conditions=conditions,
+        )
+        if not conditions:
+            return None
+
+        return conditions
 
 
 class Reranker:
@@ -577,8 +693,11 @@ class Reranker:
                 term_matches / max(len(expanded_terms), 1),
                 0.2,
             )
-
+            print('-= expanded_terms =-')
+            print(expanded_terms)
             # spec ERP-field
+
+
             if "eic" in expanded_terms:
                 if "eic" in content_lower:
                     score += 0.50

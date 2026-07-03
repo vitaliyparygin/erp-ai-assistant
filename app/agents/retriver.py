@@ -15,6 +15,8 @@ from app.rag.prompts import (
 from app.rag.retriever import Reranker, VectorRetriever
 import traceback
 from app.ingestion.query_metadata import extract_query_metadata
+from app.ingestion.document_reference import extract_document_reference
+
 
 logger = get_logger(__name__)
 
@@ -237,8 +239,21 @@ class RetrieverAgent:
             start_time = time.monotonic()
 
             query_metadata = extract_query_metadata(rewritten_query)
+            doc_ref = extract_document_reference(state.query)
+
+
+            logger.warning(
+                "extract_document_reference",
+                doc_ref=doc_ref,
+            )
             logger.warning(
                 "query_metadata",
+                query_metadata=query_metadata,
+            )
+            query_metadata.update(doc_ref)
+
+            logger.warning(
+                "query_metadata+doc_ref",
                 query_metadata=query_metadata,
             )
             # results = metadata_boost(
@@ -262,6 +277,17 @@ class RetrieverAgent:
                         "chunk": c.chunk_index,
                     }
                     for c in chunks
+                ],
+            )
+            logger.warning(
+                "TOP20_RESULTS",
+                docs=[
+                    {
+                        "doc": d.metadata.get("original_filename"),
+                        "score": d.score,
+                        "page": d.metadata.get("page_number"),
+                    }
+                    for d in chunks
                 ],
             )
             logger.debug(

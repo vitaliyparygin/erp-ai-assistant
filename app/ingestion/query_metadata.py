@@ -50,6 +50,35 @@ def extract_query_metadata(question: str) -> dict:
             metadata["person"] = m.group(0)
             break
 
+    if metadata.get("person"):
+        person = metadata.get("person")
+        q = question.lower()
+
+        if any(x in q for x in (
+                "salary",
+                "зарплат",
+                "hours",
+                "hour",
+                "overtime",
+                "відпрац",
+                "timesheet",
+        )):
+            metadata["employee_name"] = person
+
+        elif any(x in q for x in (
+                "tenant",
+                "орендар",
+        )):
+            metadata["tenant"] = person
+
+        elif any(x in q for x in (
+                "landlord",
+                "орендодав",
+        )):
+            metadata["landlord"] = person
+
+        else:
+            metadata["person"] = person
     #
     # intent
     #

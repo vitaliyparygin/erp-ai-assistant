@@ -120,7 +120,7 @@
     "expected_doc": "Vendor Profile.pdf"
   },
   {
-    "question": "phone vendor?",
+    "question": "What is the vendor phone number?",
     "expected": "+380671234567",
     "expected_doc": "Vendor Profile.pdf"
   },
@@ -250,6 +250,11 @@
     "expected_doc": "NDA Agreement.pdf"
   },
   {
+  "question": "Хто є стороною A в NDA Agreement?",
+  "expected": "Alpha LLC",
+  "expected_doc": "NDA Agreement.pdf"
+},
+  {
     "question": "хто був на мітингу по Оновленню мобільного додатку?",
     "expected": "Максим Рибак",
     "expected_doc": "MEETING MINUTES.pdf"
@@ -265,7 +270,7 @@
     "expected_doc": "Maintenance Contract.pdf"
   },
   {
-    "question": "хто звільняється?",
+    "question": "хто йде у відпустку?",
     "expected": "Jane Doe",
     "expected_doc": "Leave Order.pdf"
   },
@@ -303,6 +308,10 @@
     "question": "який бюджет зазначено в контракті ERP-2026-001?",
     "expected": "50000 USD",
     "expected_doc": "erp_master_contract.pdf"
+  },
+    {
+    "question": "який статус ERP Rollout?",
+    "expected": "Negotiation",
+    "expected_doc": "CRM Opportunity.pdf"
   }
-
 ]

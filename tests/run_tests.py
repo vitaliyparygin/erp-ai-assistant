@@ -43,6 +43,7 @@ def ask(question):
 def test_decor(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
+        print()
         print(f"=== {func.__name__} test ===")
 
         result = func(*args, **kwargs)
@@ -170,14 +171,14 @@ def run_not_found():
         "не містить",
         "not provided",
         "not found",
-        "does not contain",
+        "not contain",
         "not available",
         "is not provided",
         "не приведений",
-        "does not contain",
         "немає",
         "не зазначено",
-        "не заповнений"
+        "не заповнений",
+        "не знайшов"
     ]
     passed = 0
 
@@ -232,9 +233,9 @@ start_time = time.monotonic()
 single_passed = single_total = citation_passed = citation_total = multi_passed =\
     multi_total = notfound_passed = notfound_total = disambiguation_passed = disambiguation_total = 0
 
-# single_passed, single_total = run_single_turn()
-# disambiguation_passed, disambiguation_total = run_disambiguation()
-# notfound_passed, notfound_total = run_not_found()
+single_passed, single_total = run_single_turn()
+disambiguation_passed, disambiguation_total = run_disambiguation()
+notfound_passed, notfound_total = run_not_found()
 citation_passed, citation_total = run_citations()
 # multi_passed, multi_total = run_multi_turn()
 #
