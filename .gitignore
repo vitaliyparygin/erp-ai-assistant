@@ -2,6 +2,5 @@
 .idea/
 .DS_Store
 cheatnote.txt
-app/__pycache__/
-app/workers/__pycache__/
 tests/report.csv
+__pycache__/

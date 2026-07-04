@@ -1,0 +1,47 @@
+[
+  {
+    "id": 1,
+    "query": "What is the project name of the project described in PROJECT STATUS REPORT.pdf?",
+    "expected_document": "PROJECT STATUS REPORT.pdf",
+    "expected_fields": [
+      "project_name"
+    ],
+    "document_type": "Project",
+    "difficulty": "medium",
+    "tags": [
+      "retrieval",
+      "erp",
+      "metadata"
+    ]
+  },
+  {
+    "id": 2,
+    "query": "What is the status of the project described in PROJECT STATUS REPORT.pdf?",
+    "expected_document": "PROJECT STATUS REPORT.pdf",
+    "expected_fields": [
+      "status"
+    ],
+    "document_type": "Project",
+    "difficulty": "medium",
+    "tags": [
+      "retrieval",
+      "erp",
+      "metadata"
+    ]
+  },
+  {
+    "id": 3,
+    "query": "What is the manager of the project described in PROJECT STATUS REPORT.pdf?",
+    "expected_document": "PROJECT STATUS REPORT.pdf",
+    "expected_fields": [
+      "manager"
+    ],
+    "document_type": "Project",
+    "difficulty": "medium",
+    "tags": [
+      "retrieval",
+      "erp",
+      "metadata"
+    ]
+  }
+]

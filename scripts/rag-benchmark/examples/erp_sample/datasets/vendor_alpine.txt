@@ -1,0 +1,6 @@
+VENDOR PROFILE
+
+Vendor Name: Alpine Components Ltd.
+Phone: +1-720-555-0198
+Email: procurement@alpinecomponents.example
+Address: 900 Foothills Parkway, Boulder, CO

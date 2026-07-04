@@ -10,7 +10,6 @@ from __future__ import annotations
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -61,11 +60,6 @@ class Document(BaseModel):
     char_count: int = 0
 
     model_config = {"arbitrary_types_allowed": True}
-
-    @field_validator("char_count", mode="before")
-    @classmethod
-    def _compute_char_count(cls, value: int, info: Any) -> int:  # noqa: ARG003
-        return value
 
 
 class ClassificationResult(BaseModel):
