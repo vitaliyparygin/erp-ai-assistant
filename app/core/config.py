@@ -190,7 +190,7 @@ class Settings(BaseSettings):
 def get_settings():
     settings = Settings()
 
-    logger.warning(
+    logger.debug(
         "SETTINGS_DEBUG",
         query_rewrite_enabled=settings.query_rewrite_enabled,
     )

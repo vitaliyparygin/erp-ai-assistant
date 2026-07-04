@@ -315,7 +315,7 @@ class VectorRetriever:
                 "query_embedding_first",
                 value=query_embedding[:5],
             )
-            logger.warning(
+            logger.debug(
                 "RETRIEVER_QUERY",
                 query=query,
                 query_filter=search_filter,
@@ -385,7 +385,7 @@ class VectorRetriever:
         chunks = []
 
         for result in results:
-            logger.warning(
+            logger.debug(
                 "RAW_QDRANT_PAYLOAD",
                 payload=result.payload,
             )
@@ -402,7 +402,7 @@ class VectorRetriever:
                     metadata=result.payload,
                 )
             )
-        logger.warning(
+        logger.debug(
             "RETRIEVER_RESULTS",
             docs=[
                 {
@@ -437,7 +437,6 @@ class VectorRetriever:
             limit=100,
             with_payload=True,
         ))
-        print("GET_CONTRACT_DOCUMENTS CALLED")
         contracts = {}
 
         for point in points:

@@ -42,10 +42,10 @@ async def upload_document(
 ) -> DocumentUploadResponse:
     if not file.filename:
         raise HTTPException(status_code=400, detail="Filename required")
-    print(f"1111-upload_document-111")
-    print(f"{file.filename}")
-    print(f"{file}")
-
+    logger.debug(
+        "-upload_document-",
+        documfileent_id=file
+    )
     extension = Path(file.filename).suffix.lstrip(".").lower()
     if extension not in settings.allowed_extensions:
         raise UnsupportedFileTypeError(
@@ -182,7 +182,7 @@ async def delete_document(
         await VectorStore(client).delete_document(str(document_id))
         await client.close()
     except Exception as e:
-        logger.warning("qdrant_delete_failed", error=str(e))
+        logger.error("qdrant_delete_failed", error=str(e))
 
     Path(doc.file_path).unlink(missing_ok=True)
     await db.delete(doc)

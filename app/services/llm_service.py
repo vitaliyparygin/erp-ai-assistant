@@ -2,7 +2,9 @@
 import httpx
 
 from app.core.config import get_settings
+from app.core.logging import get_logger
 
+logger = get_logger(__name__)
 
 class LLMService:
     def __init__(self):
@@ -20,7 +22,7 @@ class LLMService:
                     "stream": False,
                 },
             )
-            logger.warning(
+            logger.debug(
                 "PROMPT_DEBUG",
                 prompt=prompt[:3000]
             )

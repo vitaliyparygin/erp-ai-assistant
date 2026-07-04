@@ -178,14 +178,14 @@ class DocumentChunker:
         """Split a parsed document into chunks."""
         chunks: list[TextChunk] = []
         chunk_index = 0
-        logger.warning(
+        logger.debug(
             "CHUNKER_METHOD_ENTERED",
         )
         full_text = "\n".join(
             page["text"]
             for page in document.pages
         )
-        # print(f"(full_text)> {full_text}")
+
         logger.debug(
             "document_debug",
             document=document,
@@ -195,7 +195,10 @@ class DocumentChunker:
             full_text,
             Path(document.file_path).name,
         )
-        print(f"(document_metadata)> {document_metadata}")
+        logger.debug(
+            "document_metadata",
+            document_metadata=document_metadata,
+        )
         for page in document.pages:
             page_text = page["text"]
             page_number = page.get("page_number")
@@ -221,8 +224,11 @@ class DocumentChunker:
                         **page.get("metadata", {}),
                     },
                 )
-                print('print(chunk.metadata)')
-                print(chunk.metadata)
+
+                logger.debug(
+                    "chunk.metadata",
+                    chunkmetadata=chunk.metadata,
+                )
                 chunks.append(chunk)
                 chunk_index += 1
 

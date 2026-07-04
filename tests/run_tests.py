@@ -47,7 +47,6 @@ def test_decor(func):
 
         result = func(*args, **kwargs)
 
-        # print(result)
         return result
 
     return wrapper
@@ -96,7 +95,6 @@ def run_citations():
             "citations",
             []
         )
-        # print(citations)
         top_doc = (
             citations[0]["document_name"]
             if citations
@@ -145,7 +143,7 @@ def run_multi_turn():
                 expected.lower() in answer.lower()
                 for expected in step["expected"]
             )
-            # print(f"{answer} = {step['expected']} | {ok}")
+
             total += 1
             passed += ok
 
@@ -188,7 +186,7 @@ def run_not_found():
             pattern in answer.lower()
             for pattern in NOT_FOUND_PATTERNS
         )
-        # print(f"{answer} = {test['expected']} | {ok}")
+
         passed += ok
 
         print(
@@ -232,12 +230,12 @@ start_time = time.monotonic()
 single_passed = single_total = citation_passed = citation_total = multi_passed =\
     multi_total = notfound_passed = notfound_total = disambiguation_passed = disambiguation_total = 0
 
-# single_passed, single_total = run_single_turn()
-# disambiguation_passed, disambiguation_total = run_disambiguation()
-# notfound_passed, notfound_total = run_not_found()
+single_passed, single_total = run_single_turn()
+disambiguation_passed, disambiguation_total = run_disambiguation()
+notfound_passed, notfound_total = run_not_found()
 citation_passed, citation_total = run_citations()
-# multi_passed, multi_total = run_multi_turn()
-#
+multi_passed, multi_total = run_multi_turn()
+
 
 
 
@@ -296,74 +294,4 @@ print(
 print(
     f"Latency       : {latency_ms}'s"
 )
-# todo: add
-# Average latency : 5.9s
-# Average tokens  : 512
 
-# with open("tests/test_cases.yaml") as f:
-#     config = yaml.safe_load(f)
-#
-# results = []
-#
-# for test in config["tests"]:
-#
-#     response = requests.post(
-#         API_URL,
-#         json={
-#             "message": test["question"]
-#         }
-#     )
-#
-#     data = response.json()
-#
-#     answer = data.get("answer", "")
-#
-#     if "expected" in test:
-#         passed = all(
-#             e.lower() in answer.lower()
-#             for e in test["expected"]
-#         )
-#
-#         expected_text = "; ".join(test["expected"])
-#
-#     elif "expected_any" in test:
-#         passed = any(
-#             e.lower() in answer.lower()
-#             for e in test["expected_any"]
-#         )
-#
-#         expected_text = "; ".join(test["expected_any"])
-#
-#     else:
-#         raise ValueError(
-#             f"Test {test['question']} has no expected field"
-#         )
-#
-#     results.append({
-#         "question": test["question"],
-#         "expected": expected_text,
-#         "answer": answer,
-#         "passed": passed,
-#     })
-#
-# with open("tests/report.csv", "w", newline="") as f:
-#     writer = csv.DictWriter(
-#         f,
-#         fieldnames=[
-#             "question",
-#             "expected",
-#             "answer",
-#             "passed",
-#         ]
-#     )
-#
-#     writer.writeheader()
-#
-#     for row in results:
-#         writer.writerow(row)
-#
-# passed = sum(r["passed"] for r in results)
-#
-# print(
-#     f"\nPassed {passed}/{len(results)} tests"
-# )

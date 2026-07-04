@@ -194,7 +194,7 @@ class ERPAssistantGraph:
             needs_research=state.needs_research,
             has_sufficient_context=state.has_sufficient_context
         )
-        logger.warning(
+        logger.debug(
             "ROUTER_DEBUG",
             requires_clarification=state.requires_clarification,
             final_answer=state.final_answer,

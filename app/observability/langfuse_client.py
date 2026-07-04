@@ -85,7 +85,7 @@ class LangFuseTracer:
                 metadata={"latency_ms": latency_ms},
             )
         except Exception as e:
-            logger.debug("langfuse_log_generation_error", error=str(e))
+            logger.error("langfuse_log_generation_error", error=str(e))
 
     def log_score(
         self,
@@ -106,7 +106,7 @@ class LangFuseTracer:
                 comment=comment,
             )
         except Exception as e:
-            logger.debug("langfuse_log_score_error", error=str(e))
+            logger.error("langfuse_log_score_error", error=str(e))
 
     def flush(self) -> None:
         """Flush pending events to LangFuse."""

@@ -100,21 +100,22 @@ async def _ingest_document_async(
 
     logger = get_logger(__name__)
     start_time = time.monotonic()
-    logger.warning(
+    logger.debug(
         "CHUNKER_CLASS",
         file=inspect.getfile(DocumentChunker),
     )
-    logger.info(
+    logger.debug(
         "ingestion_started",
         document_id=document_id,
         file_path=file_path,
         mime_type=mime_type
     )
-    logger.warning(
+    logger.debug(
         "INGEST_START",
         document_id=document_id,
         document_name=document_name,
     )
+
     try:
         # ---- Parse ----
         parser = DocumentParser()
@@ -122,27 +123,21 @@ async def _ingest_document_async(
 
 
         # ---- Chunk ----
-        print(
+        logger.debug(
             "DocumentChunker source:",
-            inspect.getfile(DocumentChunker),
+            document_chunker=inspect.getfile(DocumentChunker),
         )
+
         chunker = DocumentChunker(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
-        print(
+        logger.debug(
             "ingestion_worker chunks begin"
         )
         chunks = chunker.chunk(parsed_doc, document_id)
-
-        # print('db_chunks:')
-        # for i, c in enumerate(db_chunks):
-        #     print(i, hex(id(c)), c.id)
-
-        # async with SessionLocal() as db:
-        #     db.add_all(db_chunks)
-        #     # await db.flush()
-        #     await db.commit()
-        print(
-            f"ingestion_worker chunks end/chunks= {chunks}"
+        logger.debug(
+            "ingestion_worker chunks end/chunks=",
+            chunks=chunks
         )
+
         if not chunks:
             raise ValueError(f"No chunks extracted from document {document_id}")
 
@@ -209,29 +204,23 @@ async def _ingest_document_async(
             points=len(point_ids),
         )
         await qdrant_client.close()
-        # await AsyncSessionLocal.kw["bind"].dispose()
-        logger.warning("STEP_A")
-        # ---- Update DB ----
-        # logger.warning(
-        #     "ENGINE-A",
-        #     engine=id(AsyncSessionLocal.kw["bind"])
-        # )
+        #logger.warning("STEP_A")
         import asyncio
 
-        logger.warning(
+        logger.debug(
             "EVENT_LOOP",
             loop=id(asyncio.get_running_loop())
         )
-        logger.warning("BEFORE_EXECUTE")
+        logger.debug("BEFORE_EXECUTE")
         SessionLocal = get_sessionmaker()
         async with SessionLocal() as db:
-            logger.warning("STEP_A-1")
-            logger.warning(
+            # logger.warning("STEP_A-1")
+            logger.debug(
                 "DB_SESSION",
                 session=id(db),
             )
 
-            logger.warning(
+            logger.debug(
                 "DB_BIND",
                 bind=id(db.bind),
             )
@@ -240,27 +229,27 @@ async def _ingest_document_async(
                     DocumentModel.id == uuid.UUID(document_id)
                 )
             )
-            logger.warning("STEP_A-2")
+            # logger.warning("STEP_A-2")
             doc = result.scalar_one_or_none()
-            logger.warning("STEP_A-3")
+            # logger.warning("STEP_A-3")
             if doc:
-                logger.warning("STEP_A-4")
+                # logger.warning("STEP_A-4")
                 doc.status = "indexed"
                 doc.chunk_count = len(chunks)
                 doc.page_count = parsed_doc.total_pages
                 doc.qdrant_collection = settings.qdrant_collection_name
                 await db.commit()
-                logger.warning("STEP_A-5")
-        logger.warning("AFTER_EXECUTE")
+                # logger.warning("STEP_A-5")
+        # logger.warning("AFTER_EXECUTE")
         # ---- Metrics ----
         latency = time.monotonic() - start_time
-        logger.warning("STEP_A-6")
+        # logger.warning("STEP_A-6")
         DOCUMENTS_INGESTED_TOTAL.labels(status="success", mime_type=mime_type).inc()
-        logger.warning("STEP_A-7")
+        # logger.warning("STEP_A-7")
         INGESTION_CHUNKS_CREATED.observe(len(chunks))
-        logger.warning("STEP_A-8")
+        # logger.warning("STEP_A-8")
         INGESTION_LATENCY_SECONDS.observe(latency)
-        logger.warning("STEP_A-9")
+        # logger.warning("STEP_A-9")
         logger.debug(
             "ingestion_completed",
             document_id=document_id,
@@ -288,20 +277,16 @@ async def _ingest_document_async(
 
         # Update DB with error
         try:
-            logger.warning("STEP_B-1")
-            # logger.warning(
-            #     "ENGINE-B",
-            #     engine=id(AsyncSessionLocal.kw["bind"])
-            # )
+            # logger.warning("STEP_B-1")
             SessionLocal = get_sessionmaker()
             async with SessionLocal() as db2:
-                logger.warning("STEP_B-2")
-                logger.warning(
+                # logger.warning("STEP_B-2")
+                logger.debug(
                     "DB2_SESSION",
                     session=id(db2),
                 )
 
-                logger.warning(
+                logger.debug(
                     "DB2_BIND",
                     bind=id(db2.bind),
                 )
@@ -310,14 +295,14 @@ async def _ingest_document_async(
                         DocumentModel.id == uuid.UUID(document_id)
                     )
                 )
-                logger.warning("STEP_B-2")
+                # logger.warning("STEP_B-2")
                 doc = result.scalar_one_or_none()
-                logger.warning("STEP_B-3")
+                # logger.warning("STEP_B-3")
                 if doc:
                     doc.status = "failed"
                     doc.error_message = str(exc)[:500]
                     await db2.commit()
-                    logger.warning("STEP_B-4")
+                    # logger.warning("STEP_B-4")
         except Exception as e:
             logger.error(
                 "ingestion_worker. ",
@@ -327,8 +312,8 @@ async def _ingest_document_async(
             import traceback
             traceback.print_exc()
             raise
-        logger.warning("STEP_C-1")
+        # logger.warning("STEP_C-1")
         DOCUMENTS_INGESTED_TOTAL.labels(status="error", mime_type=mime_type).inc()
-        logger.warning("STEP_C-2")
+        # logger.warning("STEP_C-2")
         # Retry with exponential backoff
         raise task.retry(exc=exc, countdown=2 ** task.request.retries * 30)
