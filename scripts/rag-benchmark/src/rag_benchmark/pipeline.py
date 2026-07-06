@@ -44,6 +44,26 @@ class BenchmarkPipeline:
     extractor: MetadataExtractor | None = None
     generator: QuestionGenerator = field(default_factory=TemplateQuestionGenerator)
 
+    def resolve_template(self, config: BenchmarkConfig) -> TemplateDefinition:
+        """Load the template referenced by a config.
+
+        Exposed as its own method (rather than inlined in `run`) so other
+        callers — notably the diagnostics subsystem — can resolve the same
+        template `run()` would use without duplicating `load_template`
+        calls or re-running the whole pipeline.
+        """
+        return load_template(config.template)
+
+    def build_classifier(self, template: TemplateDefinition) -> DocumentClassifier:
+        """Return the classifier that would be used for a given template."""
+        return self.classifier or DefaultClassifier(rules=template.classification_rules or None)
+
+    def build_extractor(self, template: TemplateDefinition) -> MetadataExtractor:
+        """Return the extractor that would be used for a given template."""
+        return self.extractor or RegexMetadataExtractor(
+            extra_rules=template.extraction_rules or None
+        )
+
     def load_documents(self, dataset_dir: Path, recursive: bool = True) -> list[ScannedFile]:
         """Scan a dataset directory for supported files.
 
@@ -70,12 +90,8 @@ class BenchmarkPipeline:
             fail to read are logged and skipped rather than aborting the
             whole run.
         """
-        classifier = self.classifier or DefaultClassifier(
-            rules=template.classification_rules or None
-        )
-        extractor = self.extractor or RegexMetadataExtractor(
-            extra_rules=template.extraction_rules or None
-        )
+        classifier = self.build_classifier(template)
+        extractor = self.build_extractor(template)
 
         results: list[ClassifiedDocument] = []
         for scanned in scanned_files:
@@ -116,7 +132,7 @@ class BenchmarkPipeline:
             (e.g. the CLI's `report` command) can compute statistics without
             re-running the pipeline.
         """
-        template = load_template(config.template)
+        template = self.resolve_template(config)
         scanned_files = self.load_documents(config.dataset, recursive=config.recursive)
         classified_documents = self.classify_and_extract(scanned_files, template)
         dataset = self.generate(

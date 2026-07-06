@@ -5,9 +5,10 @@ from __future__ import annotations
 from rag_benchmark.generators.base import QuestionGenerator, QuestionTemplateMap
 from rag_benchmark.models import BenchmarkQuery, ClassifiedDocument
 from rag_benchmark.utils import get_logger
-
+from rich.console import Console
 logger = get_logger("generators.template")
 
+console = Console()
 
 class TemplateQuestionGenerator(QuestionGenerator):
     """Generates questions by filling QuestionSpec templates with metadata.
@@ -26,6 +27,9 @@ class TemplateQuestionGenerator(QuestionGenerator):
         queries: list[BenchmarkQuery] = []
         next_id = 1
 
+        console.print(
+            f"[yellow]Generated[/yellow]"
+        )
         for classified in documents:
             doc_type = classified.classification.document_type
             specs = template_map.get(doc_type, [])
@@ -39,25 +43,44 @@ class TemplateQuestionGenerator(QuestionGenerator):
 
             available_fields = classified.metadata.as_plain_dict()
             generated_for_doc = 0
-
+            logger.debug(f"generate.specs specs={specs} max_questions_per_document={max_questions_per_document}")
             for spec in specs:
                 if generated_for_doc >= max_questions_per_document:
+                    logger.debug(f"generated_for_doc >= max_questions_per_document1"
+                          f"generated_for_doc={generated_for_doc} max_questions_per_document={max_questions_per_document}")
                     break
 
                 missing = [f for f in spec.requires_fields if f not in available_fields]
                 if missing:
-                    continue
+                    logger.warning(
+                        """
+                        Document: %s
+                        Document type:%s
+                        Missing:%s
+                        Available:%s
+                        """,
+                        classified.document.filename,
+                        doc_type,
+                        missing,
+                        available_fields.keys()
+                    )
 
+                    continue
+                logger.debug(f"generate.spec.requires_fields = {spec.requires_fields}")
                 if spec.requires_fields:
                     # One question per required field, rendered individually.
                     for field_name in spec.requires_fields:
                         if generated_for_doc >= max_questions_per_document:
+                            logger.debug(f"generated_for_doc >= max_questions_per_document1"
+                                  f"generated_for_doc={generated_for_doc} max_questions_per_document={max_questions_per_document}")
                             break
                         query_text = spec.query_template.format(
                             field=field_name.replace("_", " "),
                             filename=classified.document.filename,
                             **available_fields,
                         )
+                        logger.debug(f"generate.query_text1 query_text={query_text}",)
+
                         queries.append(
                             BenchmarkQuery(
                                 id=next_id,
@@ -75,6 +98,8 @@ class TemplateQuestionGenerator(QuestionGenerator):
                     query_text = spec.query_template.format(
                         filename=classified.document.filename, **available_fields
                     )
+                    logger.debug(f"generate.query_text2 query_text={query_text}")
+
                     queries.append(
                         BenchmarkQuery(
                             id=next_id,
@@ -89,5 +114,5 @@ class TemplateQuestionGenerator(QuestionGenerator):
                     next_id += 1
                     generated_for_doc += 1
 
-        logger.info("Generated %d question(s) from %d document(s)", len(queries), len(documents))
+        logger.info("Generated:: %d question(s) from %d document(s)", len(queries), len(documents))
         return queries

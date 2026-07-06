@@ -22,12 +22,8 @@ def configure_logging(verbose: bool = False, debug: bool = False) -> logging.Log
         The configured logger instance.
     """
     logger = logging.getLogger(_LOGGER_NAME)
-    if debug:
-        level = logging.DEBUG
-    elif verbose:
-        level = logging.INFO
-    else:
-        level = logging.WARNING
+
+    level = logging.DEBUG if verbose else logging.INFO
 
     logger.setLevel(level)
     if not logger.handlers:
@@ -52,6 +48,7 @@ def configure_logging(verbose: bool = False, debug: bool = False) -> logging.Log
 
 def get_logger(name: str | None = None) -> logging.Logger:
     """Return a child logger of the package logger."""
+    logging.getLogger()
     if name:
         return logging.getLogger(f"{_LOGGER_NAME}.{name}")
     return logging.getLogger(_LOGGER_NAME)

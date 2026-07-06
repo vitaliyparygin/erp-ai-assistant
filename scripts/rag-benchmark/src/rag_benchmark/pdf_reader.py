@@ -62,6 +62,11 @@ class PDFReader(DocumentReader):
             raise ValueError(f"Failed to read PDF {path}: {exc}") from exc
 
         text = "\n".join(text_parts)
+        logger.info(
+            "reader: %s : %d chars",
+            path.name,
+            len(text),
+        )
         return Document(
             id=stable_document_id(path),
             path=path,

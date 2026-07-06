@@ -124,10 +124,18 @@ class RegexMetadataExtractor(MetadataExtractor):
     """
 
     def __init__(self, extra_rules: dict[str, tuple[FieldRule, ...]] | None = None) -> None:
-        self._rules = dict(DEFAULT_FIELD_RULES)
+        self._rules: dict[str, tuple[FieldRule, ...]] = dict(DEFAULT_FIELD_RULES)
         if extra_rules:
             for doc_type, rules in extra_rules.items():
-                self._rules[doc_type] = self._rules.get(doc_type, ()) + rules
+                base = self._rules.get(doc_type, ())
+                # Merge by field name so a template can override a generic
+                # rule's regex without producing a duplicate entry for the
+                # same field (which would otherwise double-count that field
+                # in expected_fields(), coverage stats, and reports).
+                merged: dict[str, FieldRule] = {rule.name: rule for rule in base}
+                for rule in rules:
+                    merged[rule.name] = rule
+                self._rules[doc_type] = tuple(merged.values())
 
     def extract(self, document: DocumentModel, document_type: str) -> ExtractedMetadata:
         rules = self._rules.get(document_type, ())
@@ -150,3 +158,19 @@ class RegexMetadataExtractor(MetadataExtractor):
         return ExtractedMetadata(
             document_id=document.id, document_type=document_type, fields=fields
         )
+
+    def expected_fields(self, document_type: str) -> list[str]:
+        """Return the field names this extractor knows how to extract for a type.
+
+        Used by the diagnostics subsystem to compute metadata coverage
+        (fields expected vs. fields actually extracted) without needing to
+        know anything about regex internals.
+
+        Args:
+            document_type: The classified document type to look up.
+
+        Returns:
+            Field names in rule-definition order, or an empty list if no
+            rules are registered for this document type.
+        """
+        return [rule.name for rule in self._rules.get(document_type, ())]

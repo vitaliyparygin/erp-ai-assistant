@@ -7,6 +7,8 @@ Commands:
     report    Run the pipeline and write a Markdown summary report.
     validate  Validate an existing benchmark_queries.json for issues.
     export    Run the pipeline and write all output artifacts at once.
+    diagnose  Run the full pipeline read-only and explain pipeline health.
+    inspect   Deep-dive into a single document's pipeline journey.
 """
 
 from __future__ import annotations
@@ -17,9 +19,17 @@ from typing import Annotated
 
 import typer
 from rich.console import Console
+from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
 from rag_benchmark.config import BenchmarkConfig
+from rag_benchmark.diagnostics import build_diagnostics_report
+from rag_benchmark.diagnostics.inspect import (
+    DocumentNotFoundError,
+    UnsupportedDocumentError,
+    inspect_document,
+)
+from rag_benchmark.diagnostics.reporter import DiagnosticsReporter, write_markdown_report
 from rag_benchmark.metrics import compute_statistics, validate_dataset
 from rag_benchmark.models import BenchmarkDataset, BenchmarkQuery
 from rag_benchmark.pipeline import BenchmarkPipeline
@@ -47,6 +57,9 @@ ForceOpt = Annotated[bool, typer.Option("--force", help="Overwrite existing outp
 VerboseOpt = Annotated[bool, typer.Option("--verbose", help="Enable INFO-level logging.")]
 DryRunOpt = Annotated[
     bool, typer.Option("--dry-run", help="Show what would happen without writing files.")
+]
+SaveReportOpt = Annotated[
+    bool, typer.Option("--save-report", help="Write diagnose_latest.md to the output directory.")
 ]
 
 
@@ -288,6 +301,74 @@ def export(
     console.print(f"  - {retrieval_csv_path} (scaffold, ready for evaluation results)")
     console.print(f"  - {latency_csv_path} (scaffold, ready for evaluation results)")
     console.print(f"  - {report_path}")
+
+
+@app.command()
+def diagnose(
+    dataset: DatasetOpt = None,
+    output: OutputOpt = None,
+    template: TemplateOpt = None,
+    config: ConfigOpt = None,
+    verbose: VerboseOpt = False,
+    save_report: SaveReportOpt = False,
+) -> None:
+    """Run the full pipeline read-only and diagnose why generation succeeds or fails.
+
+    Executes every stage (scan, classify, extract, generate) exactly as
+    `generate` would, but never writes benchmark_queries.json. Use
+    --save-report to additionally write diagnose_latest.md.
+    """
+    configure_logging(verbose=verbose)
+    cfg = _build_config(dataset, output, template, config)
+    pipeline = BenchmarkPipeline()
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+        transient=True,
+    ) as progress:
+        task = progress.add_task("Running diagnostics pipeline...", total=None)
+        try:
+            report_result = build_diagnostics_report(pipeline, cfg)
+        except (FileNotFoundError, NotADirectoryError) as exc:
+            console.print(f"[red]{exc}[/red]")
+            raise typer.Exit(code=1) from exc
+        progress.update(task, completed=1)
+
+    reporter = DiagnosticsReporter(console=console)
+    reporter.render(report_result, verbose=verbose)
+
+    if save_report:
+        report_path = cfg.output / "diagnose_latest.md"
+        write_markdown_report(report_result, report_path)
+        console.print(f"\n[green]Diagnostics report saved[/green] -> {report_path}")
+
+
+@app.command()
+def inspect(
+    file_name: Annotated[
+        str, typer.Argument(help="Filename (or stem) to inspect within the dataset directory.")
+    ],
+    dataset: DatasetOpt = None,
+    output: OutputOpt = None,
+    template: TemplateOpt = None,
+    config: ConfigOpt = None,
+    verbose: VerboseOpt = False,
+) -> None:
+    """Deep-dive into a single document: classification, metadata, questions, raw text."""
+    configure_logging(verbose=verbose)
+    cfg = _build_config(dataset, output, template, config)
+    pipeline = BenchmarkPipeline()
+
+    try:
+        result = inspect_document(pipeline, cfg, file_name)
+    except (DocumentNotFoundError, UnsupportedDocumentError) as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+
+    reporter = DiagnosticsReporter(console=console)
+    reporter.render_inspect(result)
 
 
 if __name__ == "__main__":

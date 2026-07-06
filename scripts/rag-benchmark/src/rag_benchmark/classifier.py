@@ -13,9 +13,12 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 
 from rag_benchmark.models import ClassificationResult, Document
-from rag_benchmark.utils import get_logger
 
+from rag_benchmark.utils import get_logger
 logger = get_logger("classifier")
+
+from rich.console import Console
+console = Console()
 
 UNKNOWN_TYPE = "Unknown"
 
@@ -161,6 +164,14 @@ class DefaultClassifier(DocumentClassifier):
 
         if best_type == UNKNOWN_TYPE:
             logger.debug("Could not classify document: %s", document.filename)
+
+        logger.info(
+            "%s -> %s, confidence {%s}",
+            document.filename,
+            best_type,
+            best_score
+
+        )
 
         return ClassificationResult(
             document_id=document.id,

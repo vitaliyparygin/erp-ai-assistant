@@ -1,4 +1,4 @@
-dataset: ../../tests/datasets
+dataset: my-benchmark/datasets
 output: my-benchmark/benchmarks
 template: erp
 reader: pdfplumber
