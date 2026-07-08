@@ -226,15 +226,7 @@ class Summary:
     skipped_questions: int
     coverage: float
 
-@dataclass
-class DocumentDiagnostics:
-    filename: str
-    document_type: str
-    extracted_fields: dict[str, str]
-    required_fields: list[str]
-    generated_questions: int
-    skipped_questions: int
-    coverage: float
+
 
 
 @dataclass
@@ -244,11 +236,4 @@ class QuestionCoverage:
     generated_fields: list[str]
 
 
-@dataclass
-class DocumentSummary:
-    filename: str
-    document_type: str
-    field_coverage: float
-    regex: str
-    questions: str
 

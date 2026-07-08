@@ -4,8 +4,17 @@ from __future__ import annotations
 from dataclasses import dataclass
 from rag_benchmark.models import ClassifiedDocument
 
-@dataclass(slots=True)
+@dataclass
 class FieldCoverage:
+    """Coverage of a single expected metadata field across one document type."""
+
+    field_name: str
+    documents_with_field: int
+    total_documents_of_type: int
+    coverage_percent: float
+
+@dataclass(slots=True)
+class FieldCoverageResult:
     """Field extraction statistics for a single document."""
 
     expected: list[str]
@@ -20,7 +29,7 @@ class FieldCoverageAnalyzer:
     def analyze(
         classified: ClassifiedDocument,
         expected_fields: list[str],
-    ) -> FieldCoverage:
+    ) -> FieldCoverageResult:
         available = list(classified.metadata.fields.keys())
 
         missing = [
@@ -35,7 +44,7 @@ class FieldCoverageAnalyzer:
             else 1.0
         )
 
-        return FieldCoverage(
+        return FieldCoverageResult(
             expected=expected_fields,
             extracted=available,
             missing=missing,

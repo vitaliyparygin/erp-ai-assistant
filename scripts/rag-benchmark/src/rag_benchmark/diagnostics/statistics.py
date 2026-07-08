@@ -7,11 +7,17 @@ trivially testable.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 from rag_benchmark.classifier import UNKNOWN_TYPE
-from rag_benchmark.diagnostics.analyzer import DocumentDiagnostic, PipelineDiagnostics
 from rag_benchmark.utils import get_logger
+from rag_benchmark.diagnostics.models import (
+    PipelineDiagnostics,
+    DocumentDiagnostic,
+    ClassificationStats,
+    DocumentTypeMetadataCoverage,
+    QuestionTypeStats,
+    ReadinessScores
+)
+from rag_benchmark.analyzers.field_coverage import FieldCoverage
 
 logger = get_logger("diagnostics.statistics")
 
@@ -40,68 +46,8 @@ def _mean(values: list[float]) -> float:
     return round(sum(values) / len(values), 1)
 
 
-@dataclass
-class ClassificationStats:
-    """Aggregate classification outcomes across the whole dataset."""
-
-    counts: dict[str, int]
-    total_documents: int
-    classified_count: int
-    unknown_count: int
-    classification_rate: float
 
 
-@dataclass
-class FieldCoverage:
-    """Coverage of a single expected metadata field across one document type."""
-
-    field_name: str
-    documents_with_field: int
-    total_documents_of_type: int
-    coverage_percent: float
-
-
-@dataclass
-class DocumentTypeMetadataCoverage:
-    """Metadata extraction coverage for one document type, field by field."""
-
-    document_type: str
-    fields: list[FieldCoverage]
-    overall_coverage_percent: float
-
-# @dataclass
-# class DatasetCoverage:
-#
-# @dataclass
-# class ExtractionCoverage:
-#
-# @dataclass
-# class GenerationCoverage:
-#
-# @dataclass
-# class TemplateCoverage:
-
-
-@dataclass
-class QuestionTypeStats:
-    """Question-generation yield for one document type."""
-
-    document_type: str
-    possible: int
-    generated: int
-    skipped: int
-    coverage_percent: float
-
-
-@dataclass
-class ReadinessScores:
-    """Weighted readiness scores summarizing the whole diagnostic run."""
-
-    classification_score: float
-    extraction_score: float
-    question_score: float
-    overall_score: float
-    status: str
 
 
 def compute_classification_stats(diagnostics: PipelineDiagnostics) -> ClassificationStats:
@@ -145,7 +91,7 @@ def _group_by_document_type(
     for diag in diagnostics.document_diagnostics:
         if exclude_unknown and diag.is_unknown:
             continue
-        grouped.setdefault(diag.classified.classification.document_type, []).append(diag)
+        grouped.setdefault(diag.document_type, []).append(diag)
     return grouped
 
 
@@ -168,13 +114,13 @@ def compute_metadata_coverage(
     results: list[DocumentTypeMetadataCoverage] = []
 
     for doc_type, diags in sorted(grouped.items()):
-        expected_fields = diags[0].expected_fields
+        expected_fields = diags[0].extracted_fields
         if not expected_fields:
             continue
 
         field_coverages: list[FieldCoverage] = []
         for field_name in expected_fields:
-            with_field = sum(1 for d in diags if field_name in d.available_fields)
+            with_field = sum(1 for d in diags if field_name in d.extracted_fields)
             field_coverages.append(
                 FieldCoverage(
                     field_name=field_name,
@@ -220,9 +166,9 @@ def compute_question_stats(diagnostics: PipelineDiagnostics) -> list[QuestionTyp
         if not specs:
             continue
 
-        possible_per_document = sum(len(spec.requires_fields) or 1 for spec in specs)
+        possible_per_document = sum(len(spec.fields) or 1 for spec in specs)
         possible = possible_per_document * len(diags)
-        generated = sum(len(d.questions) for d in diags)
+        generated = sum(d.generated_questions for d in diags)
         skipped = max(possible - generated, 0)
 
         results.append(

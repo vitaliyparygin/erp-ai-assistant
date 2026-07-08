@@ -11,23 +11,24 @@ from __future__ import annotations
 
 import re
 from collections import Counter, defaultdict
-from dataclasses import dataclass, field
-from datetime import datetime
 from pathlib import Path
-
-import rag_benchmark
 from rag_benchmark.classifier import UNKNOWN_TYPE
 from rag_benchmark.config import BenchmarkConfig
-from rag_benchmark.extractor import RegexMetadataExtractor
-from rag_benchmark.models import BenchmarkDataset, BenchmarkQuery, ClassifiedDocument
+from rag_benchmark.models import  BenchmarkQuery
 from rag_benchmark.pipeline import BenchmarkPipeline
-from rag_benchmark.templates import TemplateDefinition
+
 from rag_benchmark.utils import get_logger, normalize_whitespace, slugify
 
 from rag_benchmark.analyzers.regex_analyzer import RegexAnalyzer
 from rag_benchmark.analyzers.field_coverage import FieldCoverageAnalyzer
 from rag_benchmark.analyzers.question_coverage import QuestionCoverageAnalyzer
 from rag_benchmark.analyzers.document_summary import DocumentSummaryAnalyzer
+from rag_benchmark.diagnostics.models import (
+    SuggestedClassificationRule,
+    PipelineDiagnostics,
+    DocumentDiagnostic
+)
+
 
 logger = get_logger("diagnostics.analyzer")
 
@@ -67,13 +68,7 @@ def extract_keywords(text: str, max_keywords: int = DEFAULT_MAX_KEYWORDS) -> lis
     return [label for label, _ in counts.most_common(max_keywords)]
 
 
-@dataclass(frozen=True)
-class SuggestedClassificationRule:
-    """A human-readable suggestion for classifying a currently-unknown document."""
 
-    document_type: str
-    filename_pattern: str
-    content_patterns: list[str]
 
 
 def suggest_classification_rule(
@@ -108,40 +103,7 @@ def suggest_classification_rule(
     )
 
 
-@dataclass
-class DocumentDiagnostic:
-    """Per-document diagnostic facts, combining every pipeline stage's output."""
 
-    classified: ClassifiedDocument
-    expected_fields: list[str]
-    missing_fields: list[str]
-    questions: list[BenchmarkQuery] = field(default_factory=list)
-    keywords: list[str] = field(default_factory=list)
-    suggested_rule: SuggestedClassificationRule | None = None
-
-    @property
-    def is_unknown(self) -> bool:
-        return self.classified.classification.document_type == UNKNOWN_TYPE
-
-    @property
-    def available_fields(self) -> list[str]:
-        return list(self.classified.metadata.fields.keys())
-
-
-@dataclass
-class PipelineDiagnostics:
-    """Complete, descriptive snapshot of a single (dry) pipeline run."""
-
-    config: BenchmarkConfig
-    template: TemplateDefinition
-    classified_documents: list[ClassifiedDocument]
-    dataset: BenchmarkDataset
-    document_diagnostics: list[DocumentDiagnostic]
-    generated_at: datetime = field(default_factory=datetime.utcnow)
-
-    @property
-    def unknown_diagnostics(self) -> list[DocumentDiagnostic]:
-        return [d for d in self.document_diagnostics if d.is_unknown]
 
 
 def run_diagnostics(pipeline: BenchmarkPipeline, config: BenchmarkConfig) -> PipelineDiagnostics:
@@ -184,6 +146,10 @@ def run_diagnostics(pipeline: BenchmarkPipeline, config: BenchmarkConfig) -> Pip
 
     document_diagnostics: list[DocumentDiagnostic] = []
     for classified in classified_documents:
+        document_questions = questions_by_document.get(
+            classified.document.filename,
+            [],
+        )
         expected_fields = extractor.expected_fields(
             classified.classification.document_type
         )
@@ -212,39 +178,30 @@ def run_diagnostics(pipeline: BenchmarkPipeline, config: BenchmarkConfig) -> Pip
             regex_result,
             question_result,
         )
+        keywords: list[str] = []
+        suggested_rule: SuggestedClassificationRule | None = None
 
-        document_diagnostics.append(summary)
-    # for classified in classified_documents:
-    #     doc_type = classified.classification.document_type
-    #     expected_fields = (
-    #         extractor.expected_fields(doc_type)
-    #         if isinstance(extractor, RegexMetadataExtractor)
-    #         else []
-    #     )
-    #     available = set(classified.metadata.fields.keys())
-    #     missing_fields = [f for f in expected_fields if f not in available]
-    #
-    #     keywords: list[str] = []
-    #     suggested_rule: SuggestedClassificationRule | None = None
-    #     if doc_type == UNKNOWN_TYPE:
-    #         keywords = extract_keywords(classified.document.text)
-    #         suggested_rule = suggest_classification_rule(classified.document.filename, keywords)
-    #         logger.debug(
-    #             "Unknown document %s: suggested type=%s",
-    #             classified.document.filename,
-    #             suggested_rule.document_type,
-    #         )
-    #
-    #     document_diagnostics.append(
-    #         DocumentDiagnostic(
-    #             classified=classified,
-    #             expected_fields=expected_fields,
-    #             missing_fields=missing_fields,
-    #             questions=questions_by_document.get(classified.document.filename, []),
-    #             keywords=keywords,
-    #             suggested_rule=suggested_rule,
-    #         )
-    #     )
+        if classified.classification.document_type == UNKNOWN_TYPE:
+            keywords = extract_keywords(classified.document.text)
+
+            suggested_rule = suggest_classification_rule(
+                classified.document.filename,
+                keywords,
+            )
+        document_diagnostics.append(
+            DocumentDiagnostic(
+                classified=classified,
+                expected_fields=expected_fields,
+                missing_fields=field_result.missing,
+                questions=document_questions,
+                keywords=keywords,
+                suggested_rule=suggested_rule,
+                field_coverage=field_result,
+                regex_analysis=regex_result,
+                question_coverage=question_result,
+                summary=summary,
+            )
+        )
 
     return PipelineDiagnostics(
         config=config,

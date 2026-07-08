@@ -1,13 +1,13 @@
 # Benchmark Results
 
-- **Generated at:** 2026-07-04T04:48:54.675142 UTC
+- **Generated at:** 2026-07-08T12:38:11.076026 UTC
 - **Template:** erp
 
 ## Dataset Statistics
 
 - Total documents scanned: 31
-- Total questions generated: 3
-- Average questions per document: 0.10
+- Total questions generated: 26
+- Average questions per document: 0.84
 - Unknown document types: 12
 
 ## Detected Document Types
@@ -50,4 +50,4 @@
 ## Warnings
 
 - 12 document(s) could not be classified.
-- 30 document(s) produced no benchmark questions.
+- 18 document(s) produced no benchmark questions.

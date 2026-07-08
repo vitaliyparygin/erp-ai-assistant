@@ -54,7 +54,7 @@ class RegexAnalyzer:
                 stats.append(
                     RegexStat(
                         document_type=doc.classification.document_type,
-                        field=rule.field_name,
+                        field=rule.name,
                         pattern=pattern,
                         matches=len(found),
                         value=value,

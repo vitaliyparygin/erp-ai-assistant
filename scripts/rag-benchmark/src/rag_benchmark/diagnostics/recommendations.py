@@ -7,16 +7,14 @@ without asserting on prose.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-
-from rag_benchmark.diagnostics.analyzer import PipelineDiagnostics
-from rag_benchmark.diagnostics.statistics import (
+from rag_benchmark.utils import get_logger
+from rag_benchmark.diagnostics.models import (
+    PipelineDiagnostics,
     ClassificationStats,
     DocumentTypeMetadataCoverage,
     QuestionTypeStats,
+    Recommendation
 )
-from rag_benchmark.utils import get_logger
-
 logger = get_logger("diagnostics.recommendations")
 
 #: Fields extracted in fewer than this percentage of documents are flagged
@@ -34,16 +32,6 @@ MAX_TEMPLATE_RECOMMENDATIONS = 10
 SEVERITY_CRITICAL = "critical"
 SEVERITY_WARNING = "warning"
 SEVERITY_INFO = "info"
-
-
-@dataclass(frozen=True)
-class Recommendation:
-    """One actionable diagnostic finding."""
-
-    context: str
-    issue: str
-    suggestion: str
-    severity: str = SEVERITY_WARNING
 
 
 def _unknown_document_recommendations(diagnostics: PipelineDiagnostics) -> list[Recommendation]:

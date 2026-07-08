@@ -7,6 +7,7 @@ from rag_benchmark.analyzers.question_coverage import QuestionCoverage
 from rag_benchmark.analyzers.regex_analyzer import RegexStat
 from rag_benchmark.models import ClassifiedDocument
 
+UNKNOWN_TYPE = "Unknown"
 
 @dataclass
 class DocumentSummary:
@@ -22,6 +23,22 @@ class DocumentSummary:
     skipped_questions: int
 
     field_coverage: float
+    # @property
+    # def generated_questions(self) -> int:
+    #     return (
+    #         self.question_coverage.generated
+    #         if self.question_coverage
+    #         else 0
+    #     )
+    #
+    #
+    # @property
+    # def skipped_questions(self) -> int:
+    #     return (
+    #         self.question_coverage.skipped
+    #         if self.question_coverage
+    #         else 0
+    #     )
 
 
 class DocumentSummaryAnalyzer:

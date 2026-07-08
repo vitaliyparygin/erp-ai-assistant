@@ -57,16 +57,24 @@ class TemplateQuestionGenerator(QuestionGenerator):
                     logger.debug(f"generated_for_doc >= max_questions_per_document1"
                           f"generated_for_doc={generated_for_doc} max_questions_per_document={max_questions_per_document}")
                     break
-                missing_fields = []
 
-                for field_name in spec.requires_fields:
+                for field in spec.fields:
 
-                    if field_name not in available_fields:
-                        doc_stats.missing_fields.append(field_name)
+                    if generated_for_doc >= max_questions_per_document:
+                        break
+
+                    if field.name not in available_fields:
+                        if field.required:
+                            doc_stats.missing_fields.append(field.name)
                         continue
 
+                    display_name = (
+                        field.aliases[0]
+                        if field.aliases
+                        else field.name.replace("_", " ")
+                    )
                     query_text = spec.query_template.format(
-                        field=field_name.replace("_", " "),
+                        field=display_name,
                         filename=classified.document.filename,
                         **available_fields,
                     )
@@ -76,19 +84,19 @@ class TemplateQuestionGenerator(QuestionGenerator):
                             id=next_id,
                             query=query_text,
                             expected_document=classified.document.filename,
-                            expected_fields=[field_name],
+                            expected_fields=[field.name],
                             document_type=doc_type,
                             difficulty=spec.difficulty,
                             tags=list(spec.tags),
                         )
                     )
                     doc_stats.generated_questions += 1
-                    doc_stats.generated_fields.append(field_name)
-                    stats.append(doc_stats)
+                    doc_stats.generated_fields.append(field.name)
 
                     next_id += 1
                     generated_for_doc += 1
 
+                stats.append(doc_stats)
                 logger.debug(
                     "Document=%s generated=%d generated_fields=%s missing=%s",
                     doc_stats.document_name,
@@ -97,7 +105,4 @@ class TemplateQuestionGenerator(QuestionGenerator):
                     doc_stats.missing_fields,
                 )
         # return queries
-        return QuestionGenerationResult(
-            queries=queries,
-            statistics=stats,
-        )
+        return queries

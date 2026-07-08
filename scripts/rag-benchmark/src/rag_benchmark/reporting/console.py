@@ -1,6 +1,5 @@
 from rich.console import Console
 from rich.table import Table
-from rag_benchmark.models import DocumentDiagnostics, Summary
 
 console = Console()
 
