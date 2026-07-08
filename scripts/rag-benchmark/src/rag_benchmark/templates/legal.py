@@ -5,8 +5,7 @@ from __future__ import annotations
 from rag_benchmark.classifier import ClassificationRule
 from rag_benchmark.extractor import FieldRule
 from rag_benchmark.generators.base import QuestionSpec, QuestionTemplateMap
-from rag_benchmark.models import Difficulty
-
+from rag_benchmark.models import Difficulty, QuestionField
 TEMPLATE_NAME = "legal"
 
 CLASSIFICATION_RULES: tuple[ClassificationRule, ...] = (
@@ -58,32 +57,42 @@ QUESTION_TEMPLATES: QuestionTemplateMap = {
     "NDA": [
         QuestionSpec(
             "What is the {field} of the NDA in {filename}?",
-            requires_fields=("effective_date", "disclosing_party", "receiving_party"),
-            difficulty=Difficulty.EASY,
+            fields=[
+                QuestionField("effective_date"),
+                QuestionField("disclosing_party"),
+                QuestionField("receiving_party"),
+            ],
             tags=("retrieval", "legal", "metadata"),
         ),
     ],
     "Litigation Brief": [
         QuestionSpec(
             "Who is the {field} named in {filename}?",
-            requires_fields=("plaintiff", "defendant"),
-            difficulty=Difficulty.MEDIUM,
+            fields=[
+                QuestionField("plaintiff"),
+                QuestionField("defendant"),
+            ],
             tags=("retrieval", "legal", "metadata"),
         ),
     ],
     "Contract": [
         QuestionSpec(
             "What is the {field} specified in contract {filename}?",
-            requires_fields=("governing_law", "start_date", "end_date"),
-            difficulty=Difficulty.MEDIUM,
+            fields=[
+                QuestionField("governing_law"),
+                QuestionField("start_date"),
+                QuestionField("start_dend_dateate"),
+            ],
             tags=("retrieval", "legal", "metadata"),
         ),
     ],
     "Power of Attorney": [
         QuestionSpec(
             "Who is the {field} in the power of attorney {filename}?",
-            requires_fields=("principal", "agent"),
-            difficulty=Difficulty.EASY,
+            fields=[
+                QuestionField("principal"),
+                QuestionField("agent"),
+            ],
             tags=("retrieval", "legal", "metadata"),
         ),
     ],

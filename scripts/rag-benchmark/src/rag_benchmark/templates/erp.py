@@ -16,7 +16,7 @@ from __future__ import annotations
 from rag_benchmark.classifier import ClassificationRule
 from rag_benchmark.extractor import FieldRule
 from rag_benchmark.generators.base import QuestionSpec, QuestionTemplateMap
-from rag_benchmark.models import Difficulty
+from rag_benchmark.models import Difficulty, QuestionField
 
 TEMPLATE_NAME = "erp"
 
@@ -117,64 +117,95 @@ QUESTION_TEMPLATES: QuestionTemplateMap = {
     "Purchase Order": [
         QuestionSpec(
             "What is the {field} on purchase order {filename}?",
-            requires_fields=("po_number", "vendor", "amount", "delivery_date"),
-            difficulty=Difficulty.EASY,
+            fields=[
+                QuestionField("po_number"),
+                QuestionField("vendor"),
+                QuestionField("amount"),
+                QuestionField("amoudelivery_datent"),
+            ],
             tags=("retrieval", "erp", "metadata"),
         ),
     ],
     "Invoice": [
         QuestionSpec(
             "What is the {field} on invoice {filename}?",
-            requires_fields=("invoice_number", "amount", "customer", "currency", "due_date"),
-            difficulty=Difficulty.EASY,
+            fields=[
+                QuestionField("invoice_number"),
+                QuestionField("amount"),
+                QuestionField("customer"),
+                QuestionField("currency"),
+                QuestionField("due_date"),
+            ],
             tags=("retrieval", "erp", "metadata"),
         ),
     ],
     "Contract": [
         QuestionSpec(
             "What is the {field} in contract {filename}?",
-            requires_fields=("contract_number", "customer", "contractor", "start_date", "end_date"),
-            difficulty=Difficulty.MEDIUM,
+            fields=[
+                QuestionField("contract_number"),
+                QuestionField("customer"),
+                QuestionField("contractor"),
+                QuestionField("start_date"),
+                QuestionField("end_date"),
+            ],
             tags=("retrieval", "erp", "metadata"),
         ),
     ],
     "Vendor Profile": [
         QuestionSpec(
             "What is the {field} of the vendor in {filename}?",
-            requires_fields=("vendor", "phone", "email", "address"),
-            difficulty=Difficulty.EASY,
+            fields=[
+                QuestionField("vendor"),
+                QuestionField("phone"),
+                QuestionField("email"),
+                QuestionField("address"),
+            ],
             tags=("retrieval", "erp", "metadata"),
         ),
     ],
     "Service Ticket": [
         QuestionSpec(
             "What is the {field} for service ticket {filename}?",
-            requires_fields=("ticket_number", "status", "engineer", "priority"),
-            difficulty=Difficulty.EASY,
+            fields=[
+                QuestionField("ticket_number"),
+                QuestionField("status"),
+                QuestionField("engineer"),
+                QuestionField("priority"),
+            ],
             tags=("retrieval", "erp", "metadata"),
         ),
     ],
     "CRM Opportunity": [
         QuestionSpec(
             "What is the {field} of the opportunity in {filename}?",
-            requires_fields=("opportunity_name", "stage", "value"),
-            difficulty=Difficulty.MEDIUM,
+            fields=[
+                QuestionField("opportunity_name"),
+                QuestionField("stage"),
+                QuestionField("value"),
+            ],
             tags=("retrieval", "erp", "metadata"),
         ),
     ],
     "Project": [
         QuestionSpec(
             "What is the {field} of the project described in {filename}?",
-            requires_fields=("project_name", "status", "manager"),
-            difficulty=Difficulty.MEDIUM,
+            fields=[
+                QuestionField("project_name"),
+                QuestionField("status"),
+                QuestionField("manager"),
+            ],
             tags=("retrieval", "erp", "metadata"),
         ),
     ],
     "Employee": [
         QuestionSpec(
             "What is the {field} for the employee record in {filename}?",
-            requires_fields=("employee_id", "department", "hire_date"),
-            difficulty=Difficulty.EASY,
+            fields=[
+                QuestionField("employee_id"),
+                QuestionField("department"),
+                QuestionField("hire_date"),
+            ],
             tags=("retrieval", "erp", "metadata"),
         ),
     ],

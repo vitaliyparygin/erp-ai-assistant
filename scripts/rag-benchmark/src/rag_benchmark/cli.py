@@ -35,7 +35,13 @@ from rag_benchmark.models import BenchmarkDataset, BenchmarkQuery
 from rag_benchmark.pipeline import BenchmarkPipeline
 from rag_benchmark.templates import available_builtin_templates
 from rag_benchmark.utils import configure_logging, get_logger
-
+from rag_benchmark.reporting import (
+    print_document_report,
+    print_summary,
+)
+from rag_benchmark.analyzers.regex_analyzer import RegexAnalyzer
+from rag_benchmark.analyzers.report_unused import report_unused_regexes
+from rag_benchmark.analyzers.suggest_regex import suggest_regex
 app = typer.Typer(
     name="rag-benchmark",
     help="Generate benchmark datasets and evaluation assets from a document collection.",
@@ -154,6 +160,12 @@ def generate(
 
     pipeline = BenchmarkPipeline()
     classified_documents, dataset_result = pipeline.run(cfg)
+
+    console.rule("[bold blue]Regex diagnostics")
+    analyzer = RegexAnalyzer(template)
+    stats = analyzer.analyze(classified_documents)
+    report_unused_regexes(stats)
+    suggest_regex(classified_documents)
 
     output_path = cfg.output / "benchmark_queries.json"
     if dry_run:
@@ -321,6 +333,10 @@ def diagnose(
     configure_logging(verbose=verbose)
     cfg = _build_config(dataset, output, template, config)
     pipeline = BenchmarkPipeline()
+    total_required = 0
+    total_extracted = 0
+    generated = 0
+    skipped = 0
 
     with Progress(
         SpinnerColumn(),

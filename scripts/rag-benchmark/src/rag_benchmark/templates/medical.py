@@ -10,7 +10,7 @@ from __future__ import annotations
 from rag_benchmark.classifier import ClassificationRule
 from rag_benchmark.extractor import FieldRule
 from rag_benchmark.generators.base import QuestionSpec, QuestionTemplateMap
-from rag_benchmark.models import Difficulty
+from rag_benchmark.models import Difficulty, QuestionField
 
 TEMPLATE_NAME = "medical"
 
@@ -63,32 +63,43 @@ QUESTION_TEMPLATES: QuestionTemplateMap = {
     "Patient Record": [
         QuestionSpec(
             "What is the {field} recorded for the patient in {filename}?",
-            requires_fields=("patient_id", "diagnosis", "date_of_birth"),
-            difficulty=Difficulty.EASY,
+            fields=[
+                QuestionField("patient_id"),
+                QuestionField("diagnosis"),
+                QuestionField("date_of_birth"),
+            ],
             tags=("retrieval", "medical", "metadata"),
         ),
     ],
     "Lab Report": [
         QuestionSpec(
             "What is the {field} reported in {filename}?",
-            requires_fields=("specimen", "test_name", "result"),
-            difficulty=Difficulty.MEDIUM,
+            fields=[
+                QuestionField("specimen"),
+                QuestionField("test_name"),
+                QuestionField("result"),
+            ],
             tags=("retrieval", "medical", "metadata"),
         ),
     ],
     "Prescription": [
         QuestionSpec(
             "What is the {field} listed on the prescription in {filename}?",
-            requires_fields=("medication", "dosage", "refills"),
-            difficulty=Difficulty.EASY,
+            fields=[
+                QuestionField("medication"),
+                QuestionField("dosage"),
+                QuestionField("rerefillssult"),
+            ],
             tags=("retrieval", "medical", "metadata"),
         ),
     ],
     "Discharge Summary": [
         QuestionSpec(
             "What is the {field} in the discharge summary {filename}?",
-            requires_fields=("admission_date", "discharge_date"),
-            difficulty=Difficulty.MEDIUM,
+            fields=[
+                QuestionField("admission_date"),
+                QuestionField("discharge_date"),
+            ],
             tags=("retrieval", "medical", "metadata"),
         ),
     ],

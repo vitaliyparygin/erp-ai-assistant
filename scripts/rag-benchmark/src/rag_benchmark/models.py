@@ -13,6 +13,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field, field_validator
 
+from dataclasses import dataclass, field
 
 class DocumentFormat(str, Enum):
     """Supported raw document formats."""
@@ -187,3 +188,67 @@ class DatasetStatistics(BaseModel):
     unknown_document_types: int = 0
     metadata_field_counts: dict[str, int] = Field(default_factory=dict)
     warnings: list[str] = Field(default_factory=list)
+
+@dataclass(slots=True)
+class GenerationStats:
+    """
+    Statistics for one processed document.
+    """
+    document_name: str
+    document_type: str
+    generated_questions: int = 0
+    generated_fields: list[str] = field(default_factory=list)
+    missing_fields: list[str] = field(default_factory=list)
+    available_fields: list[str] = field(default_factory=list)
+    skipped_fields: list[str] = field(default_factory=list)
+    generated_questions: int = 0
+    max_possible_questions: int = 0
+
+@dataclass(slots=True)
+class QuestionGenerationResult:
+    queries: list[BenchmarkQuery]
+    statistics: list[GenerationStats]
+
+@dataclass
+class QuestionField:
+    name: str
+    required: bool = False
+    aliases: list[str] = field(default_factory=list)
+    weight: int = 1
+
+@dataclass
+class Summary:
+    total_documents: int
+    classified_documents: int
+    extracted_fields: int
+    total_fields: int
+    generated_questions: int
+    skipped_questions: int
+    coverage: float
+
+@dataclass
+class DocumentDiagnostics:
+    filename: str
+    document_type: str
+    extracted_fields: dict[str, str]
+    required_fields: list[str]
+    generated_questions: int
+    skipped_questions: int
+    coverage: float
+
+
+@dataclass
+class QuestionCoverage:
+    generated: int
+    skipped: int
+    generated_fields: list[str]
+
+
+@dataclass
+class DocumentSummary:
+    filename: str
+    document_type: str
+    field_coverage: float
+    regex: str
+    questions: str
+

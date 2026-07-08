@@ -9,7 +9,7 @@ modest, broadly applicable set of question patterns.
 from __future__ import annotations
 
 from rag_benchmark.generators.base import QuestionSpec, QuestionTemplateMap
-from rag_benchmark.models import Difficulty
+from rag_benchmark.models import Difficulty, QuestionField
 
 TEMPLATE_NAME = "generic"
 
@@ -17,54 +17,65 @@ QUESTION_TEMPLATES: QuestionTemplateMap = {
     "Invoice": [
         QuestionSpec(
             "What is the {field} on invoice {filename}?",
-            requires_fields=("invoice_number", "amount", "customer", "currency"),
-            difficulty=Difficulty.EASY,
-            tags=("retrieval", "metadata"),
+            fields=[
+                QuestionField("invoice_number"),
+                QuestionField("amount"),
+                QuestionField("customer"),
+                QuestionField("currency")
+            ],
         ),
     ],
     "Vendor Profile": [
         QuestionSpec(
             "What is the {field} of the vendor described in {filename}?",
-            requires_fields=("vendor", "phone", "email", "address"),
-            difficulty=Difficulty.EASY,
-            tags=("retrieval", "metadata"),
+            fields=[
+                QuestionField("vendor"),
+                QuestionField("phone"),
+                QuestionField("email"),
+                QuestionField("address")
+            ]
         ),
     ],
     "Generic Contract": [
         QuestionSpec(
             "What is the {field} in the contract {filename}?",
-            requires_fields=("contract_number", "customer", "contractor", "start_date", "end_date"),
-            difficulty=Difficulty.MEDIUM,
-            tags=("retrieval", "metadata"),
+            fields=[
+                QuestionField("contract_number"),
+                QuestionField("customer"),
+                QuestionField("contractor"),
+                QuestionField("contend_dateractor"),
+                QuestionField("start_date")
+            ]
         ),
         QuestionSpec(
             "Summarize the key terms of {filename}.",
-            difficulty=Difficulty.HARD,
-            tags=("summarization",),
         ),
     ],
     "Bank Statement": [
         QuestionSpec(
             "What is the {field} shown in {filename}?",
-            requires_fields=("account_number", "statement_period", "balance"),
-            difficulty=Difficulty.EASY,
-            tags=("retrieval", "metadata"),
+            fields=[
+                QuestionField("account_number"),
+                QuestionField("statement_period"),
+                QuestionField("balance"),
+            ]
         ),
     ],
     "Meeting Minutes": [
         QuestionSpec(
             "Who attended the meeting recorded in {filename}?",
-            requires_fields=("attendees",),
-            difficulty=Difficulty.MEDIUM,
-            tags=("retrieval",),
+            fields=[
+                QuestionField("attendees")
+            ]
         ),
     ],
     "Project Report": [
         QuestionSpec(
             "What is the current {field} of the project in {filename}?",
-            requires_fields=("project_name", "status"),
-            difficulty=Difficulty.MEDIUM,
-            tags=("retrieval", "metadata"),
+            fields=[
+                QuestionField("project_name"),
+                QuestionField("status"),
+            ]
         ),
     ],
 }

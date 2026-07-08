@@ -16,6 +16,7 @@ from rag_benchmark.models import (
     DocumentFormat,
     ExtractedField,
     ExtractedMetadata,
+    QuestionField
 )
 
 
@@ -47,8 +48,11 @@ def test_template_generator_skips_spec_when_any_required_field_missing() -> None
         "Invoice": [
             QuestionSpec(
                 "What is the {field} on {filename}?",
-                requires_fields=("invoice_number", "amount", "customer"),
-                difficulty=Difficulty.EASY,
+                fields=[
+                    QuestionField("invoice_number"),
+                    QuestionField("amount"),
+                    QuestionField("customer"),
+                ],
                 tags=("retrieval",),
             )
         ]
@@ -66,8 +70,10 @@ def test_template_generator_generates_when_all_required_fields_present() -> None
         "Invoice": [
             QuestionSpec(
                 "What is the {field} on {filename}?",
-                requires_fields=("invoice_number", "amount"),
-                difficulty=Difficulty.EASY,
+                fields=[
+                    QuestionField("invoice_number"),
+                    QuestionField("amount"),
+                ],
                 tags=("retrieval",),
             )
         ]
@@ -86,8 +92,10 @@ def test_template_generator_respects_max_questions_per_document() -> None:
         "Invoice": [
             QuestionSpec(
                 "What is the {field} on {filename}?",
-                requires_fields=("invoice_number", "amount"),
-                difficulty=Difficulty.EASY,
+                fields=[
+                    QuestionField("invoice_number"),
+                    QuestionField("amount"),
+                ]
             )
         ]
     }

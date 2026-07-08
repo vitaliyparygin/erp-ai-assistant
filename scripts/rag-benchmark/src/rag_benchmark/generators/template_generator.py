@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 from rag_benchmark.generators.base import QuestionGenerator, QuestionTemplateMap
-from rag_benchmark.models import BenchmarkQuery, ClassifiedDocument
+from rag_benchmark.models import (BenchmarkQuery,
+                                  ClassifiedDocument,
+                                  QuestionGenerationResult,
+                                  GenerationStats)
 from rag_benchmark.utils import get_logger
 from rich.console import Console
 logger = get_logger("generators.template")
@@ -25,6 +28,7 @@ class TemplateQuestionGenerator(QuestionGenerator):
         max_questions_per_document: int,
     ) -> list[BenchmarkQuery]:
         queries: list[BenchmarkQuery] = []
+        stats: list[GenerationStats] = []
         next_id = 1
 
         console.print(
@@ -42,6 +46,10 @@ class TemplateQuestionGenerator(QuestionGenerator):
                 continue
 
             available_fields = classified.metadata.as_plain_dict()
+            doc_stats = GenerationStats(
+                document_name=classified.document.filename,
+                document_type=doc_type,
+            )
             generated_for_doc = 0
             logger.debug(f"generate.specs specs={specs} max_questions_per_document={max_questions_per_document}")
             for spec in specs:
@@ -49,70 +57,47 @@ class TemplateQuestionGenerator(QuestionGenerator):
                     logger.debug(f"generated_for_doc >= max_questions_per_document1"
                           f"generated_for_doc={generated_for_doc} max_questions_per_document={max_questions_per_document}")
                     break
+                missing_fields = []
 
-                missing = [f for f in spec.requires_fields if f not in available_fields]
-                if missing:
-                    logger.warning(
-                        """
-                        Document: %s
-                        Document type:%s
-                        Missing:%s
-                        Available:%s
-                        """,
-                        classified.document.filename,
-                        doc_type,
-                        missing,
-                        available_fields.keys()
-                    )
+                for field_name in spec.requires_fields:
 
-                    continue
-                logger.debug(f"generate.spec.requires_fields = {spec.requires_fields}")
-                if spec.requires_fields:
-                    # One question per required field, rendered individually.
-                    for field_name in spec.requires_fields:
-                        if generated_for_doc >= max_questions_per_document:
-                            logger.debug(f"generated_for_doc >= max_questions_per_document1"
-                                  f"generated_for_doc={generated_for_doc} max_questions_per_document={max_questions_per_document}")
-                            break
-                        query_text = spec.query_template.format(
-                            field=field_name.replace("_", " "),
-                            filename=classified.document.filename,
-                            **available_fields,
-                        )
-                        logger.debug(f"generate.query_text1 query_text={query_text}",)
+                    if field_name not in available_fields:
+                        doc_stats.missing_fields.append(field_name)
+                        continue
 
-                        queries.append(
-                            BenchmarkQuery(
-                                id=next_id,
-                                query=query_text,
-                                expected_document=classified.document.filename,
-                                expected_fields=[field_name],
-                                document_type=doc_type,
-                                difficulty=spec.difficulty,
-                                tags=list(spec.tags),
-                            )
-                        )
-                        next_id += 1
-                        generated_for_doc += 1
-                else:
                     query_text = spec.query_template.format(
-                        filename=classified.document.filename, **available_fields
+                        field=field_name.replace("_", " "),
+                        filename=classified.document.filename,
+                        **available_fields,
                     )
-                    logger.debug(f"generate.query_text2 query_text={query_text}")
 
                     queries.append(
                         BenchmarkQuery(
                             id=next_id,
                             query=query_text,
                             expected_document=classified.document.filename,
-                            expected_fields=[],
+                            expected_fields=[field_name],
                             document_type=doc_type,
                             difficulty=spec.difficulty,
                             tags=list(spec.tags),
                         )
                     )
+                    doc_stats.generated_questions += 1
+                    doc_stats.generated_fields.append(field_name)
+                    stats.append(doc_stats)
+
                     next_id += 1
                     generated_for_doc += 1
 
-        logger.info("Generated:: %d question(s) from %d document(s)", len(queries), len(documents))
-        return queries
+                logger.debug(
+                    "Document=%s generated=%d generated_fields=%s missing=%s",
+                    doc_stats.document_name,
+                    doc_stats.generated_questions,
+                    doc_stats.generated_fields,
+                    doc_stats.missing_fields,
+                )
+        # return queries
+        return QuestionGenerationResult(
+            queries=queries,
+            statistics=stats,
+        )

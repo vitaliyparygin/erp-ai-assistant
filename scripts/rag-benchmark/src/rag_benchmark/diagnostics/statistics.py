@@ -69,6 +69,18 @@ class DocumentTypeMetadataCoverage:
     fields: list[FieldCoverage]
     overall_coverage_percent: float
 
+# @dataclass
+# class DatasetCoverage:
+#
+# @dataclass
+# class ExtractionCoverage:
+#
+# @dataclass
+# class GenerationCoverage:
+#
+# @dataclass
+# class TemplateCoverage:
+
 
 @dataclass
 class QuestionTypeStats:

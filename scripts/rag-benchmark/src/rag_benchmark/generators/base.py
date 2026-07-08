@@ -12,28 +12,19 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 
-from rag_benchmark.models import BenchmarkQuery, ClassifiedDocument, Difficulty
+from rag_benchmark.models import BenchmarkQuery, ClassifiedDocument, Difficulty, QuestionField
 
 
 @dataclass(frozen=True)
 class QuestionSpec:
-    """A single question pattern belonging to a template.
-
-    Attributes:
-        query_template: A format string, e.g. "What is the {field} of
-            {filename}?". May reference `{field}` (a specific metadata
-            field name declared in `requires_fields`) and `{filename}`.
-        requires_fields: Metadata field names that must be present on the
-            document for this spec to apply. If empty, the spec applies
-            regardless of extracted metadata.
-        difficulty: Difficulty tier assigned to generated questions.
-        tags: Tags attached to generated questions.
     """
-
+    Template describing one family of questions.
+    """
     query_template: str
-    requires_fields: tuple[str, ...] = field(default_factory=tuple)
+    fields: tuple[QuestionField, ...]
     difficulty: Difficulty = Difficulty.EASY
-    tags: tuple[str, ...] = field(default_factory=tuple)
+    tags: tuple[str, ...] = ()
+    max_questions: int | None = None
 
 
 # document_type -> question specs for that type.

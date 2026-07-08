@@ -11,16 +11,14 @@ check_set:
 benchmark:
 	python3 scripts/benchmark.py
 benchmark-init:
-	python -m scripts.benchmark.cli init
-
-benchmark:
-	python -m scripts.benchmark.cli run
-
-benchmark-history:
-	python -m scripts.benchmark.cli history
-
-benchmark-compare:
-	python -m scripts.benchmark.cli compare
-
+	rag-benchmark init --output my-benchmark --template erp
+benchmark-scan:
+	rag-benchmark scan     --config my-benchmark/benchmark.yaml
+benchmark-generate:
+	rag-benchmark generate --config my-benchmark/benchmark.yaml
+benchmark-report:
+	rag-benchmark report   --config my-benchmark/benchmark.yaml
+benchmark-validate:
+	rag-benchmark validate --config my-benchmark/benchmark.yaml
 benchmark-export:
-	python -m scripts.benchmark.cli export
+	rag-benchmark export   --config my-benchmark/benchmark.yaml

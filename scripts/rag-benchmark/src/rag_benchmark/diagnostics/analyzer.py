@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
+import rag_benchmark
 from rag_benchmark.classifier import UNKNOWN_TYPE
 from rag_benchmark.config import BenchmarkConfig
 from rag_benchmark.extractor import RegexMetadataExtractor
@@ -22,6 +23,11 @@ from rag_benchmark.models import BenchmarkDataset, BenchmarkQuery, ClassifiedDoc
 from rag_benchmark.pipeline import BenchmarkPipeline
 from rag_benchmark.templates import TemplateDefinition
 from rag_benchmark.utils import get_logger, normalize_whitespace, slugify
+
+from rag_benchmark.analyzers.regex_analyzer import RegexAnalyzer
+from rag_benchmark.analyzers.field_coverage import FieldCoverageAnalyzer
+from rag_benchmark.analyzers.question_coverage import QuestionCoverageAnalyzer
+from rag_benchmark.analyzers.document_summary import DocumentSummaryAnalyzer
 
 logger = get_logger("diagnostics.analyzer")
 
@@ -178,36 +184,67 @@ def run_diagnostics(pipeline: BenchmarkPipeline, config: BenchmarkConfig) -> Pip
 
     document_diagnostics: list[DocumentDiagnostic] = []
     for classified in classified_documents:
-        doc_type = classified.classification.document_type
-        expected_fields = (
-            extractor.expected_fields(doc_type)
-            if isinstance(extractor, RegexMetadataExtractor)
-            else []
+        expected_fields = extractor.expected_fields(
+            classified.classification.document_type
         )
-        available = set(classified.metadata.fields.keys())
-        missing_fields = [f for f in expected_fields if f not in available]
 
-        keywords: list[str] = []
-        suggested_rule: SuggestedClassificationRule | None = None
-        if doc_type == UNKNOWN_TYPE:
-            keywords = extract_keywords(classified.document.text)
-            suggested_rule = suggest_classification_rule(classified.document.filename, keywords)
-            logger.debug(
-                "Unknown document %s: suggested type=%s",
+        field_result = FieldCoverageAnalyzer.analyze(
+            classified,
+            expected_fields,
+        )
+
+        regex_result = RegexAnalyzer.analyze(
+            classified,
+            template,
+        )
+
+        question_result = QuestionCoverageAnalyzer.analyze(
+            expected_fields,
+            questions_by_document.get(
                 classified.document.filename,
-                suggested_rule.document_type,
-            )
-
-        document_diagnostics.append(
-            DocumentDiagnostic(
-                classified=classified,
-                expected_fields=expected_fields,
-                missing_fields=missing_fields,
-                questions=questions_by_document.get(classified.document.filename, []),
-                keywords=keywords,
-                suggested_rule=suggested_rule,
-            )
+                [],
+            ),
         )
+
+        summary = DocumentSummaryAnalyzer.analyze(
+            classified,
+            field_result,
+            regex_result,
+            question_result,
+        )
+
+        document_diagnostics.append(summary)
+    # for classified in classified_documents:
+    #     doc_type = classified.classification.document_type
+    #     expected_fields = (
+    #         extractor.expected_fields(doc_type)
+    #         if isinstance(extractor, RegexMetadataExtractor)
+    #         else []
+    #     )
+    #     available = set(classified.metadata.fields.keys())
+    #     missing_fields = [f for f in expected_fields if f not in available]
+    #
+    #     keywords: list[str] = []
+    #     suggested_rule: SuggestedClassificationRule | None = None
+    #     if doc_type == UNKNOWN_TYPE:
+    #         keywords = extract_keywords(classified.document.text)
+    #         suggested_rule = suggest_classification_rule(classified.document.filename, keywords)
+    #         logger.debug(
+    #             "Unknown document %s: suggested type=%s",
+    #             classified.document.filename,
+    #             suggested_rule.document_type,
+    #         )
+    #
+    #     document_diagnostics.append(
+    #         DocumentDiagnostic(
+    #             classified=classified,
+    #             expected_fields=expected_fields,
+    #             missing_fields=missing_fields,
+    #             questions=questions_by_document.get(classified.document.filename, []),
+    #             keywords=keywords,
+    #             suggested_rule=suggested_rule,
+    #         )
+    #     )
 
     return PipelineDiagnostics(
         config=config,
