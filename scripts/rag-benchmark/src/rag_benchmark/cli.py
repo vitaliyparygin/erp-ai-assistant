@@ -163,7 +163,7 @@ def generate(
     analyzer = RegexAnalyzer(template)
     stats = analyzer.analyze(classified_documents)
     analyzer.report_unused(stats)
-    analyzer.suggest(stats)
+    analyzer.suggest(classified_documents)
 
     output_path = cfg.output / "benchmark_queries.json"
     if dry_run:

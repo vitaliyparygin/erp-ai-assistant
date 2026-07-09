@@ -243,6 +243,7 @@ class RegexStat:
     matches: int
     matched: bool
     value: str | None
+    matched_text: str | None = None
 
 
 @dataclass(slots=True)

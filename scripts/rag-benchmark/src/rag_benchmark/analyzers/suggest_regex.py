@@ -1,9 +1,9 @@
 import re
-from __future__ import annotations
 from collections import Counter
 from rich.table import Table
 from rag_benchmark.models import ClassifiedDocument
 from rich.console import Console
+from rich.markup import escape
 console = Console()
 
 LABEL_REGEX = re.compile(
@@ -11,7 +11,7 @@ LABEL_REGEX = re.compile(
     flags=re.MULTILINE,
 )
 
-def suggest_regex(
+def collect_regex_candidates(
     documents: list[ClassifiedDocument],
 ):
 
@@ -31,7 +31,7 @@ def suggest_regex(
         table.add_row(
             label,
             str(cnt),
-            regex,
+            escape(regex),
         )
 
     console.print(table)

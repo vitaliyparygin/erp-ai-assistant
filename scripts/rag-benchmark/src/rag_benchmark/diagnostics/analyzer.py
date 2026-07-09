@@ -19,7 +19,7 @@ from rag_benchmark.pipeline import BenchmarkPipeline
 
 from rag_benchmark.utils import get_logger, normalize_whitespace, slugify
 
-from rag_benchmark.analyzers.regex_analyzer import RegexAnalyzer
+from rag_benchmark.analyzers.regex_analyzer import RegexAnalyzer, LABEL_REGEX
 from rag_benchmark.analyzers.field_coverage import FieldCoverageAnalyzer
 from rag_benchmark.analyzers.question_generation import QuestionGenerationAnalyzer
 from rag_benchmark.analyzers.document_summary import DocumentSummaryAnalyzer
@@ -28,7 +28,6 @@ from rag_benchmark.diagnostics.models import (
     PipelineDiagnostics,
     DocumentDiagnostic
 )
-from rag_benchmark.analyzers.question_coverage import (QuestionCoverageAnalyzer)
 
 logger = get_logger("diagnostics.analyzer")
 
@@ -206,6 +205,23 @@ def run_diagnostics(pipeline: BenchmarkPipeline, config: BenchmarkConfig) -> Pip
                 summary=summary,
             )
         )
+        RegexAnalyzer.print_regex_analysis(document_diagnostics)
+        all_regex_stats = [
+            stat
+            for diag in document_diagnostics
+            for stat in diag.regex_stats
+        ]
+
+        RegexAnalyzer.report_unused(all_regex_stats)
+        counter = Counter()
+
+        for diag in document_diagnostics:
+            text = diag.document.text
+
+            for match in LABEL_REGEX.finditer(text):
+                counter[match.group(1).strip()] += 1
+
+        RegexAnalyzer.collect_regex_candidates(counter)
 
     return PipelineDiagnostics(
         config=config,

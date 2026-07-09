@@ -33,6 +33,9 @@ from rag_benchmark.diagnostics.statistics import (
     STATUS_GOOD,
 )
 from rag_benchmark.utils import get_logger
+from rag_benchmark.analyzers.regex_analyzer import RegexAnalyzer
+from rich.text import Text
+
 
 logger = get_logger("diagnostics.reporter")
 
@@ -225,6 +228,12 @@ class DiagnosticsReporter:
             for missing_field in diag.missing_fields:
                 hints = suggest_field_synonyms(missing_field)
                 suggestions_branch.add(f"{missing_field}: add regex for {', '.join(hints)}")
+                field_branch = suggestions_branch.add(
+                    f"{missing_field}: add regex for {', '.join(hints)}"
+                )
+
+                for label, regex in RegexAnalyzer.field_suggestions(missing_field):
+                    field_branch.add(Text(f"{label} → {regex}"))
 
         self._console.print(tree)
 
