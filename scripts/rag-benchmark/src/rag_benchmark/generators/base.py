@@ -20,6 +20,7 @@ class QuestionSpec:
     """
     Template describing one family of questions.
     """
+    key: str
     query_template: str
     fields: tuple[QuestionField, ...]
     difficulty: Difficulty = Difficulty.EASY

@@ -88,6 +88,7 @@ class TemplateQuestionGenerator(QuestionGenerator):
                             document_type=doc_type,
                             difficulty=spec.difficulty,
                             tags=list(spec.tags),
+                            template_id=spec.key
                         )
                     )
                     doc_stats.generated_questions += 1

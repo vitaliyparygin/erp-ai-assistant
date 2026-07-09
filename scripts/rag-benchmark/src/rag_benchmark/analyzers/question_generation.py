@@ -1,31 +1,10 @@
-# analyzers/question_generation.py
-
 from __future__ import annotations
-
-from dataclasses import dataclass, field
-
+from rich.tree import Tree
 from rag_benchmark.models import BenchmarkQuery, ClassifiedDocument
 from rag_benchmark.templates import TemplateDefinition
-
-
-@dataclass(slots=True)
-class QuestionGeneration:
-    """Question generation statistics for one document."""
-
-    possible: int
-
-    generated: int
-
-    skipped: int
-
-    generated_fields: list[str] = field(default_factory=list)
-
-    missing_fields: list[str] = field(default_factory=list)
-
-    unused_templates: list[str] = field(default_factory=list)
-
-    coverage: float = 0.0
-
+from rag_benchmark.diagnostics.models import DocumentDiagnostic, QuestionGeneration
+from rich.console import Console
+console = Console()
 
 class QuestionGenerationAnalyzer:
 
@@ -40,9 +19,7 @@ class QuestionGenerationAnalyzer:
             classified.classification.document_type,
             (),
         )
-
         available = classified.metadata.as_plain_dict()
-
         generated_fields = {
             field
             for q in questions
@@ -54,15 +31,10 @@ class QuestionGenerationAnalyzer:
         unused_templates: list[str] = []
 
         for spec in specs:
-
             template_used = False
-
             for field in spec.fields:
-
                 possible += 1
-
                 name = field.name
-
                 if name in available:
                     template_used = True
                 else:
@@ -72,12 +44,10 @@ class QuestionGenerationAnalyzer:
                 unused_templates.append(spec.query_template)
 
         generated = len(questions)
-
         skipped = max(
             possible - generated,
             0,
         )
-
         coverage = (
             generated / possible
             if possible
@@ -93,3 +63,18 @@ class QuestionGenerationAnalyzer:
             unused_templates=unused_templates,
             coverage=coverage,
         )
+
+    @staticmethod
+    def report(
+        diagnostics: list[DocumentDiagnostic],
+    ):
+        console.print()
+        tree = Tree("[bold]Generated Questions[/bold]")
+        for diag in diagnostics:
+            if not diag.questions:
+                continue
+            doc = tree.add(diag.filename)
+            for q in diag.questions:
+                doc.add(q.query)
+
+        console.print(tree)

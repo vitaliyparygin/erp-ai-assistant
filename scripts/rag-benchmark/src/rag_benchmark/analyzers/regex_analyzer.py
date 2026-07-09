@@ -1,13 +1,10 @@
-from __future__ import annotations
-
 import re
-from collections import Counter, defaultdict
-from dataclasses import dataclass
-
+from collections import Counter
 from rag_benchmark.models import ClassifiedDocument
 from rag_benchmark.templates import TemplateDefinition
 from rich.console import Console
 from rich.table import Table
+from rag_benchmark.diagnostics.models import RegexStat
 
 console = Console()
 LABEL_REGEX = re.compile(
@@ -15,14 +12,6 @@ LABEL_REGEX = re.compile(
     flags=re.MULTILINE,
 )
 
-@dataclass
-class RegexStat:
-    document_type: str
-    field: str
-    pattern: str
-    matches: int
-    matched: bool
-    value: str | None
 
 class RegexAnalyzer:
 

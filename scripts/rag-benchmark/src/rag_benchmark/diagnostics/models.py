@@ -1,15 +1,9 @@
 from dataclasses import dataclass, field
 from rag_benchmark.models import BenchmarkDataset, BenchmarkQuery, ClassifiedDocument
-from rag_benchmark.analyzers.regex_analyzer import RegexStat
-from rag_benchmark.analyzers.question_generation import QuestionGeneration
-from rag_benchmark.analyzers.document_summary import DocumentSummary
 from rag_benchmark.classifier import UNKNOWN_TYPE
 from rag_benchmark.config import BenchmarkConfig
 from rag_benchmark.templates import TemplateDefinition
 from datetime import datetime
-from rag_benchmark.analyzers.field_coverage import FieldCoverage
-from rag_benchmark.analyzers.question_coverage import QuestionCoverage
-
 
 #: Fields extracted in fewer than this percentage of documents are flagged
 #: as "partially working" rather than "completely missing".
@@ -36,6 +30,13 @@ class SuggestedClassificationRule:
     filename_pattern: str
     content_patterns: list[str]
 
+@dataclass(slots=True)
+class QuestionCoverage:
+    filename: str
+    generated: list[str]
+    missing: list[str]
+    coverage: float
+
 @dataclass
 class DocumentDiagnostic:
     """Everything known about one document."""
@@ -46,7 +47,6 @@ class DocumentDiagnostic:
     expected_fields: list[str]
     missing_fields: list[str]
     question_generation: QuestionGeneration | None
-    question_coverage: QuestionCoverage
     questions: list[BenchmarkQuery] = field(default_factory=list)
     keywords: list[str] = field(default_factory=list)
     suggested_rule: SuggestedClassificationRule | None = None
@@ -95,19 +95,6 @@ class DocumentDiagnostic:
     @property
     def document(self):
         return self.classified.document
-    @property
-    def generated_questions(self) -> int:
-        if self.question_coverage is None:
-            return 0
-        return self.question_coverage.generated
-
-
-    @property
-    def skipped_questions(self) -> int:
-        if self.question_coverage is None:
-            return 0
-        return self.question_coverage.skipped
-
 
     @property
     def field_coverage_ratio(self) -> float:
@@ -121,13 +108,24 @@ class DocumentDiagnostic:
         return self.regex_analysis
 
     @property
-    def generated_questions(self):
-        return self.question_coverage.generated
+    def generated_questions(self) -> int:
+        if self.question_generation is None:
+            return 0
+        return self.question_generation.generated
 
 
     @property
-    def skipped_questions(self):
-        return self.question_coverage.skipped
+    def skipped_questions(self) -> int:
+        if self.question_generation is None:
+            return 0
+        return self.question_generation.skipped
+
+
+    @property
+    def question_coverage_ratio(self) -> float:
+        if self.question_generation is None:
+            return 0.0
+        return self.question_generation.coverage
 
 @dataclass
 class PipelineDiagnostics:
@@ -208,3 +206,59 @@ class Recommendation:
     issue: str
     suggestion: str
     severity: str = SEVERITY_WARNING
+
+@dataclass(slots=True)
+class QuestionGeneration:
+    """Question generation statistics for one document."""
+
+    possible: int
+    generated: int
+    skipped: int
+    generated_fields: list[str] = field(default_factory=list)
+    missing_fields: list[str] = field(default_factory=list)
+    unused_templates: list[str] = field(default_factory=list)
+    coverage: float = 0.0
+
+
+
+@dataclass(slots=True)
+class UnusedQuestionTemplate:
+    document_type: str
+    template: str
+
+@dataclass
+class FieldCoverage:
+    """Coverage of a single expected metadata field across one document type."""
+
+    field_name: str
+    documents_with_field: int
+    total_documents_of_type: int
+    coverage_percent: float
+
+@dataclass
+class RegexStat:
+    document_type: str
+    field: str
+    pattern: str
+    matches: int
+    matched: bool
+    value: str | None
+
+
+@dataclass(slots=True)
+class FieldCoverageResult:
+    """Field extraction statistics for a single document."""
+
+    expected: list[str]
+    extracted: list[str]
+    missing: list[str]
+    coverage: float
+
+@dataclass
+class DocumentSummary:
+    filename: str
+    document_type: str
+    extracted_fields: list[str]
+    missing_fields: list[str]
+    regex_stats: list[RegexStat]
+    field_coverage: float

@@ -9,7 +9,9 @@ output to the `diagnose_latest.md` export.
 from __future__ import annotations
 
 from dataclasses import dataclass
-
+from rag_benchmark.analyzers.question_generation import QuestionGenerationAnalyzer
+from rag_benchmark.analyzers.question_coverage import (QuestionCoverageAnalyzer)
+from rag_benchmark.analyzers.question_template_analyzer import QuestionTemplateAnalyzer
 from rag_benchmark.config import BenchmarkConfig
 from rag_benchmark.diagnostics.analyzer import PipelineDiagnostics, run_diagnostics
 from rag_benchmark.diagnostics.recommendations import Recommendation, generate_recommendations
@@ -62,6 +64,18 @@ def build_diagnostics_report(
     readiness = compute_readiness(classification, metadata_coverage, question_stats)
     recommendations = generate_recommendations(
         diagnostics, classification, metadata_coverage, question_stats
+    )
+    QuestionGenerationAnalyzer.report(
+        diagnostics.document_diagnostics,
+    )
+
+    QuestionCoverageAnalyzer.report(
+        diagnostics.document_diagnostics,
+    )
+
+    QuestionTemplateAnalyzer.report(
+        diagnostics.document_diagnostics,
+        diagnostics.template,
     )
 
     logger.info("Diagnostics complete: overall readiness %.1f%%", readiness.overall_score)

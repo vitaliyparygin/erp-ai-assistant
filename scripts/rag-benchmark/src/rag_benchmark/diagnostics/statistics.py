@@ -15,9 +15,9 @@ from rag_benchmark.diagnostics.models import (
     ClassificationStats,
     DocumentTypeMetadataCoverage,
     QuestionTypeStats,
-    ReadinessScores
+    ReadinessScores,
+    FieldCoverage
 )
-from rag_benchmark.analyzers.field_coverage import FieldCoverage
 
 logger = get_logger("diagnostics.statistics")
 
@@ -168,8 +168,18 @@ def compute_question_stats(diagnostics: PipelineDiagnostics) -> list[QuestionTyp
 
         possible_per_document = sum(len(spec.fields) or 1 for spec in specs)
         possible = possible_per_document * len(diags)
-        generated = sum(d.generated_questions for d in diags)
-        skipped = max(possible - generated, 0)
+        generated = sum(
+            d.question_generation.generated
+            if d.question_generation
+            else 0
+            for d in diags
+        )
+        skipped = sum(
+            d.question_generation.skipped
+            if d.question_generation
+            else 0
+            for d in diags
+        )
 
         results.append(
             QuestionTypeStats(

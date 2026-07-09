@@ -115,6 +115,7 @@ class BenchmarkQuery(BaseModel):
     document_type: str
     difficulty: Difficulty
     tags: list[str] = Field(default_factory=list)
+    template_id: str
 
 
 class BenchmarkDataset(BaseModel):

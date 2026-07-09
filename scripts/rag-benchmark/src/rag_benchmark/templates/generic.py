@@ -16,6 +16,7 @@ TEMPLATE_NAME = "generic"
 QUESTION_TEMPLATES: QuestionTemplateMap = {
     "Invoice": [
         QuestionSpec(
+            "Invoice",
             "What is the {field} on invoice {filename}?",
             fields=[
                 QuestionField("invoice_number"),
@@ -27,6 +28,7 @@ QUESTION_TEMPLATES: QuestionTemplateMap = {
     ],
     "Vendor Profile": [
         QuestionSpec(
+            "Vendor Profile",
             "What is the {field} of the vendor described in {filename}?",
             fields=[
                 QuestionField("vendor"),
@@ -38,6 +40,7 @@ QUESTION_TEMPLATES: QuestionTemplateMap = {
     ],
     "Generic Contract": [
         QuestionSpec(
+            "Generic Contract",
             "What is the {field} in the contract {filename}?",
             fields=[
                 QuestionField("contract_number"),
@@ -47,12 +50,10 @@ QUESTION_TEMPLATES: QuestionTemplateMap = {
                 QuestionField("start_date")
             ]
         ),
-        QuestionSpec(
-            "Summarize the key terms of {filename}.",
-        ),
     ],
     "Bank Statement": [
         QuestionSpec(
+            "Bank Statement",
             "What is the {field} shown in {filename}?",
             fields=[
                 QuestionField("account_number"),
@@ -63,6 +64,7 @@ QUESTION_TEMPLATES: QuestionTemplateMap = {
     ],
     "Meeting Minutes": [
         QuestionSpec(
+            "Meeting Minutes",
             "Who attended the meeting recorded in {filename}?",
             fields=[
                 QuestionField("attendees")
@@ -71,6 +73,7 @@ QUESTION_TEMPLATES: QuestionTemplateMap = {
     ],
     "Project Report": [
         QuestionSpec(
+            "Project Report",
             "What is the current {field} of the project in {filename}?",
             fields=[
                 QuestionField("project_name"),

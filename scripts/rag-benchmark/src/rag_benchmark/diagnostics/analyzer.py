@@ -146,10 +146,7 @@ def run_diagnostics(pipeline: BenchmarkPipeline, config: BenchmarkConfig) -> Pip
 
     document_diagnostics: list[DocumentDiagnostic] = []
     for classified in classified_documents:
-        document_questions = questions_by_document.get(
-            classified.document.filename,
-            [],
-        )
+
         expected_fields = extractor.expected_fields(
             classified.classification.document_type
         )
@@ -164,21 +161,24 @@ def run_diagnostics(pipeline: BenchmarkPipeline, config: BenchmarkConfig) -> Pip
             template,
         )
 
-        question_result = QuestionCoverageAnalyzer.analyze(
-            expected_fields,
-            document_questions,
+        document_questions = questions_by_document.get(
+            classified.document.filename,
+            [],
         )
+
         question_generation = QuestionGenerationAnalyzer.analyze(
             classified=classified,
             template=template,
             questions=document_questions,
         )
+
         summary = DocumentSummaryAnalyzer.analyze(
             classified,
             field_result,
             regex_result,
-            question_result,
+            question_generation,
         )
+
         keywords: list[str] = []
         suggested_rule: SuggestedClassificationRule | None = None
 
@@ -189,17 +189,19 @@ def run_diagnostics(pipeline: BenchmarkPipeline, config: BenchmarkConfig) -> Pip
                 classified.document.filename,
                 keywords,
             )
+
         document_diagnostics.append(
             DocumentDiagnostic(
                 classified=classified,
                 expected_fields=expected_fields,
                 missing_fields=field_result.missing,
+
                 questions=document_questions,
                 keywords=keywords,
                 suggested_rule=suggested_rule,
+
                 field_coverage=field_result,
                 regex_analysis=regex_result,
-                question_coverage=question_result,
                 question_generation=question_generation,
                 summary=summary,
             )

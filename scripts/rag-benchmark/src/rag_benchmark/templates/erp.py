@@ -116,6 +116,7 @@ EXTRACTION_RULES: dict[str, tuple[FieldRule, ...]] = {
 QUESTION_TEMPLATES: QuestionTemplateMap = {
     "Purchase Order": [
         QuestionSpec(
+            "Purchase Order",
             "What is the {field} on purchase order {filename}?",
             fields=[
                 QuestionField("po_number"),
@@ -128,6 +129,7 @@ QUESTION_TEMPLATES: QuestionTemplateMap = {
     ],
     "Invoice": [
         QuestionSpec(
+            "Invoice",
             "What is the {field} on invoice {filename}?",
             fields=[
                 QuestionField("invoice_number"),
@@ -141,6 +143,7 @@ QUESTION_TEMPLATES: QuestionTemplateMap = {
     ],
     "Contract": [
         QuestionSpec(
+            "Contract",
             "What is the {field} in contract {filename}?",
             fields=[
                 QuestionField("contract_number"),
@@ -154,6 +157,7 @@ QUESTION_TEMPLATES: QuestionTemplateMap = {
     ],
     "Vendor Profile": [
         QuestionSpec(
+            "Vendor Profile",
             "What is the {field} of the vendor in {filename}?",
             fields=[
                 QuestionField("vendor"),
@@ -166,6 +170,7 @@ QUESTION_TEMPLATES: QuestionTemplateMap = {
     ],
     "Service Ticket": [
         QuestionSpec(
+            "Service Ticket",
             "What is the {field} for service ticket {filename}?",
             fields=[
                 QuestionField("ticket_number"),
@@ -178,6 +183,7 @@ QUESTION_TEMPLATES: QuestionTemplateMap = {
     ],
     "CRM Opportunity": [
         QuestionSpec(
+            "CRM Opportunity",
             "What is the {field} of the opportunity in {filename}?",
             fields=[
                 QuestionField("opportunity_name"),
@@ -189,6 +195,7 @@ QUESTION_TEMPLATES: QuestionTemplateMap = {
     ],
     "Project": [
         QuestionSpec(
+            "Project",
             "What is the {field} of the project described in {filename}?",
             fields=[
                 QuestionField("project_name"),
@@ -200,6 +207,7 @@ QUESTION_TEMPLATES: QuestionTemplateMap = {
     ],
     "Employee": [
         QuestionSpec(
+            "Employee",
             "What is the {field} for the employee record in {filename}?",
             fields=[
                 QuestionField("employee_id"),

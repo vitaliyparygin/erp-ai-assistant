@@ -1,26 +1,6 @@
-
 from __future__ import annotations
-
-from dataclasses import dataclass
 from rag_benchmark.models import ClassifiedDocument
-
-@dataclass
-class FieldCoverage:
-    """Coverage of a single expected metadata field across one document type."""
-
-    field_name: str
-    documents_with_field: int
-    total_documents_of_type: int
-    coverage_percent: float
-
-@dataclass(slots=True)
-class FieldCoverageResult:
-    """Field extraction statistics for a single document."""
-
-    expected: list[str]
-    extracted: list[str]
-    missing: list[str]
-    coverage: float
+from rag_benchmark.diagnostics.models import FieldCoverageResult
 
 class FieldCoverageAnalyzer:
     """Analyze extracted metadata coverage for one document."""

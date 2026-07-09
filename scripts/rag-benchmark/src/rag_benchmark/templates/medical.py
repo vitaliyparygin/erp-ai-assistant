@@ -62,6 +62,7 @@ EXTRACTION_RULES: dict[str, tuple[FieldRule, ...]] = {
 QUESTION_TEMPLATES: QuestionTemplateMap = {
     "Patient Record": [
         QuestionSpec(
+            "Patient Record",
             "What is the {field} recorded for the patient in {filename}?",
             fields=[
                 QuestionField("patient_id"),
@@ -73,6 +74,7 @@ QUESTION_TEMPLATES: QuestionTemplateMap = {
     ],
     "Lab Report": [
         QuestionSpec(
+            "Lab Report",
             "What is the {field} reported in {filename}?",
             fields=[
                 QuestionField("specimen"),
@@ -84,6 +86,7 @@ QUESTION_TEMPLATES: QuestionTemplateMap = {
     ],
     "Prescription": [
         QuestionSpec(
+            "Prescription",
             "What is the {field} listed on the prescription in {filename}?",
             fields=[
                 QuestionField("medication"),
@@ -95,6 +98,7 @@ QUESTION_TEMPLATES: QuestionTemplateMap = {
     ],
     "Discharge Summary": [
         QuestionSpec(
+            "Discharge Summary",
             "What is the {field} in the discharge summary {filename}?",
             fields=[
                 QuestionField("admission_date"),

@@ -97,6 +97,7 @@ class LLMQuestionGenerator(QuestionGenerator):
                             document_type=doc_type,
                             difficulty=Difficulty(item.get("difficulty", "easy")),
                             tags=item.get("tags", []),
+                            template_id=item.key
                         )
                     )
                     next_id += 1
