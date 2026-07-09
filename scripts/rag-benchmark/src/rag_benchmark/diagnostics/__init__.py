@@ -44,7 +44,9 @@ class DiagnosticsReport:
 
 
 def build_diagnostics_report(
-    pipeline: BenchmarkPipeline, config: BenchmarkConfig
+    pipeline: BenchmarkPipeline,
+    config: BenchmarkConfig,
+    file: str | None = None,
 ) -> DiagnosticsReport:
     """Run the pipeline read-only and compute the full diagnostics report.
 
@@ -56,7 +58,7 @@ def build_diagnostics_report(
         A complete DiagnosticsReport.
     """
     logger.info("Starting diagnostics run for dataset: %s", config.dataset)
-    diagnostics = run_diagnostics(pipeline, config)
+    diagnostics = run_diagnostics(pipeline, config, file)
 
     classification = compute_classification_stats(diagnostics)
     metadata_coverage = compute_metadata_coverage(diagnostics)

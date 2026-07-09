@@ -65,7 +65,13 @@ DryRunOpt = Annotated[
 SaveReportOpt = Annotated[
     bool, typer.Option("--save-report", help="Write diagnose_latest.md to the output directory.")
 ]
-
+FileOpt = Annotated[
+    str | None,
+    typer.Option(
+        "--file",
+        help="Run diagnostics only for files matching this name.",
+    ),
+]
 
 def _build_config(
     dataset: Path | None,
@@ -321,6 +327,7 @@ def diagnose(
     config: ConfigOpt = None,
     verbose: VerboseOpt = False,
     save_report: SaveReportOpt = False,
+    file: FileOpt = None,
 ) -> None:
     """Run the full pipeline read-only and diagnose why generation succeeds or fails.
 
@@ -344,7 +351,11 @@ def diagnose(
     ) as progress:
         task = progress.add_task("Running diagnostics pipeline...", total=None)
         try:
-            report_result = build_diagnostics_report(pipeline, cfg)
+            report_result = build_diagnostics_report(
+                pipeline,
+                cfg,
+                file=file,
+            )
         except (FileNotFoundError, NotADirectoryError) as exc:
             console.print(f"[red]{exc}[/red]")
             raise typer.Exit(code=1) from exc

@@ -105,7 +105,11 @@ def suggest_classification_rule(
 
 
 
-def run_diagnostics(pipeline: BenchmarkPipeline, config: BenchmarkConfig) -> PipelineDiagnostics:
+def run_diagnostics(
+        pipeline: BenchmarkPipeline,
+        config: BenchmarkConfig,
+        file: str | None = None,
+) -> PipelineDiagnostics:
     """Run the full pipeline in read-only mode and collect diagnostic data.
 
     This never calls any writer — it is safe to run repeatedly against a
@@ -144,6 +148,13 @@ def run_diagnostics(pipeline: BenchmarkPipeline, config: BenchmarkConfig) -> Pip
         questions_by_document[query.expected_document].append(query)
 
     document_diagnostics: list[DocumentDiagnostic] = []
+
+    if file:
+        classified_documents = [
+            d
+            for d in classified_documents
+            if file.lower() in d.document.filename.lower()
+        ]
     for classified in classified_documents:
 
         expected_fields = extractor.expected_fields(
