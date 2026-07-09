@@ -229,11 +229,6 @@ class Summary:
 
 
 
-@dataclass
-class QuestionCoverage:
-    generated: int
-    skipped: int
-    generated_fields: list[str]
 
 
 

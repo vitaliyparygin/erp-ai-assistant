@@ -40,8 +40,6 @@ from rag_benchmark.reporting import (
     print_summary,
 )
 from rag_benchmark.analyzers.regex_analyzer import RegexAnalyzer
-from rag_benchmark.analyzers.report_unused import report_unused_regexes
-from rag_benchmark.analyzers.suggest_regex import suggest_regex
 app = typer.Typer(
     name="rag-benchmark",
     help="Generate benchmark datasets and evaluation assets from a document collection.",
@@ -164,8 +162,8 @@ def generate(
     console.rule("[bold blue]Regex diagnostics")
     analyzer = RegexAnalyzer(template)
     stats = analyzer.analyze(classified_documents)
-    report_unused_regexes(stats)
-    suggest_regex(classified_documents)
+    analyzer.report_unused(stats)
+    analyzer.suggest(stats)
 
     output_path = cfg.output / "benchmark_queries.json"
     if dry_run:

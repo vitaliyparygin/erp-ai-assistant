@@ -13,6 +13,7 @@ class QuestionCoverage:
     skipped: int
     generated_fields: list[str]
     missing_fields: list[str]
+    skipped_reasons: list[str]
 
 
 class QuestionCoverageAnalyzer:
@@ -33,7 +34,8 @@ class QuestionCoverageAnalyzer:
         missing_fields = list(set(expected_fields) - set(generated_fields))
         return QuestionCoverage(
             generated=generated,
-            skipped=skipped,
+            skipped_reasons=skipped,
             generated_fields=generated_fields,
             missing_fields=missing_fields,
+            skipped=skipped
         )

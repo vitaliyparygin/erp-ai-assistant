@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from rag_benchmark.analyzers.field_coverage import FieldCoverage
 from rag_benchmark.analyzers.question_coverage import QuestionCoverage
 from rag_benchmark.analyzers.regex_analyzer import RegexStat
+from rag_benchmark.analyzers.question_generation import QuestionGeneration
 from rag_benchmark.models import ClassifiedDocument
 
 UNKNOWN_TYPE = "Unknown"
@@ -13,32 +14,23 @@ UNKNOWN_TYPE = "Unknown"
 class DocumentSummary:
     filename: str
     document_type: str
-
     extracted_fields: list[str]
     missing_fields: list[str]
-
     regex_stats: list[RegexStat]
-
-    generated_questions: int
-    skipped_questions: int
-
     field_coverage: float
-    # @property
-    # def generated_questions(self) -> int:
-    #     return (
-    #         self.question_coverage.generated
-    #         if self.question_coverage
-    #         else 0
-    #     )
-    #
-    #
-    # @property
-    # def skipped_questions(self) -> int:
-    #     return (
-    #         self.question_coverage.skipped
-    #         if self.question_coverage
-    #         else 0
-    #     )
+    # question_generation: QuestionGeneration
+
+    @property
+    def generated_questions(self):
+        return self.question_generation.generated
+
+    @property
+    def skipped_questions(self):
+        return self.question_generation.skipped
+
+    @property
+    def question_coverage(self):
+        return self.question_generation.coverage
 
 
 class DocumentSummaryAnalyzer:
@@ -59,9 +51,6 @@ class DocumentSummaryAnalyzer:
             missing_fields=field_result.missing,
 
             regex_stats=regex_result,
-
-            generated_questions=question_result.generated,
-            skipped_questions=question_result.skipped,
 
             field_coverage=field_result.coverage,
         )

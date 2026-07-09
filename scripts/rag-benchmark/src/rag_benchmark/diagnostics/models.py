@@ -1,13 +1,16 @@
 from dataclasses import dataclass, field
 from rag_benchmark.models import BenchmarkDataset, BenchmarkQuery, ClassifiedDocument
 from rag_benchmark.analyzers.regex_analyzer import RegexStat
-from rag_benchmark.analyzers.question_coverage import QuestionCoverage
+from rag_benchmark.analyzers.question_generation import QuestionGeneration
 from rag_benchmark.analyzers.document_summary import DocumentSummary
 from rag_benchmark.classifier import UNKNOWN_TYPE
 from rag_benchmark.config import BenchmarkConfig
 from rag_benchmark.templates import TemplateDefinition
 from datetime import datetime
 from rag_benchmark.analyzers.field_coverage import FieldCoverage
+from rag_benchmark.analyzers.question_coverage import QuestionCoverage
+
+
 #: Fields extracted in fewer than this percentage of documents are flagged
 #: as "partially working" rather than "completely missing".
 LOW_FIELD_COVERAGE_THRESHOLD = 50.0
@@ -42,19 +45,19 @@ class DocumentDiagnostic:
 
     expected_fields: list[str]
     missing_fields: list[str]
-
+    question_generation: QuestionGeneration | None
+    question_coverage: QuestionCoverage
     questions: list[BenchmarkQuery] = field(default_factory=list)
-
     keywords: list[str] = field(default_factory=list)
     suggested_rule: SuggestedClassificationRule | None = None
-
     # analyzer results
     field_coverage: FieldCoverage | None = None
     regex_analysis: list[RegexStat] = field(default_factory=list)
-    question_coverage: QuestionCoverage | None = None
 
     # presentation object
     summary: DocumentSummary | None = None
+
+
 
     @property
     def is_unknown(self) -> bool:
@@ -116,6 +119,15 @@ class DocumentDiagnostic:
     @property
     def regex_stats(self) -> list[RegexStat]:
         return self.regex_analysis
+
+    @property
+    def generated_questions(self):
+        return self.question_coverage.generated
+
+
+    @property
+    def skipped_questions(self):
+        return self.question_coverage.skipped
 
 @dataclass
 class PipelineDiagnostics:

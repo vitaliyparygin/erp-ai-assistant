@@ -21,14 +21,14 @@ from rag_benchmark.utils import get_logger, normalize_whitespace, slugify
 
 from rag_benchmark.analyzers.regex_analyzer import RegexAnalyzer
 from rag_benchmark.analyzers.field_coverage import FieldCoverageAnalyzer
-from rag_benchmark.analyzers.question_coverage import QuestionCoverageAnalyzer
+from rag_benchmark.analyzers.question_generation import QuestionGenerationAnalyzer
 from rag_benchmark.analyzers.document_summary import DocumentSummaryAnalyzer
 from rag_benchmark.diagnostics.models import (
     SuggestedClassificationRule,
     PipelineDiagnostics,
     DocumentDiagnostic
 )
-
+from rag_benchmark.analyzers.question_coverage import (QuestionCoverageAnalyzer)
 
 logger = get_logger("diagnostics.analyzer")
 
@@ -166,12 +166,13 @@ def run_diagnostics(pipeline: BenchmarkPipeline, config: BenchmarkConfig) -> Pip
 
         question_result = QuestionCoverageAnalyzer.analyze(
             expected_fields,
-            questions_by_document.get(
-                classified.document.filename,
-                [],
-            ),
+            document_questions,
         )
-
+        question_generation = QuestionGenerationAnalyzer.analyze(
+            classified=classified,
+            template=template,
+            questions=document_questions,
+        )
         summary = DocumentSummaryAnalyzer.analyze(
             classified,
             field_result,
@@ -199,6 +200,7 @@ def run_diagnostics(pipeline: BenchmarkPipeline, config: BenchmarkConfig) -> Pip
                 field_coverage=field_result,
                 regex_analysis=regex_result,
                 question_coverage=question_result,
+                question_generation=question_generation,
                 summary=summary,
             )
         )
