@@ -10,7 +10,7 @@ Create a file, e.g. `my_company.py`, anywhere on disk:
 
 ```python
 from rag_benchmark.generators.base import QuestionSpec, QuestionTemplateMap
-from rag_benchmark.models import Difficulty
+from rag_benchmark.models import Difficulty, QuestionField
 
 TEMPLATE_NAME = "my_company"
 
@@ -18,9 +18,9 @@ QUESTION_TEMPLATES: QuestionTemplateMap = {
     "Onboarding Doc": [
         QuestionSpec(
             "What is the {field} described in {filename}?",
-            requires_fields=("policy_name",),
-            difficulty=Difficulty.EASY,
-            tags=("retrieval", "hr"),
+            fields=[
+                QuestionField("policy_name"),
+            ]
         ),
     ],
 }
@@ -87,6 +87,10 @@ handles well (e.g. `Invoice`, `Bank Statement`).
 ```python
 QuestionSpec(
     query_template="What is the {field} of {filename}?",
+    fields=[
+                QuestionField("field_a"),
+                QuestionField("amoufield_bnt"),
+            ],
     requires_fields=("field_a", "field_b"),   # every field must have been extracted
     difficulty=Difficulty.MEDIUM,
     tags=("retrieval", "metadata"),

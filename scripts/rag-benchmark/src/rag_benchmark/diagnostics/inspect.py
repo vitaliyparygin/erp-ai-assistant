@@ -25,6 +25,7 @@ from rag_benchmark.models import BenchmarkQuery, ClassifiedDocument, DocumentFor
 from rag_benchmark.pipeline import BenchmarkPipeline
 from rag_benchmark.scanner import detect_format
 from rag_benchmark.utils import get_logger, truncate
+from rag_benchmark.templates import TemplateDefinition
 
 logger = get_logger("diagnostics.inspect")
 
@@ -43,12 +44,16 @@ class InspectResult:
 
     scanned_file: ScannedFile
     classified: ClassifiedDocument
+
     expected_fields: list[str]
     missing_fields: list[str]
+    template: TemplateDefinition
     questions: list[BenchmarkQuery] = field(default_factory=list)
     text_preview: str = ""
     keywords: list[str] = field(default_factory=list)
+
     suggested_rule: SuggestedClassificationRule | None = None
+
 
     @property
     def is_unknown(self) -> bool:
@@ -91,7 +96,9 @@ def find_document(dataset_dir: Path, name: str, recursive: bool = True) -> Path:
 
 
 def inspect_document(
-    pipeline: BenchmarkPipeline, config: BenchmarkConfig, filename: str
+    pipeline: BenchmarkPipeline,
+    config: BenchmarkConfig,
+    filename: str
 ) -> InspectResult:
     """Run a single document through the full pipeline and collect diagnostics.
 
@@ -132,7 +139,9 @@ def inspect_document(
     classified = ClassifiedDocument(
         document=document, classification=classification, metadata=metadata
     )
-
+    # recommendations = generate_recommendations(
+    #     #     diagnostics, classification, metadata, question_stats
+    #     # )
     expected_fields = (
         extractor.expected_fields(classification.document_type)
         if isinstance(extractor, RegexMetadataExtractor)
@@ -171,4 +180,5 @@ def inspect_document(
         text_preview=truncate(document.text, TEXT_PREVIEW_CHARS),
         keywords=keywords,
         suggested_rule=suggested_rule,
+        template=template
     )

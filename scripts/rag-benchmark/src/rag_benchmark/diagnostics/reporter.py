@@ -35,8 +35,10 @@ from rag_benchmark.diagnostics.statistics import (
 from rag_benchmark.utils import get_logger
 from rag_benchmark.analyzers.regex_analyzer import RegexAnalyzer
 from rich.text import Text
-
-
+from rag_benchmark.suggestions.regex_suggestions import suggest_field_synonyms
+from rag_benchmark.diagnostics.models import Recommendation
+from rich.console import Console
+console = Console()
 logger = get_logger("diagnostics.reporter")
 
 _SEVERITY_COLORS = {
@@ -52,28 +54,8 @@ _STATUS_COLORS = {
 }
 _DEFAULT_STATUS_COLOR = "red"
 
-#: Field name -> alternative phrasings worth adding to an extraction regex.
-#: A small, deliberately generic hint table — not meant to be exhaustive,
-#: just enough to unblock a developer looking at a 0%-coverage field.
-FIELD_SYNONYM_HINTS: dict[str, list[str]] = {
-    "address": ["office", "registered office", "location"],
-    "phone": ["telephone", "contact number", "mobile"],
-    "email": ["e-mail", "contact email"],
-    "amount": ["total", "sum", "balance due", "grand total"],
-    "vendor": ["supplier", "seller", "provider"],
-    "customer": ["client", "buyer", "account holder"],
-    "start_date": ["effective date", "commencement date"],
-    "end_date": ["expiration date", "termination date"],
-    "status": ["state", "current status"],
-    "engineer": ["technician", "assigned to"],
-    "ticket_number": ["case number", "reference number"],
-    "contract_number": ["agreement number", "reference number"],
-}
 
 
-def suggest_field_synonyms(field_name: str) -> list[str]:
-    """Return alternative phrasings that might help extract a missing field."""
-    return FIELD_SYNONYM_HINTS.get(field_name, ["(no synonym hints available — inspect a sample document)"])
 
 
 class DiagnosticsReporter:
@@ -232,7 +214,9 @@ class DiagnosticsReporter:
                     f"{missing_field}: add regex for {', '.join(hints)}"
                 )
 
-                for label, regex in RegexAnalyzer.field_suggestions(missing_field):
+                for label, regex in RegexAnalyzer.field_suggestions(
+                                                        missing_field
+                                                    ):
                     field_branch.add(Text(f"{label} → {regex}"))
 
         self._console.print(tree)
@@ -283,24 +267,34 @@ class DiagnosticsReporter:
 
     # -- Section 9: Recommendations --------------------------------------------
 
-    def render_recommendations(self, report: DiagnosticsReport) -> None:
-        if not report.recommendations:
-            self._console.print("[green]No recommendations — the dataset looks benchmark-ready![/green]")
+
+
+    def render_recommendations(
+            self,
+            recommendations: list[Recommendation],
+    ) -> None:
+        if not recommendations:
             return
 
         table = Table(title="Recommendations")
+
+        table.add_column("#", style="cyan", width=3)
         table.add_column("Severity")
         table.add_column("Context")
         table.add_column("Issue")
         table.add_column("Suggestion")
 
-        for rec in report.recommendations:
-            color = _SEVERITY_COLORS.get(rec.severity, "white")
+        for i, rec in enumerate(recommendations, 1):
             table.add_row(
-                f"[{color}]{rec.severity.upper()}[/{color}]", rec.context, rec.issue, rec.suggestion
+                str(i),
+                rec.severity,
+                rec.context,
+                rec.issue,
+                rec.suggestion,
             )
 
-        self._console.print(table)
+        console.print(table)
+
 
     # -- Section 10: Overall Benchmark Readiness --------------------------------
 
@@ -370,7 +364,7 @@ class DiagnosticsReporter:
         self.render_question_preview(report)
 
         self._console.print(Rule("Recommendations"))
-        self.render_recommendations(report)
+        self.render_recommendations(report.recommendations)
 
         self._console.print(Rule("Readiness"))
         self.render_readiness(report)

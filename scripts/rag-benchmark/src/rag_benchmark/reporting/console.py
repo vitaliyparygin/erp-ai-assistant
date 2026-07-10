@@ -85,15 +85,3 @@ def print_summary(
 
     console.print()
     console.print(table)
-
-
-# def print_document_types(...):
-#     ...
-#
-#
-# def print_missing_fields(...):
-#     ...
-#
-#
-# def print_recommendations(...):
-#     ...

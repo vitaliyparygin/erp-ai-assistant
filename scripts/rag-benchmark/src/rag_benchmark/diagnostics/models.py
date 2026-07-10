@@ -263,3 +263,20 @@ class DocumentSummary:
     missing_fields: list[str]
     regex_stats: list[RegexStat]
     field_coverage: float
+
+@dataclass
+class DiagnosticsReport:
+    """Everything a diagnostics report needs to render, in one object."""
+
+    pipeline_diagnostics: PipelineDiagnostics
+    classification: ClassificationStats
+    metadata_coverage: list[DocumentTypeMetadataCoverage]
+    question_stats: list[QuestionTypeStats]
+    readiness: ReadinessScores
+    recommendations: list[Recommendation]
+
+@dataclass
+class RegexCandidate:
+    label: str
+    count: int
+    regex: str

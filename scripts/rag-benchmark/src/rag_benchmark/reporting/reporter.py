@@ -5,7 +5,7 @@ class DiagnosticsReporter:
 
     def render(
         self,
-        report: DiagnosticsReport,
+        report: DiagnosticsReporter,
         verbose: bool = False,
     ) -> None:
 
@@ -17,6 +17,3 @@ class DiagnosticsReporter:
             for document in report.documents:
                 print_document_report(document)
 
-        #print_missing_fields(report.missing_fields)
-
-        # print_recommendations(report.recommendations)

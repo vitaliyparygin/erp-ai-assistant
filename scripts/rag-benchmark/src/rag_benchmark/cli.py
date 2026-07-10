@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
-from rich.console import Console
+
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
@@ -35,17 +35,18 @@ from rag_benchmark.models import BenchmarkDataset, BenchmarkQuery
 from rag_benchmark.pipeline import BenchmarkPipeline
 from rag_benchmark.templates import available_builtin_templates
 from rag_benchmark.utils import configure_logging, get_logger
-from rag_benchmark.reporting import (
-    print_document_report,
-    print_summary,
-)
+from rag_benchmark.diagnostics.analyzers.inspect_analyzer import InspectAnalyzer
 from rag_benchmark.analyzers.regex_analyzer import RegexAnalyzer
+from rag_benchmark.diagnostics.inspect_recommendations.document import generate_document_recommendations
+from rag_benchmark.diagnostics.renderers.inspect_renderer import InspectRenderer
+from rich.console import Console
+console = Console()
 app = typer.Typer(
     name="rag-benchmark",
     help="Generate benchmark datasets and evaluation assets from a document collection.",
     no_args_is_help=True,
 )
-console = Console()
+
 logger = get_logger("cli")
 
 DatasetOpt = Annotated[Path | None, typer.Option("--dataset", help="Dataset directory to scan.")]
@@ -168,8 +169,8 @@ def generate(
     console.rule("[bold blue]Regex diagnostics")
     analyzer = RegexAnalyzer(template)
     stats = analyzer.analyze(classified_documents)
-    analyzer.report_unused(stats)
-    analyzer.suggest(classified_documents)
+    analyzer.render_unused(stats)
+    analyzer.render_dataset_suggestions(classified_documents)
 
     output_path = cfg.output / "benchmark_queries.json"
     if dry_run:
@@ -372,28 +373,36 @@ def diagnose(
 
 @app.command()
 def inspect(
-    file_name: Annotated[
-        str, typer.Argument(help="Filename (or stem) to inspect within the dataset directory.")
-    ],
     dataset: DatasetOpt = None,
     output: OutputOpt = None,
     template: TemplateOpt = None,
     config: ConfigOpt = None,
     verbose: VerboseOpt = False,
+    file: FileOpt = None,
 ) -> None:
     """Deep-dive into a single document: classification, metadata, questions, raw text."""
     configure_logging(verbose=verbose)
     cfg = _build_config(dataset, output, template, config)
     pipeline = BenchmarkPipeline()
-
+    print(pipeline, cfg, file)
     try:
-        result = inspect_document(pipeline, cfg, file_name)
+        result = inspect_document(pipeline, cfg, file)
     except (DocumentNotFoundError, UnsupportedDocumentError) as exc:
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(code=1) from exc
 
-    reporter = DiagnosticsReporter(console=console)
-    reporter.render_inspect(result)
+    InspectAnalyzer.analyze(
+        result,
+    )
+
+    recommendations = generate_document_recommendations(
+        result,
+    )
+
+    InspectRenderer.render(
+        result,
+        recommendations,
+    )
 
 
 if __name__ == "__main__":

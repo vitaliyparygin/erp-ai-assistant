@@ -12,14 +12,15 @@ from __future__ import annotations
 import re
 from collections import Counter, defaultdict
 from pathlib import Path
+
 from rag_benchmark.classifier import UNKNOWN_TYPE
 from rag_benchmark.config import BenchmarkConfig
 from rag_benchmark.models import  BenchmarkQuery
 from rag_benchmark.pipeline import BenchmarkPipeline
-
 from rag_benchmark.utils import get_logger, normalize_whitespace, slugify
-
 from rag_benchmark.analyzers.regex_analyzer import RegexAnalyzer, LABEL_REGEX
+from rag_benchmark.suggestions.regex_suggestions import build_regex_candidates
+from rag_benchmark.renderers.regex_renderer import RegexRenderer
 from rag_benchmark.analyzers.field_coverage import FieldCoverageAnalyzer
 from rag_benchmark.analyzers.question_generation import QuestionGenerationAnalyzer
 from rag_benchmark.analyzers.document_summary import DocumentSummaryAnalyzer
@@ -216,14 +217,14 @@ def run_diagnostics(
                 summary=summary,
             )
         )
-        RegexAnalyzer.print_regex_analysis(document_diagnostics)
+        RegexRenderer.render_regex_analysis(document_diagnostics)
         all_regex_stats = [
             stat
             for diag in document_diagnostics
             for stat in diag.regex_stats
         ]
 
-        RegexAnalyzer.report_unused(all_regex_stats)
+        RegexRenderer.render_unused(all_regex_stats)
         counter = Counter()
 
         for diag in document_diagnostics:
@@ -232,7 +233,7 @@ def run_diagnostics(
             for match in LABEL_REGEX.finditer(text):
                 counter[match.group(1).strip()] += 1
 
-        RegexAnalyzer.collect_regex_candidates(counter)
+        build_regex_candidates(counter)
 
     return PipelineDiagnostics(
         config=config,

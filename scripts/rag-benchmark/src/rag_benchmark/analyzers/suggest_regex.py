@@ -11,7 +11,7 @@ LABEL_REGEX = re.compile(
     flags=re.MULTILINE,
 )
 
-def collect_regex_candidates(
+def print_regex_candidates(
     documents: list[ClassifiedDocument],
 ):
 

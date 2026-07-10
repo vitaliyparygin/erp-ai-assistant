@@ -14,7 +14,7 @@ from rag_benchmark.analyzers.question_coverage import (QuestionCoverageAnalyzer)
 from rag_benchmark.analyzers.question_template_analyzer import QuestionTemplateAnalyzer
 from rag_benchmark.config import BenchmarkConfig
 from rag_benchmark.diagnostics.analyzer import PipelineDiagnostics, run_diagnostics
-from rag_benchmark.diagnostics.recommendations import Recommendation, generate_recommendations
+from rag_benchmark.diagnostics.recommendations import generate_recommendations
 from rag_benchmark.diagnostics.statistics import (
     ClassificationStats,
     DocumentTypeMetadataCoverage,
@@ -25,23 +25,11 @@ from rag_benchmark.diagnostics.statistics import (
     compute_question_stats,
     compute_readiness,
 )
+from rag_benchmark.diagnostics.models import DiagnosticsReport
 from rag_benchmark.pipeline import BenchmarkPipeline
 from rag_benchmark.utils import get_logger
 
 logger = get_logger("diagnostics")
-
-
-@dataclass
-class DiagnosticsReport:
-    """Everything a diagnostics report needs to render, in one object."""
-
-    pipeline_diagnostics: PipelineDiagnostics
-    classification: ClassificationStats
-    metadata_coverage: list[DocumentTypeMetadataCoverage]
-    question_stats: list[QuestionTypeStats]
-    readiness: ReadinessScores
-    recommendations: list[Recommendation]
-
 
 def build_diagnostics_report(
     pipeline: BenchmarkPipeline,
