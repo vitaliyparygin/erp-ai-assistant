@@ -27,13 +27,21 @@ from rag_benchmark.scanner import detect_format
 from rag_benchmark.utils import get_logger, truncate
 from rag_benchmark.templates import TemplateDefinition
 from rag_benchmark.diagnostics.models import (
-    MetadataCoverageResult,
-    QuestionCoverageResult,
+    TemplateSuggestion,
     RegexSuggestion,
     RegexStat,
     RegexCandidate,
-    ReadinessResult
+    ClassificationScore,
+    MatchedKeyword,
+    MetadataDetail,
+    RegexCoverage,
+    ReadinessReport,
+    InspectSummary,
+    GeneratedQuestion,
+    QuestionCoverage,
+    FieldCoverage
 )
+from rag_benchmark.generators.base import QuestionTemplateMap
 logger = get_logger("diagnostics.inspect")
 
 
@@ -47,32 +55,36 @@ class UnsupportedDocumentError(ValueError):
 
 @dataclass
 class InspectResult:
-    """Everything known about a single document, for `inspect` to render."""
-
+    # Source
     scanned_file: ScannedFile
     classified: ClassifiedDocument
 
+    question_templates: QuestionTemplateMap
+    questions: list[GeneratedQuestion]
+
+    # Metadata
     expected_fields: list[str]
     missing_fields: list[str]
-    template: TemplateDefinition
-    questions: list[BenchmarkQuery] = field(default_factory=list)
-    text_preview: str = ""
-    keywords: list[str] = field(default_factory=list)
+    available_fields: list[str]
 
-    suggested_rule: SuggestedClassificationRule | None = None
+    text_preview: str
+
+    # Filled by InspectAnalyzer
+    classification_scores: list[ClassificationScore] = field(default_factory=list)
+    matched_keywords: list[MatchedKeyword] = field(default_factory=list)
+
+    metadata_details: list[MetadataDetail] = field(default_factory=list)
+    field_coverage: FieldCoverage | None = None
+
     regex_stats: list[RegexStat] = field(default_factory=list)
-
+    regex_coverage: RegexCoverage | None = None
     regex_candidates: list[RegexCandidate] = field(default_factory=list)
-
     regex_suggestions: list[RegexSuggestion] = field(default_factory=list)
 
-    unused_regex: list[RegexStat] = field(default_factory=list)
+    question_coverage: QuestionCoverage | None = None
+    template_suggestions: list[TemplateSuggestion] = field(default_factory=list)
 
-    metadata_coverage: MetadataCoverageResult | None = None
-
-    question_coverage: QuestionCoverageResult | None = None
-
-    readiness: ReadinessResult | None = None
+    readiness: ReadinessReport | None = None
 
     @property
     def is_unknown(self) -> bool:
@@ -193,11 +205,10 @@ def inspect_document(
     return InspectResult(
         scanned_file=scanned,
         classified=classified,
+        question_templates=template,
+        questions=questions,
         expected_fields=expected_fields,
         missing_fields=missing_fields,
-        questions=questions,
+        available_fields=available,
         text_preview=truncate(document.text, TEXT_PREVIEW_CHARS),
-        keywords=keywords,
-        suggested_rule=suggested_rule,
-        template=template
     )

@@ -4,12 +4,13 @@ from __future__ import annotations
 
 from rag_benchmark.analyzers.document_summary import DocumentSummaryAnalyzer
 from rag_benchmark.analyzers.field_coverage import FieldCoverageAnalyzer
+from rag_benchmark.diagnostics.models import QuestionCoverage
 from rag_benchmark.analyzers.question_coverage import QuestionCoverageAnalyzer
 from rag_benchmark.analyzers.regex_analyzer import RegexAnalyzer
 from rag_benchmark.models import BenchmarkQuery, Difficulty
 from types import SimpleNamespace
 from rag_benchmark.diagnostics.models import FieldCoverage
-from rag_benchmark.analyzers.question_coverage import QuestionCoverage
+
 from rag_benchmark.analyzers.regex_analyzer import RegexStat
 
 def test_field_coverage():

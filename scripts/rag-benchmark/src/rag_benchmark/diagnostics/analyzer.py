@@ -20,7 +20,6 @@ from rag_benchmark.pipeline import BenchmarkPipeline
 from rag_benchmark.utils import get_logger, normalize_whitespace, slugify
 from rag_benchmark.analyzers.regex_analyzer import RegexAnalyzer, LABEL_REGEX
 from rag_benchmark.suggestions.regex_suggestions import build_regex_candidates
-from rag_benchmark.renderers.regex_renderer import RegexRenderer
 from rag_benchmark.analyzers.field_coverage import FieldCoverageAnalyzer
 from rag_benchmark.analyzers.question_generation import QuestionGenerationAnalyzer
 from rag_benchmark.analyzers.document_summary import DocumentSummaryAnalyzer

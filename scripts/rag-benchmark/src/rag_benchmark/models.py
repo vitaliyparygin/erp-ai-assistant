@@ -62,14 +62,17 @@ class Document(BaseModel):
 
     model_config = {"arbitrary_types_allowed": True}
 
+class ClassificationCandidate(BaseModel):
+    document_type: str
+    confidence: float
+    matched_signals: list[str] = Field(default_factory=list)
 
 class ClassificationResult(BaseModel):
-    """Output of a DocumentClassifier for a single document."""
-
     document_id: str
     document_type: str
-    confidence: float = Field(ge=0.0, le=1.0)
+    confidence: float
     matched_signals: list[str] = Field(default_factory=list)
+    candidates: list[ClassificationCandidate] = Field(default_factory=list)
 
 
 class ExtractedField(BaseModel):

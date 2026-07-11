@@ -20,7 +20,7 @@ class QuestionCoverageAnalyzer:
             expected=expected,
             generated=generated,
             coverage=(
-                generated / expected * 100
+                generated / expected
                 if expected else 100
             ),
         )
@@ -37,7 +37,7 @@ class QuestionCoverageAnalyzer:
             )
             tree = Tree(
                 f"[cyan]{result.filename}[/cyan] "
-                f"({result.coverage:.0%})"
+                f"({result.coverage:.%})"
             )
             generated = tree.add("[green]Generated[/green]")
             if result.generated:

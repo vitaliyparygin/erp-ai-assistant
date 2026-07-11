@@ -6,27 +6,7 @@ single object `reporter.py` needs to render everything from Rich console
 output to the `diagnose_latest.md` export.
 """
 
-from __future__ import annotations
-
-from dataclasses import dataclass
-from rag_benchmark.analyzers.question_generation import QuestionGenerationAnalyzer
-from rag_benchmark.analyzers.question_coverage import (QuestionCoverageAnalyzer)
-from rag_benchmark.analyzers.question_template_analyzer import QuestionTemplateAnalyzer
-from rag_benchmark.config import BenchmarkConfig
-from rag_benchmark.diagnostics.analyzer import PipelineDiagnostics, run_diagnostics
-from rag_benchmark.diagnostics.recommendations import generate_recommendations
-from rag_benchmark.diagnostics.statistics import (
-    ClassificationStats,
-    DocumentTypeMetadataCoverage,
-    QuestionTypeStats,
-    ReadinessScores,
-    compute_classification_stats,
-    compute_metadata_coverage,
-    compute_question_stats,
-    compute_readiness,
-)
-from rag_benchmark.diagnostics.models import DiagnosticsReport
-from rag_benchmark.pipeline import BenchmarkPipeline
+from .models import *
 from rag_benchmark.utils import get_logger
 
 logger = get_logger("diagnostics")

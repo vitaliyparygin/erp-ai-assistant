@@ -304,3 +304,64 @@ class ReadinessResult:
     metadata: float
     questions: float
     overall: float
+
+@dataclass
+class ClassificationScore:
+    document_type: str
+    score: float
+
+@dataclass
+class MatchedKeyword:
+    keyword: str
+    source: str
+
+@dataclass
+class MetadataDetail:
+    field: str
+    regex: str
+    matched: bool
+    extracted_value: str | None
+
+@dataclass
+class RegexCoverage:
+    total: int
+    matched: int
+    missing: int
+    coverage: float
+
+@dataclass
+class TemplateSuggestion:
+    field: str
+    reason: str
+
+@dataclass
+class ReadinessReport:
+    metadata_score: float
+    question_score: float
+    regex_score: float
+    overall_score: float
+
+@dataclass
+class InspectSummary:
+    document_type: str
+    confidence: float
+    metadata_found: int
+    metadata_expected: int
+    generated_questions: int
+    regex_matched: int
+    regex_total: int
+    readiness: float
+
+@dataclass(slots=True)
+class GeneratedQuestion:
+    query: str
+    answer: str | None = None
+    metadata_field: str | None = None
+    template_name: str | None = None
+    confidence: float | None = None
+
+@dataclass
+class MissingImprovement:
+    category: str
+    item: str
+    suggestion: str

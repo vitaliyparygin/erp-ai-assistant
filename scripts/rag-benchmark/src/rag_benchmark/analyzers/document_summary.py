@@ -1,6 +1,10 @@
-from __future__ import annotations
-from rag_benchmark.models import ClassifiedDocument
-from rag_benchmark.diagnostics.models import QuestionCoverage,FieldCoverage,RegexStat, DocumentSummary
+from rag_benchmark.diagnostics.models import (
+    QuestionCoverage,
+    FieldCoverage,
+    RegexStat,
+    DocumentSummary,
+    ClassifiedDocument
+)
 UNKNOWN_TYPE = "Unknown"
 
 class DocumentSummaryAnalyzer:

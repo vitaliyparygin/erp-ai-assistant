@@ -1,5 +1,5 @@
 
-from rag_benchmark.diagnostics.models import (ReadinessResult)
+from rag_benchmark.diagnostics.models import (ReadinessReport)
 from rag_benchmark.diagnostics.inspect import InspectResult
 
 
@@ -10,21 +10,22 @@ class ReadinessAnalyzer:
         result: InspectResult,
         metadata,
         questions,
+        regex_score
     ):
-
-        classification = (
-            result.classified.classification.confidence * 100
-        )
-
+        metadata_score = metadata.coverage
+        question_score = questions.coverage
+        regex_score = regex_score.coverage
+        classification = result.classified.classification.confidence
         overall = (
-            classification
-            + metadata.coverage
-            + questions.coverage
-        ) / 3
+                          classification
+                          + metadata_score
+                          + question_score
+                          + regex_score
+                  ) / 4
 
-        return ReadinessResult(
-            classification=classification,
-            metadata=metadata.coverage,
-            questions=questions.coverage,
-            overall=overall,
+        return ReadinessReport(
+            metadata_score=metadata.coverage,
+            question_score=questions.coverage,
+            overall_score = overall,
+            regex_score = regex_score
         )

@@ -31,6 +31,7 @@ class QuestionSpec:
 # document_type -> question specs for that type.
 QuestionTemplateMap = dict[str, list[QuestionSpec]]
 
+TemplateRegistry = QuestionTemplateMap
 
 class QuestionGenerator(ABC):
     """Abstract interface for turning classified documents into questions."""

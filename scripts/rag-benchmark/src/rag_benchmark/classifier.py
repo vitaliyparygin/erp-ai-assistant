@@ -12,7 +12,7 @@ import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 
-from rag_benchmark.models import ClassificationResult, Document
+from rag_benchmark.models import ClassificationResult,ClassificationCandidate, Document
 
 from rag_benchmark.utils import get_logger
 logger = get_logger("classifier")
@@ -136,7 +136,7 @@ class DefaultClassifier(DocumentClassifier):
         best_type = UNKNOWN_TYPE
         best_score = 0.0
         best_signals: list[str] = []
-
+        all_scores: list[ClassificationCandidate] = []
         for rule in self._rules:
             signals: list[str] = []
             filename_hit = any(
@@ -161,10 +161,20 @@ class DefaultClassifier(DocumentClassifier):
                 best_score = score
                 best_type = rule.document_type
                 best_signals = signals
+            all_scores.append(
+                ClassificationCandidate(
+                    document_type=rule.document_type,
+                    confidence=round(score, 3),
+                    matched_signals=signals,
+                )
+            )
 
         if best_type == UNKNOWN_TYPE:
             logger.debug("Could not classify document: %s", document.filename)
-
+        all_scores.sort(
+            key=lambda x: x.confidence,
+            reverse=True,
+        )
         logger.info(
             "%s -> %s, confidence {%s}",
             document.filename,
@@ -178,4 +188,5 @@ class DefaultClassifier(DocumentClassifier):
             document_type=best_type,
             confidence=round(best_score, 3),
             matched_signals=best_signals,
+            candidates=all_scores,
         )
