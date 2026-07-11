@@ -60,7 +60,6 @@ def build_regex_candidates(
             RegexCandidate(
                 label=label,
                 count=count,
-                regex=build_regex(label),
             )
         )
 
