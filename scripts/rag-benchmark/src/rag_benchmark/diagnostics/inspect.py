@@ -26,7 +26,14 @@ from rag_benchmark.pipeline import BenchmarkPipeline
 from rag_benchmark.scanner import detect_format
 from rag_benchmark.utils import get_logger, truncate
 from rag_benchmark.templates import TemplateDefinition
-
+from rag_benchmark.diagnostics.models import (
+    MetadataCoverageResult,
+    QuestionCoverageResult,
+    RegexSuggestion,
+    RegexStat,
+    RegexCandidate,
+    ReadinessResult
+)
 logger = get_logger("diagnostics.inspect")
 
 
@@ -53,7 +60,19 @@ class InspectResult:
     keywords: list[str] = field(default_factory=list)
 
     suggested_rule: SuggestedClassificationRule | None = None
+    regex_stats: list[RegexStat] = field(default_factory=list)
 
+    regex_candidates: list[RegexCandidate] = field(default_factory=list)
+
+    regex_suggestions: list[RegexSuggestion] = field(default_factory=list)
+
+    unused_regex: list[RegexStat] = field(default_factory=list)
+
+    metadata_coverage: MetadataCoverageResult | None = None
+
+    question_coverage: QuestionCoverageResult | None = None
+
+    readiness: ReadinessResult | None = None
 
     @property
     def is_unknown(self) -> bool:

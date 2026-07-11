@@ -67,5 +67,112 @@ def build_regex_candidates(
     return candidates
 
 
-# suggest_regex()
+def escape_label(label: str) -> str:
+    """
+    Escape label for regex generation.
+
+    Example:
+        Invoice Number
+        Invoice (Net)
+        PO#
+    """
+
+    return re.escape(label)
+
+
+def suggest_regex(label: str) -> str:
+    """
+    Generate a generic regex for a detected document label.
+
+    Examples
+    --------
+    Customer
+        -> Customer\\s*[:\\-]?\\s*(.+)
+
+    Invoice Number
+        -> Invoice\\ Number\\s*[:\\-]?\\s*(.+)
+
+    Amount
+        -> Amount\\s*[:\\-]?\\s*([$€£]?\\s?[0-9][0-9,.]*)
+
+    Date
+        -> Date\\s*[:\\-]?\\s*([0-9./\\-]+)
+
+    Currency
+        -> Currency\\s*[:\\-]?\\s*([A-Z]{3})
+    """
+
+    label = label.strip()
+
+    escaped = escape_label(label)
+
+    lower = label.lower()
+
+    #
+    # Amount / Total
+    #
+    if any(
+        word in lower
+        for word in (
+            "amount",
+            "total",
+            "subtotal",
+            "price",
+            "balance",
+            "cost",
+        )
+    ):
+        value = r"([$€£]?\s?[0-9][0-9,.]*)"
+
+    #
+    # Date
+    #
+    elif "date" in lower:
+        value = r"([0-9./\-]+)"
+
+    #
+    # Currency
+    #
+    elif "currency" in lower:
+        value = r"([A-Z]{3})"
+
+    #
+    # Email
+    #
+    elif "email" in lower:
+        value = (
+            r"([A-Za-z0-9._%+-]+@"
+            r"[A-Za-z0-9.-]+\.[A-Za-z]{2,})"
+        )
+
+    #
+    # Phone
+    #
+    elif "phone" in lower:
+        value = r"([\+\d][\d\-\s()]+)"
+
+    #
+    # Number / ID
+    #
+    elif any(
+        word in lower
+        for word in (
+            "number",
+            "no",
+            "id",
+            "invoice",
+            "order",
+            "contract",
+            "po",
+        )
+    ):
+        value = r"([A-Za-z0-9\-_/]+)"
+
+    #
+    # default
+    #
+    else:
+        value = r"(.+)"
+
+    return rf"{escaped}\s*[:\-]?\s*{value}"
 

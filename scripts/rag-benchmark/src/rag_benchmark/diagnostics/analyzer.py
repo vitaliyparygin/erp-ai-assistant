@@ -217,14 +217,14 @@ def run_diagnostics(
                 summary=summary,
             )
         )
-        RegexRenderer.render_regex_analysis(document_diagnostics)
+        # RegexRenderer.render_regex_analysis(document_diagnostics)
         all_regex_stats = [
             stat
             for diag in document_diagnostics
             for stat in diag.regex_stats
         ]
 
-        RegexRenderer.render_unused(all_regex_stats)
+        # RegexRenderer.render_unused(all_regex_stats)
         counter = Counter()
 
         for diag in document_diagnostics:

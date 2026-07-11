@@ -1,6 +1,6 @@
 from __future__ import annotations
 from collections import Counter
-from rag_benchmark.analyzers.regex_analyzer import RegexAnalyzer
+from rag_benchmark.diagnostics.models import RegexCandidate
 
 class RegexCandidateAnalyzer:
 
@@ -24,12 +24,23 @@ class RegexCandidateAnalyzer:
 
     @staticmethod
     def collect_candidates(text: str) -> Counter[str]:
-        counter: Counter[str] = Counter()
+        counter = Counter()
 
-        for label in RegexAnalyzer.find_candidate_labels(text):
+        for line in text.splitlines():
+            if ":" not in line:
+                continue
+
+            label = line.split(":", 1)[0].strip()
+
             counter[label] += 1
 
-        return counter
+        return [
+            RegexCandidate(
+                label=label,
+                count=count,
+            )
+            for label, count in counter.items()
+        ]
 
 
     @staticmethod

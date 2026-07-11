@@ -1,7 +1,5 @@
 from rag_benchmark.diagnostics.inspect import InspectResult
-from rag_benchmark.diagnostics.reporter import DiagnosticsReporter
 from rag_benchmark.renderers.regex_renderer import RegexRenderer
-from rag_benchmark.analyzers.regex_analyzer import RegexAnalyzer
 from rich.table import Table
 from rich.panel import Panel
 from rich.console import Console
@@ -91,7 +89,7 @@ class InspectRenderer:
             )
 
         if report.regex_candidates:
-            RegexRenderer.render_regex_candidates(
+            RegexRenderer.render_regex_suggestions(
                 report.regex_candidates
             )
 

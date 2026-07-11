@@ -55,18 +55,6 @@ def build_diagnostics_report(
     recommendations = generate_recommendations(
         diagnostics, classification, metadata_coverage, question_stats
     )
-    QuestionGenerationAnalyzer.report(
-        diagnostics.document_diagnostics,
-    )
-
-    QuestionCoverageAnalyzer.report(
-        diagnostics.document_diagnostics,
-    )
-
-    QuestionTemplateAnalyzer.report(
-        diagnostics.document_diagnostics,
-        diagnostics.template,
-    )
 
     logger.info("Diagnostics complete: overall readiness %.1f%%", readiness.overall_score)
     return DiagnosticsReport(

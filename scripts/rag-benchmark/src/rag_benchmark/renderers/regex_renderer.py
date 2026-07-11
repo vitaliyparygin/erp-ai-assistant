@@ -2,7 +2,7 @@ from rag_benchmark.diagnostics.models import RegexStat
 from rich.table import Table
 from rich.markup import escape
 from collections import defaultdict
-from rag_benchmark.diagnostics.models import (DocumentDiagnostic)
+from rag_benchmark.diagnostics.models import (DocumentDiagnostic, RegexCandidate, RegexSuggestion)
 from rag_benchmark.suggestions.regex_suggestions import build_regex
 from collections import Counter
 from rich.console import Console
@@ -96,23 +96,20 @@ class RegexRenderer:
         console.print(table)
 
     @staticmethod
-    def render_regex_candidates(labels: Counter[str]) -> None:
-        """Render suggested regexes inferred from document labels."""
-
-        if not labels:
-            return
-
+    def render_regex_suggestions(
+            suggestions: list[RegexSuggestion],
+    ) -> None:
         table = Table(title="Suggested Regex")
 
         table.add_column("Label")
         table.add_column("Occurrences", justify="right")
         table.add_column("Suggested Regex")
 
-        for label, count in labels.most_common():
+        for suggestion in suggestions:
+
             table.add_row(
-                label,
-                str(count),
-                build_regex(label),
+                suggestion.label,
+                str(suggestion.count),
             )
 
         console.print(table)

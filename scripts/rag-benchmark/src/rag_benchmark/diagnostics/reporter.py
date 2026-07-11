@@ -33,7 +33,6 @@ from rag_benchmark.diagnostics.statistics import (
     STATUS_GOOD,
 )
 from rag_benchmark.utils import get_logger
-from rag_benchmark.analyzers.regex_analyzer import RegexAnalyzer
 from rich.text import Text
 from rag_benchmark.suggestions.regex_suggestions import suggest_field_synonyms
 from rag_benchmark.diagnostics.models import Recommendation
@@ -137,35 +136,7 @@ class DiagnosticsReporter:
 
         self._console.print(table)
 
-    # -- Section 4: Unknown documents ---------------------------------------
 
-    def render_unknown_documents(self, report: DiagnosticsReport) -> None:
-        unknowns = report.pipeline_diagnostics.unknown_diagnostics
-        if not unknowns:
-            self._console.print("[green]No unknown documents — every file was classified.[/green]")
-            return
-
-        tree = Tree("[bold]Unknown Documents[/bold]")
-        for diag in unknowns:
-            file_branch = tree.add(f"[bold yellow]{diag.classified.document.filename}[/bold yellow]")
-
-            keywords_branch = file_branch.add("Keywords")
-            if diag.keywords:
-                for keyword in diag.keywords:
-                    keywords_branch.add(keyword)
-            else:
-                keywords_branch.add("[dim](no clear keywords detected)[/dim]")
-
-            if diag.suggested_rule:
-                rule = diag.suggested_rule
-                recommendation_branch = file_branch.add("Recommendation")
-                recommendation_branch.add(f"Create document type: [bold]{rule.document_type}[/bold]")
-                recommendation_branch.add(f"Filename pattern: {rule.filename_pattern!r}")
-                content_branch = recommendation_branch.add("Content pattern(s)")
-                for pattern in rule.content_patterns or ["(none detected)"]:
-                    content_branch.add(pattern)
-
-        self._console.print(tree)
 
     # -- Section 5: Metadata extraction report -------------------------------
 
@@ -189,37 +160,37 @@ class DiagnosticsReporter:
 
     # -- Section 6: Missing metadata report ----------------------------------
 
-    def render_missing_metadata(self, report: DiagnosticsReport) -> None:
-        with_missing = [
-            d
-            for d in report.pipeline_diagnostics.document_diagnostics
-            if d.missing_fields and not d.is_unknown
-        ]
-        if not with_missing:
-            self._console.print("[green]No missing metadata — every expected field was found.[/green]")
-            return
-
-        tree = Tree("[bold]Missing Metadata[/bold]")
-        for diag in with_missing:
-            file_branch = tree.add(f"[bold]{diag.classified.document.filename}[/bold]")
-            file_branch.add(f"Missing: {', '.join(diag.missing_fields)}")
-            file_branch.add(
-                f"Available: {', '.join(diag.available_fields) or '(none)'}"
-            )
-            suggestions_branch = file_branch.add("Suggestions")
-            for missing_field in diag.missing_fields:
-                hints = suggest_field_synonyms(missing_field)
-                suggestions_branch.add(f"{missing_field}: add regex for {', '.join(hints)}")
-                field_branch = suggestions_branch.add(
-                    f"{missing_field}: add regex for {', '.join(hints)}"
-                )
-
-                for label, regex in RegexAnalyzer.field_suggestions(
-                                                        missing_field
-                                                    ):
-                    field_branch.add(Text(f"{label} → {regex}"))
-
-        self._console.print(tree)
+    # def render_missing_metadata(self, report: DiagnosticsReport) -> None:
+    #     with_missing = [
+    #         d
+    #         for d in report.pipeline_diagnostics.document_diagnostics
+    #         if d.missing_fields and not d.is_unknown
+    #     ]
+    #     if not with_missing:
+    #         self._console.print("[green]No missing metadata — every expected field was found.[/green]")
+    #         return
+    #
+    #     tree = Tree("[bold]Missing Metadata[/bold]")
+    #     for diag in with_missing:
+    #         file_branch = tree.add(f"[bold]{diag.classified.document.filename}[/bold]")
+    #         file_branch.add(f"Missing: {', '.join(diag.missing_fields)}")
+    #         file_branch.add(
+    #             f"Available: {', '.join(diag.available_fields) or '(none)'}"
+    #         )
+    #         suggestions_branch = file_branch.add("Suggestions")
+    #         for missing_field in diag.missing_fields:
+    #             hints = suggest_field_synonyms(missing_field)
+    #             suggestions_branch.add(f"{missing_field}: add regex for {', '.join(hints)}")
+    #             field_branch = suggestions_branch.add(
+    #                 f"{missing_field}: add regex for {', '.join(hints)}"
+    #             )
+    #
+    #             for label, regex in RegexAnalyzer.field_suggestions(
+    #                                                     missing_field
+    #                                                 ):
+    #                 field_branch.add(Text(f"{label} → {regex}"))
+    #
+    #     self._console.print(tree)
 
     # -- Section 7: Question generation report -------------------------------
 
@@ -249,23 +220,23 @@ class DiagnosticsReporter:
 
     # -- Section 8: Question preview ------------------------------------------
 
-    def render_question_preview(self, report: DiagnosticsReport) -> None:
-        documents_with_questions = [
-            d for d in report.pipeline_diagnostics.document_diagnostics if d.questions
-        ]
-        if not documents_with_questions:
-            self._console.print("[dim]No questions were generated.[/dim]")
-            return
-
-        tree = Tree("[bold]Generated Questions[/bold]")
-        for diag in documents_with_questions:
-            file_branch = tree.add(f"[bold]{diag.classified.document.filename}[/bold]")
-            for query in diag.questions:
-                file_branch.add(query.query)
-
-        self._console.print(tree)
-
-    # -- Section 9: Recommendations --------------------------------------------
+    # def render_question_preview(self, report: DiagnosticsReport) -> None:
+    #     documents_with_questions = [
+    #         d for d in report.pipeline_diagnostics.document_diagnostics if d.questions
+    #     ]
+    #     if not documents_with_questions:
+    #         self._console.print("[dim]No questions were generated.[/dim]")
+    #         return
+    #
+    #     tree = Tree("[bold]Generated Questions[/bold]")
+    #     for diag in documents_with_questions:
+    #         file_branch = tree.add(f"[bold]{diag.classified.document.filename}[/bold]")
+    #         for query in diag.questions:
+    #             file_branch.add(query.query)
+    #
+    #     self._console.print(tree)
+    #
+    # # -- Section 9: Recommendations --------------------------------------------
 
 
 
@@ -350,18 +321,16 @@ class DiagnosticsReporter:
         self._console.print(Rule("Classification"))
         self.render_classification_table(report)
 
-        self._console.print(Rule("Unknown Documents"))
-        self.render_unknown_documents(report)
 
         self._console.print(Rule("Metadata Extraction"))
         self.render_metadata_coverage(report)
 
-        self._console.print(Rule("Missing Metadata"))
-        self.render_missing_metadata(report)
+        # self._console.print(Rule("Missing Metadata"))
+        # self.render_missing_metadata(report)
 
         self._console.print(Rule("Question Generation"))
         self.render_question_report(report)
-        self.render_question_preview(report)
+        # self.render_question_preview(report)
 
         self._console.print(Rule("Recommendations"))
         self.render_recommendations(report.recommendations)

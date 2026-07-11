@@ -279,4 +279,28 @@ class DiagnosticsReport:
 class RegexCandidate:
     label: str
     count: int
-    regex: str
+@dataclass
+class RegexSuggestion:
+    label: str
+    occurrences: int
+    regex: (str)
+
+@dataclass
+class MetadataCoverageResult:
+    expected: int
+    extracted: int
+    missing: int
+    coverage: float
+
+@dataclass
+class QuestionCoverageResult:
+    expected: int
+    generated: int
+    coverage: float
+
+@dataclass
+class ReadinessResult:
+    classification: float
+    metadata: float
+    questions: float
+    overall: float

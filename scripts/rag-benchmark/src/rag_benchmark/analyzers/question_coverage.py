@@ -1,6 +1,7 @@
 from __future__ import annotations
 from rag_benchmark.diagnostics.models import (DocumentDiagnostic,
-                                              QuestionCoverage)
+                                              QuestionCoverageResult)
+from rag_benchmark.diagnostics.inspect import InspectResult
 from rich.tree import Tree
 from rich.console import Console
 console = Console()
@@ -8,35 +9,20 @@ console = Console()
 class QuestionCoverageAnalyzer:
     """Analyze question generation coverage."""
 
+
     @staticmethod
-    def analyze(
-            diagnostic: DocumentDiagnostic,
-    ) -> QuestionCoverage:
-        generated = sorted(
-            {
-                field
-                for q in diagnostic.questions
-                for field in q.expected_fields
-            }
-        )
+    def analyze(result: InspectResult):
 
-        missing = [
-            f
-            for f in diagnostic.expected_fields
-            if f not in generated
-        ]
-        total = len(diagnostic.expected_fields)
-        coverage = (
-            len(generated) / total
-            if total
-            else 1.0
-        )
+        expected = len(result.expected_fields)
+        generated = len(result.questions)
 
-        return QuestionCoverage(
-            filename=diagnostic.filename,
+        return QuestionCoverageResult(
+            expected=expected,
             generated=generated,
-            missing=missing,
-            coverage=coverage,
+            coverage=(
+                generated / expected * 100
+                if expected else 100
+            ),
         )
 
     @staticmethod
