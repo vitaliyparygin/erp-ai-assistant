@@ -117,10 +117,11 @@ class RegexAnalyzer:
                         value = first[0]
                     else:
                         value = first
+                field = getattr(rule, "name", None) or getattr(rule, "field_name")
                 stats.append(
                     RegexStat(
                         document_type=doc.classification.document_type,
-                        field=rule.name,
+                        field=field,
                         pattern=pattern,
                         matched=bool(found),
                         matches = 1 if found else 0,

@@ -19,10 +19,10 @@ class InspectRenderer:
         CommonRenderer.render_file_information(report)
 
         CommonRenderer.render_classification(report)
-        InspectRenderer.render_keywords(report)
+        CommonRenderer.render_keywords(report)
 
         InspectRenderer.render_metadata(report)
-        InspectRenderer.render_metadata_details(report)
+        CommonRenderer.render_metadata_details(report)
 
         InspectRenderer.render_questions(report)
         CommonRenderer.render_question_coverage(report)
@@ -30,13 +30,13 @@ class InspectRenderer:
         InspectRenderer.render_preview(report)
 
         CommonRenderer.render_regex(report)
-        InspectRenderer.render_regex_coverage(report)
+        CommonRenderer.render_regex_coverage(report)
 
         InspectRenderer.render_template_suggestions(report)
 
-        InspectRenderer.render_readiness(report)
+        CommonRenderer.render_readiness(report)
         InspectRenderer.render_missing_improvements(report)
-        InspectRenderer.render_recommendations(recommendations)
+        CommonRenderer.render_recommendations(recommendations)
 
 
 
@@ -79,31 +79,7 @@ class InspectRenderer:
         )
 
 
-    @staticmethod
-    def render_recommendations(
-            recommendations: list[Recommendation],
-    ) -> None:
-        if not recommendations:
-            return
 
-        table = Table(title="Recommendations")
-
-        table.add_column("#", style="cyan", width=3)
-        table.add_column("Severity")
-        table.add_column("Context")
-        table.add_column("Issue")
-        table.add_column("Suggestion")
-
-        for i, rec in enumerate(recommendations, 1):
-            table.add_row(
-                str(i),
-                rec.severity,
-                rec.context,
-                rec.issue,
-                rec.suggestion,
-            )
-
-        console.print(table)
 
     # @staticmethod
     # def render_template_suggestions(report: InspectResult) -> None:
@@ -122,23 +98,7 @@ class InspectRenderer:
     #
     #     console.print(table)
 
-    @staticmethod
-    def render_regex_coverage(report: InspectResult) -> None:
-        rc = getattr(report, "regex_coverage", None)
 
-        if rc is None:
-            return
-
-        table = Table(title="Regex Coverage")
-
-        table.add_column("Metric")
-        table.add_column("Value")
-
-        table.add_row("Matched", str(rc.matched))
-        table.add_row("Missing", str(rc.missing))
-        table.add_row("Coverage", f"{rc.coverage:.1%}")
-
-        console.print(table)
 
     # @staticmethod
     # def render_keywords(report: InspectResult) -> None:
@@ -178,60 +138,27 @@ class InspectRenderer:
     #     console.print(table)
 
 
-    @staticmethod
-    def render_keywords(report: InspectResult) -> None:
-        if not report.matched_keywords:
-            return
 
-        table = Table(title="Matched Keywords")
 
-        table.add_column("#")
-        table.add_column("Keyword")
 
-        for i, keyword in enumerate(report.matched_keywords, 1):
-            table.add_row(str(i), keyword)
 
-        console.print(table)
-
-    @staticmethod
-    def render_metadata_details(report: InspectResult) -> None:
-        if not report.metadata_details:
-            return
-
-        table = Table(title="Metadata Extraction Details")
-
-        table.add_column("Field")
-        table.add_column("Matched")
-        table.add_column("Pattern")
-        table.add_column("Value")
-
-        for item in report.metadata_details:
-            table.add_row(
-                item.field,
-                "✓" if item.matched else "✗",
-                item.regex,
-                item.extracted_value or "",
-            )
-
-        console.print(table)
-
-    @staticmethod
-    def render_regex_coverage(report: InspectResult) -> None:
-        if report.regex_coverage is None:
-            return
-
-        rc = report.regex_coverage
-
-        table = Table(title="Regex Coverage")
-
-        table.add_column("Metric")
-        table.add_column("Value")
-
-        table.add_row("Matched", str(rc.matched))
-        table.add_row("Missing", str(rc.missing))
-        table.add_row("Coverage", f"{rc.coverage:.1%}")
-
-        console.print(table)
+    # @staticmethod
+    # def render_regex_coverage(report: InspectResult) -> None:
+    #     if report.regex_coverage is None:
+    #         return
+    #
+    #     rc = report.regex_coverage
+    #
+    #     table = Table(title="Regex Coverage")
+    #
+    #     table.add_column("Metric")
+    #     table.add_column("Value")
+    #
+    #     table.add_row("Matched", str(rc.matched))
+    #     table.add_row("Missing", str(rc.missing))
+    #     table.add_row("Coverage", f"{rc.coverage:.1%}")
+    #
+    #     console.print(table)
 
 
 
@@ -254,41 +181,6 @@ class InspectRenderer:
             )
         console.print(table)
 
-    @staticmethod
-    def render_readiness(report: InspectResult) -> None:
-        readiness = report.readiness
-
-        if readiness is None:
-            return
-
-        table = Table(title="Readiness")
-
-        table.add_column("Metric")
-        table.add_column("Value", justify="right")
-
-        table.add_row(
-            "Metadata coverage",
-            f"{readiness.metadata_score:.1%}",
-        )
-
-        table.add_row(
-            "Question coverage",
-            f"{readiness.question_score:.1%}",
-        )
-
-        table.add_row(
-            "Regex coverage",
-            f"{readiness.regex_score:.1%}",
-        )
-
-        table.add_section()
-
-        table.add_row(
-            "[bold]Overall[/bold]",
-            f"[bold]{readiness.overall_score:.1%}[/bold]",
-        )
-
-        console.print(table)
 
     @staticmethod
     def render_missing_improvements(report: InspectResult) -> None:
