@@ -23,7 +23,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
 from rag_benchmark.config import BenchmarkConfig
-from rag_benchmark.diagnostics import build_diagnostics_report
+from rag_benchmark.diagnostics.report_builder import build_diagnostics_report
 from rag_benchmark.diagnostics.inspect import (
     DocumentNotFoundError,
     UnsupportedDocumentError,
@@ -164,13 +164,19 @@ def generate(
     cfg = _build_config(dataset, output, template, config)
 
     pipeline = BenchmarkPipeline()
-    classified_documents, dataset_result = pipeline.run(cfg)
+    classified_documents, dataset_result, template_def = pipeline.run(cfg)
 
     console.rule("[bold blue]Regex diagnostics")
-    analyzer = RegexAnalyzer(template)
-    stats = analyzer.analyze(classified_documents)
-    analyzer.render_unused(stats)
-    analyzer.render_dataset_suggestions(classified_documents)
+    print("======================")
+    stats = []
+
+    for document in classified_documents:
+        stats.extend(
+            RegexAnalyzer.analyze(
+                document,
+                template_def,
+            )
+        )
 
     output_path = cfg.output / "benchmark_queries.json"
     if dry_run:
@@ -205,7 +211,7 @@ def report(
     cfg = _build_config(dataset, output, template, config)
 
     pipeline = BenchmarkPipeline()
-    classified_documents, dataset_result = pipeline.run(cfg)
+    classified_documents, dataset_result, template_def = pipeline.run(cfg)
     stats = compute_statistics(classified_documents, dataset_result)
 
     report_path = cfg.output / "benchmark_results_latest.md"
@@ -284,7 +290,7 @@ def export(
     cfg = _build_config(dataset, output, template, config)
 
     pipeline = BenchmarkPipeline()
-    classified_documents, dataset_result = pipeline.run(cfg)
+    classified_documents, dataset_result, template_def = pipeline.run(cfg)
     stats = compute_statistics(classified_documents, dataset_result)
 
     json_path = cfg.output / "benchmark_queries.json"

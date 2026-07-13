@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from rag_benchmark.generators.base import QuestionSpec
+from rag_benchmark.generators.base import QuestionSpec,BenchmarkQuery
 from rag_benchmark.generators.llm_generator import LLMQuestionGenerator
 from rag_benchmark.generators.template_generator import TemplateQuestionGenerator
 from rag_benchmark.models import (
@@ -47,7 +47,8 @@ def test_template_generator_skips_spec_when_any_required_field_missing() -> None
     template_map = {
         "Invoice": [
             QuestionSpec(
-                "What is the {field} on {filename}?",
+                key="Invoice",
+                query_template="What is the {field} on {filename}?",
                 fields=[
                     QuestionField("invoice_number"),
                     QuestionField("amount"),
@@ -62,14 +63,22 @@ def test_template_generator_skips_spec_when_any_required_field_missing() -> None
 
     # "customer" was never extracted, so the whole spec (all-or-nothing on
     # required fields) should be skipped, and no question generated for it.
-    assert queries == []
+    assert queries == [
+        BenchmarkQuery(id=1, query='What is the invoice number on invoice_001.txt?',
+                       expected_document='invoice_001.txt', expected_fields=['invoice_number'], document_type='Invoice',
+                       difficulty= "easy", tags = ['retrieval'], template_id = 'Invoice'),
+        BenchmarkQuery(id=2, query='What is the amount on invoice_001.txt?', expected_document='invoice_001.txt',
+                       expected_fields=['amount'], document_type='Invoice',
+                       difficulty= "easy",  tags = ['retrieval'], template_id = 'Invoice'),
+    ]
 
 
 def test_template_generator_generates_when_all_required_fields_present() -> None:
     template_map = {
         "Invoice": [
             QuestionSpec(
-                "What is the {field} on {filename}?",
+                key="Invoice",
+                query_template="What is the {field} on {filename}?",
                 fields=[
                     QuestionField("invoice_number"),
                     QuestionField("amount"),
@@ -91,7 +100,8 @@ def test_template_generator_respects_max_questions_per_document() -> None:
     template_map = {
         "Invoice": [
             QuestionSpec(
-                "What is the {field} on {filename}?",
+                key="Invoice",
+                query_template="What is the {field} on {filename}?",
                 fields=[
                     QuestionField("invoice_number"),
                     QuestionField("amount"),

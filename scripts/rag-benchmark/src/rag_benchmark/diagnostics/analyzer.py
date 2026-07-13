@@ -24,6 +24,9 @@ from rag_benchmark.analyzers.field_coverage import FieldCoverageAnalyzer
 from rag_benchmark.analyzers.question_generation import QuestionGenerationAnalyzer
 from rag_benchmark.analyzers.document_summary import DocumentSummaryAnalyzer
 from rag_benchmark.diagnostics.models import (
+    DocumentSummary,
+)
+from rag_benchmark.diagnostics.models import (
     SuggestedClassificationRule,
     PipelineDiagnostics,
     DocumentDiagnostic
@@ -182,11 +185,15 @@ def run_diagnostics(
             questions=document_questions,
         )
 
-        summary = DocumentSummaryAnalyzer.analyze(
-            classified,
-            field_result,
-            regex_result,
-            question_generation,
+        summary = DocumentSummary(
+            filename=classified.document.filename,
+            document_type=classified.classification.document_type,
+            extracted_fields=list(
+                classified.metadata.fields.keys()
+            ),
+            missing_fields=field_result.missing,
+            regex_stats=regex_result,
+            field_coverage=field_result.coverage,
         )
 
         keywords: list[str] = []

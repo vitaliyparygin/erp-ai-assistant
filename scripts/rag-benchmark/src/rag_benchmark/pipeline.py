@@ -124,7 +124,7 @@ class BenchmarkPipeline:
         )
         return BenchmarkDataset(queries=queries, template=template.name)
 
-    def run(self, config: BenchmarkConfig) -> tuple[list[ClassifiedDocument], BenchmarkDataset]:
+    def run(self, config: BenchmarkConfig) -> tuple[list[ClassifiedDocument], BenchmarkDataset, TemplateDefinition]:
         """Run the full pipeline end-to-end for a given configuration.
 
         Returns:
@@ -139,4 +139,4 @@ class BenchmarkPipeline:
             classified_documents, template, config.max_questions_per_document
         )
         dataset.source_dataset = config.dataset
-        return classified_documents, dataset
+        return classified_documents, dataset, template

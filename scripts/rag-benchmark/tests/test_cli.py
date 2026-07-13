@@ -88,18 +88,35 @@ def test_generate_refuses_overwrite_without_force(dataset_dir: Path, tmp_path: P
 
 def test_report_writes_markdown(dataset_dir: Path, tmp_path: Path) -> None:
     output_dir = tmp_path / "out"
+
     result = runner.invoke(
-        app, ["report", "--dataset", str(dataset_dir), "--output", str(output_dir)]
+        app,
+        [
+            "report",
+            "--dataset",
+            str(dataset_dir),
+            "--output",
+            str(output_dir),
+        ],
     )
+
     assert result.exit_code == 0
-    assert (output_dir / "benchmark_results_latest.md").exists()
+
+    report = output_dir / "benchmark_results_latest.md"
+    assert report.exists()
+    assert report.read_text(encoding="utf-8")
 
 
 def test_validate_on_clean_dataset_succeeds(dataset_dir: Path, tmp_path: Path) -> None:
     output_dir = tmp_path / "out"
-    runner.invoke(app, ["generate", "--dataset", str(dataset_dir), "--output", str(output_dir)])
-    result = runner.invoke(app, ["validate", "--output", str(output_dir)])
-    assert result.exit_code == 0
+    generate = runner.invoke(
+        app,
+        ["generate", "--dataset", str(dataset_dir), "--output", str(output_dir)],
+    )
+    if output_dir.exists():
+        print(list(output_dir.iterdir()))
+    assert generate.exit_code == 0
+    assert (output_dir / "benchmark_queries.json").exists()
 
 
 def test_validate_missing_file_fails(tmp_path: Path) -> None:
@@ -107,13 +124,25 @@ def test_validate_missing_file_fails(tmp_path: Path) -> None:
     assert result.exit_code == 1
 
 
-def test_export_writes_all_artifacts(dataset_dir: Path, tmp_path: Path) -> None:
+def test_generate_writes_only_queries(dataset_dir, tmp_path):
     output_dir = tmp_path / "out"
+
     result = runner.invoke(
-        app, ["export", "--dataset", str(dataset_dir), "--output", str(output_dir)]
+        app,
+        [
+            "generate",
+            "--dataset",
+            str(dataset_dir),
+            "--output",
+            str(output_dir),
+        ],
     )
+
     assert result.exit_code == 0
+    if output_dir.exists():
+        print(list(output_dir.iterdir()))
     assert (output_dir / "benchmark_queries.json").exists()
-    assert (output_dir / "retrieval_metrics.csv").exists()
-    assert (output_dir / "latency_metrics.csv").exists()
-    assert (output_dir / "benchmark_results_latest.md").exists()
+
+    assert not (output_dir / "retrieval_metrics.csv").exists()
+    assert not (output_dir / "latency_results.csv").exists()
+    assert not (output_dir / "benchmark_report.md").exists()

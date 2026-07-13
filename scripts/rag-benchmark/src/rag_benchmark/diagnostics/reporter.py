@@ -19,7 +19,6 @@ from rich.syntax import Syntax
 from rich.table import Table
 from rich.tree import Tree
 
-from rag_benchmark.diagnostics import DiagnosticsReport
 from rag_benchmark.diagnostics.analyzer import DocumentDiagnostic
 from rag_benchmark.diagnostics.inspect import InspectResult
 from rag_benchmark.diagnostics.recommendations import (
@@ -33,9 +32,8 @@ from rag_benchmark.diagnostics.statistics import (
     STATUS_GOOD,
 )
 from rag_benchmark.utils import get_logger
-from rich.text import Text
 from rag_benchmark.suggestions.regex_suggestions import suggest_field_synonyms
-from rag_benchmark.diagnostics.models import Recommendation
+from rag_benchmark.diagnostics.models import Recommendation, DiagnosticsReport
 from rich.console import Console
 console = Console()
 logger = get_logger("diagnostics.reporter")

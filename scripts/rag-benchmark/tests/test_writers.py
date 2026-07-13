@@ -28,6 +28,7 @@ def _query(i: int) -> BenchmarkQuery:
         document_type="Invoice",
         difficulty=Difficulty.EASY,
         tags=["retrieval"],
+        template_id='Invoice'
     )
 
 

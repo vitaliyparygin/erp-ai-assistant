@@ -87,6 +87,7 @@ class LLMQuestionGenerator(QuestionGenerator):
                 continue
 
             for item in items[:max_questions_per_document]:
+                print(item)
                 try:
                     queries.append(
                         BenchmarkQuery(
@@ -97,7 +98,7 @@ class LLMQuestionGenerator(QuestionGenerator):
                             document_type=doc_type,
                             difficulty=Difficulty(item.get("difficulty", "easy")),
                             tags=item.get("tags", []),
-                            template_id=item.key
+                            template_id=item.get("key", '')
                         )
                     )
                     next_id += 1
