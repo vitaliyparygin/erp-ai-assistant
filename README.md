@@ -101,6 +101,22 @@ Example
 
 ---
 
+## Documentation
+
+Detailed documentation is available in the `docs/` directory.
+
+| Topic | Description |
+|--------|-------------|
+| [Architecture](docs/architecture.md) | System architecture |
+| [Agents](docs/agents.md) | Multi-agent workflow |
+| [Benchmarks](docs/benchmarks.md) | Benchmark generation |
+| [Configuration](docs/configuration.md) | Configuration options |
+| [API](docs/api.md) | REST API |
+| [Prompts](docs/prompts.md) | Prompt templates |
+| [Examples](docs/examples/) | Example datasets |
+| [Deployment](docs/deployment.md) | Deployment guide |
+| [FAQ](docs/faq.md) | Frequently asked questions |
+
 ## Screenshots
 
 ...

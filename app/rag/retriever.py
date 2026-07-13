@@ -23,7 +23,7 @@ from app.core.logging import get_logger
 from app.models.schemas import RetrievedChunk
 from app.rag.chunker import TextChunk
 from app.rag.embeddings import EmbeddingService
-from utils.resources import load_json
+from app.utils.resources import load_json
 
 logger = get_logger(__name__)
 
