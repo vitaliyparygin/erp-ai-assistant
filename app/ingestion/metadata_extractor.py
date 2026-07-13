@@ -21,8 +21,6 @@ class MetadataExtractor:
 
         # lower_name = filename.lower()
         text_lower = text.lower()
-        print('1111111-MetadataExtractor-111111')
-        print(text_lower)
 
         if (
             "service agreement" in text_lower
@@ -51,7 +49,6 @@ class MetadataExtractor:
                 if not m:
                     continue
 
-                # якщо є група захоплення
                 if m.lastindex:
                     value = m.group(1)
 

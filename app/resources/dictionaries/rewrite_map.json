@@ -1,0 +1,27 @@
+ {
+    "виконавець договору": [
+        "contractor",
+        "service provider",
+        "executor"
+    ],
+
+    "замовник договору": [
+        "customer",
+        "client"
+    ],
+
+    "номер договору": [
+        "contract number",
+        "agreement number"
+    ],
+
+    "працівник": [
+        "employee",
+        "worker"
+    ],
+
+    "наказ": [
+        "employee order",
+        "order"
+    ]
+}

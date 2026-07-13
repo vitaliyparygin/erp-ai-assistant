@@ -5,10 +5,7 @@ and cross-encoder reranking.
 """
 import time
 import uuid
-from typing import Any
 import re
-
-from dotenv.cli import unset
 from qdrant_client import AsyncQdrantClient, models
 from qdrant_client.models import (
     Distance,
@@ -16,7 +13,6 @@ from qdrant_client.models import (
     Filter,
     MatchAny,
     MatchValue,
-    NamedVector,
     PointStruct,
     VectorParams,
 )
@@ -27,82 +23,18 @@ from app.core.logging import get_logger
 from app.models.schemas import RetrievedChunk
 from app.rag.chunker import TextChunk
 from app.rag.embeddings import EmbeddingService
+from utils.resources import load_json
 
 logger = get_logger(__name__)
 
-TERM_EXPANSIONS = {
-    "executor": {"contractor", "service provider"},
-    "угода": {
-        "contract",
-        "agreement",
-        "opportunity",
-        "stage",
-    },
-    "стадія": {
-        "stage",
-        "status",
-        "phase",
-    },
-    "stage": [
-        "стадія",
-        "status",
-        "етап",
-        "phase",
-    ],
-
-    "customer": [
-        "замовник",
-        "клієнт",
-        "customer",
-        "executor"
-    ],
-
-    "contractor": [
-        "виконавець",
-        "підрядник",
-        "contractor",
-    ],
-
-    "opportunity": [
-        "угода",
-        "deal",
-        "opportunity",
-    ],
-}
+TERM_EXPANSIONS = load_json("term_expansions.json")
 STOP_WORDS = {
     "the", "is", "with", "which",
     "a", "an", "of", "to", "in"
 }
-IMPORTANT_TERMS = {
-    "contract",
-    "contractor",
-    "executor",
-    "customer",
-    "agreement",
-}
+IMPORTANT_TERMS = load_json("important_terms_with_bust.json")
 
-DOCUMENT_HINTS = {
-    "customer": {
-        "service_contract.pdf": 0.40,
-        "Customer Card.pdf": 0.30,
-    },
-
-    "contractor": {
-        "service_contract.pdf": 0.50,
-    },
-
-    "eic": {
-        "electricity_bill.pdf": 0.80,
-    },
-
-    "stage": {
-        "CRM Opportunity.pdf": 0.80,
-    },
-
-    "opportunity": {
-        "CRM Opportunity.pdf": 0.80,
-    },
-}
+DOCUMENT_HINTS = load_json("document_hints.json")
 
 class VectorStore:
     """
@@ -368,20 +300,6 @@ class VectorRetriever:
 
         latency_ms = (time.monotonic() - start_time) * 1000
 
-        # chunks = [
-        #     RetrievedChunk(
-        #         chunk_id=str(result.id),
-        #         document_id=result.payload.get("document_id", ""),
-        #         document_name=result.payload.get("document_name", ""),
-        #         content=result.payload.get("content", ""),
-        #         page_number=result.payload.get("page_number"),
-        #         score=result.score,
-        #         chunk_index=result.payload.get("chunk_index", 0),
-        #         metadata=result.payload.get("chunk_metadata", {}),
-        #     )
-        #
-        #     for result in results
-        # ]
         chunks = []
 
         for result in results:

@@ -1,0 +1,42 @@
+{
+    "executor": [
+      "contractor",
+      "service provider"
+    ],
+    "угода": [
+        "contract",
+        "agreement",
+        "opportunity",
+        "stage"
+    ],
+    "стадія": [
+      "stage",
+      "status",
+      "phase"
+    ],
+    "stage": [
+        "стадія",
+        "status",
+        "етап",
+        "phase"
+    ],
+
+    "customer": [
+        "замовник",
+        "клієнт",
+        "customer",
+        "executor"
+    ],
+
+    "contractor": [
+        "виконавець",
+        "підрядник",
+        "contractor"
+    ],
+
+    "opportunity": [
+        "угода",
+        "deal",
+        "opportunity"
+    ]
+}

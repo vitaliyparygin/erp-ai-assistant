@@ -26,61 +26,12 @@ from app.agents.memory import MemoryAgent
 from app.agents.research import ResearchAgent
 from app.agents.summarize import SummarizerAgent
 from app.agents.citation import CitationAgent
+from utils.resources import load_json
 logger = get_logger(__name__)
 
-REWRITE_MAP = {
-    "виконавець договору": [
-        "contractor",
-        "service provider",
-        "executor",
-    ],
-
-    "замовник договору": [
-        "customer",
-        "client",
-    ],
-
-    "номер договору": [
-        "contract number",
-        "agreement number",
-    ],
-
-    "працівник": [
-        "employee",
-        "worker",
-    ],
-
-    "наказ": [
-        "employee order",
-        "order",
-    ],
-}
-
-FIELD_PATTERNS = {
-    "платник": "Customer:",
-    "customer": "Customer:",
-    "замовник": "Customer:",
-    "contractor": "Contractor:",
-    "виконавець": "Contractor:",
-    "eic": "EIC:",
-}
-PROTECTED_TERMS = {
-    "eic",
-    "customer",
-    "contractor",
-    "executor",
-    "stage",
-    "status",
-    "invoice",
-    "agreement",
-    "стадія",
-    "угода",
-}
-
-
-
-
-
+REWRITE_MAP = load_json("rewrite_map.json")
+FIELD_PATTERNS = load_json("field_patterns.json")
+PROTECTED_TERMS = load_json("protected_terms.json")
 # =============================================================================
 # Graph Builder
 # =============================================================================
@@ -137,15 +88,6 @@ class ERPAssistantGraph:
 
         builder.add_edge(START, "memory")
         builder.add_edge("memory", "retriever")
-        # builder.add_edge("retriever", "research")
-        # builder.add_conditional_edges(
-        #     "disambiguation",
-        #     should_summarize,
-        #     {
-        #         True: "summarizer",
-        #         False: "citation",
-        #     },
-        # )
 
         builder.add_conditional_edges(
             "retriever",

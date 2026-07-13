@@ -1,17 +1,8 @@
-from collections import OrderedDict
-import traceback
-
-CONTRACT_TERMS = [
-    "договір",
-    "контракт",
-    "угода",
-    "agreement",
-    "contract",
-    "договор"
-]
-
 import re
+import traceback
+from utils.resources import load_json
 
+CONTRACT_TERMS = load_json("contract_keywords.json")
 
 def _extract_contract_number(
     text: str,
@@ -84,10 +75,9 @@ def build_disambiguation_answer(
 
     if len(contracts) <= 1:
         return None
-    print('traceback33333')
     traceback.print_stack()
     lines = [
-        "Я знайшов декілька договорів1:",
+        "I found some contracts:",
         "",
     ]
 
@@ -99,12 +89,12 @@ def build_disambiguation_answer(
 
         if data.get("contract_number"):
             lines.append(
-                f"   Номер: {data['contract_number']}"
+                f"   Number: {data['contract_number']}"
             )
 
         if data.get("valid_until"):
             lines.append(
-                f"   Діє до: {data['valid_until']}"
+                f"   Valid until: {data['valid_until']}"
             )
 
         lines.append("")
@@ -112,7 +102,7 @@ def build_disambiguation_answer(
         idx += 1
 
     lines.append(
-        "Уточніть, про який договір йде мова."
+        "Please clarify which contract you are talking about."
     )
 
     return "\n".join(lines)

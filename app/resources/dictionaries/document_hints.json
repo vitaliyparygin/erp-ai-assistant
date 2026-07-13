@@ -1,0 +1,22 @@
+{
+    "customer": {
+        "service_contract.pdf": 0.40,
+        "Customer Card.pdf": 0.30
+    },
+
+    "contractor": {
+        "service_contract.pdf": 0.50
+    },
+
+    "eic": {
+        "electricity_bill.pdf": 0.80
+    },
+
+    "stage": {
+        "CRM Opportunity.pdf": 0.80
+    },
+
+    "opportunity": {
+        "CRM Opportunity.pdf": 0.80
+    }
+}

@@ -15,69 +15,16 @@ from app.rag.prompts import (
 from app.rag.retriever import Reranker, VectorRetriever
 import traceback
 from app.ingestion.query_metadata import extract_query_metadata
-
+from utils.resources import load_json
 logger = get_logger(__name__)
 
-REWRITE_MAP = {
-    "виконавець договору": [
-        "contractor",
-        "service provider",
-        "executor",
-    ],
-
-    "замовник договору": [
-        "customer",
-        "client",
-    ],
-
-    "номер договору": [
-        "contract number",
-        "agreement number",
-    ],
-
-    "працівник": [
-        "employee",
-        "worker",
-    ],
-
-    "наказ": [
-        "employee order",
-        "order",
-    ],
-}
-
-FIELD_PATTERNS = {
-    "платник": "Customer:",
-    "customer": "Customer:",
-    "замовник": "Customer:",
-    "contractor": "Contractor:",
-    "виконавець": "Contractor:",
-    "eic": "EIC:",
-}
-PROTECTED_TERMS = {
-    "eic",
-    "customer",
-    "contractor",
-    "executor",
-    "stage",
-    "status",
-    "invoice",
-    "agreement",
-    "стадія",
-    "угода",
-}
+REWRITE_MAP = load_json("rewrite_map.json")
+FIELD_PATTERNS = load_json("field_patterns.json")
+PROTECTED_TERMS = load_json("protected_terms.json")
 
 def is_contract_query(query: str) -> bool:
     q = query.lower()
-
-    keywords = [
-        "договір",
-        "контракт",
-        "agreement",
-        "contract",
-        "договор"
-    ]
-    print("is_contract_query:",any(k in q for k in keywords))
+    keywords = load_json("contract_keywords.json")
     return any(k in q for k in keywords)
 
 
@@ -92,9 +39,7 @@ def has_contract_identifier(query: str) -> bool:
 def is_ambiguous_contract_query(query: str) -> bool:
     if not isinstance(query, str):
         return False
-    print(query)
-    print('is_contract_query(query):',is_contract_query(query))
-    print('not has_contract_identifier(query):', not has_contract_identifier(query))
+
     return (
         is_contract_query(query)
         and not has_contract_identifier(query)
@@ -104,7 +49,6 @@ def requires_contract_disambiguation(
     query: str,
     docs: list,
 ) -> bool:
-    print('---requires_contract_disambiguation----')
     if not is_ambiguous_contract_query(query):
         return False
     logger.warning(
@@ -122,7 +66,6 @@ def requires_contract_disambiguation(
         for d in docs
         if d.metadata.get("document_type") == "contract"
     ]
-    print('----len(contract_docs):', len(contract_docs))
 
     return len(contract_docs) > 1
 
@@ -148,7 +91,7 @@ def build_contract_disambiguation(contracts):
     if not contracts:
         return None
     traceback.print_stack()
-    lines = ["Я знайшов декілька договорів2:\n"]
+    lines = ["I found some contracts:\n"]
 
     for idx, contract in enumerate(
         contracts,
@@ -160,18 +103,18 @@ def build_contract_disambiguation(contracts):
 
         if contract.get("contract_number"):
             lines.append(
-                f"   Номер: {contract['contract_number']}"
+                f"   Number: {contract['contract_number']}"
             )
 
         if contract.get("valid_until"):
             lines.append(
-                f"   Діє до: {contract['valid_until']}"
+                f"   Valid until: {contract['valid_until']}"
             )
 
         lines.append("")
 
     lines.append(
-        "Уточніть, про який договір йде мова."
+        "Specify what you are talking about."
     )
     logger.debug(
         "build_contract_disambiguation:result",
@@ -197,15 +140,6 @@ class RetrieverAgent:
         self._settings = get_settings()
 
     async def __call__(self, state: AgentState) -> dict:
-        # RAG_RETRIEVAL_LATENCY = Histogram(
-        #     "rag_retrieval_latency_ms",
-        #     "Retrieval latency"
-        # )
-        #
-        # RAG_RETRIEVED_CHUNKS = Histogram(
-        #     "rag_retrieved_chunks_count",
-        #     "Retrieved chunks count"
-        # )
 
         logger.debug("retriever_agent_start", query=state.query[:60])
         start = time.monotonic()
@@ -241,11 +175,6 @@ class RetrieverAgent:
                 "query_metadata",
                 query_metadata=query_metadata,
             )
-            # results = metadata_boost(
-            #     results,
-            #     query_metadata,
-            # )
-            # 2. Semantic retrieval
 
             chunks = await self._retriever.retrieve(
                 query=rewritten_query,
