@@ -1,6 +1,6 @@
 import re
 import traceback
-from utils.resources import load_json
+from app.utils.resources import load_json
 
 CONTRACT_TERMS = load_json("contract_keywords.json")
 

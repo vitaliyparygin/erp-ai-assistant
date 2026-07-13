@@ -15,7 +15,7 @@ from app.rag.prompts import (
 from app.rag.retriever import Reranker, VectorRetriever
 import traceback
 from app.ingestion.query_metadata import extract_query_metadata
-from utils.resources import load_json
+from app.utils.resources import load_json
 logger = get_logger(__name__)
 
 REWRITE_MAP = load_json("rewrite_map.json")

@@ -26,7 +26,7 @@ from app.agents.memory import MemoryAgent
 from app.agents.research import ResearchAgent
 from app.agents.summarize import SummarizerAgent
 from app.agents.citation import CitationAgent
-from utils.resources import load_json
+from app.utils.resources import load_json
 logger = get_logger(__name__)
 
 REWRITE_MAP = load_json("rewrite_map.json")

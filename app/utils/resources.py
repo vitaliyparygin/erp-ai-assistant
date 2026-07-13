@@ -9,8 +9,19 @@ def load_json(name: str):
     if not name.endswith(".json"):
         name += ".json"
 
-    return json.loads(
-        files(dictionaries)
-        .joinpath(name)
-        .read_text(encoding="utf-8")
-    )
+    path = files(dictionaries).joinpath(name)
+
+    if not path.is_file():
+        available = sorted(
+            p.name
+            for p in files(dictionaries).iterdir()
+            if p.name.endswith(".json")
+        )
+
+        raise FileNotFoundError(
+            f"Dictionary '{name}' not found.\n"
+            f"Expected: {path}\n"
+            f"Available dictionaries: {available}"
+        )
+
+    return json.loads(path.read_text(encoding="utf-8"))

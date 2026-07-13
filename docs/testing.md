@@ -1,73 +1,125 @@
 # Testing
 
-The project uses Pytest.
+AI ERP Assistant includes a lightweight evaluation framework for measuring retrieval quality and tuning search parameters.
 
-## Run all tests
+Unlike traditional unit testing, the current focus is validating Retrieval-Augmented Generation (RAG) quality.
 
-```bash
-pytest
+---
+
+# Test datasets
+
+Example datasets are stored in:
+
+```
+tests/datasets/
 ```
 
-## Run benchmark tests
+These documents are indexed into Qdrant and used during retrieval evaluation.
 
-```bash
-pytest scripts/rag-benchmark/tests
+---
+
+# Test cases
+
+Queries and expected answers are defined in
+
+```
+tests/test_cases.yaml
 ```
 
-## Run a single test
+Each test case contains:
+
+- question
+- expected document
+- expected fields
+- expected answer (optional)
+
+---
+
+# Running evaluation
+
+Run the complete evaluation:
 
 ```bash
-pytest scripts/rag-benchmark/tests/test_cli.py
+python tests/run_tests.py
 ```
 
-## Run with coverage
+Results are written to
+
+```
+tests/report.csv
+```
+
+---
+
+# Threshold tuning
+
+Similarity thresholds can be optimized with
 
 ```bash
-pytest --cov=app --cov=scripts/rag-benchmark
+python tests/threshold_tuning.py
 ```
 
-## Benchmark validation
+The script evaluates different similarity cutoffs and reports precision / recall.
 
-Generate benchmark data
+---
+
+# Top-K tuning
+
+Retriever Top-K can be optimized with
 
 ```bash
-rag-benchmark generate
+python tests/top_k_tuning.py
 ```
 
-Validate
+This helps determine the best number of retrieved chunks before reranking.
+
+---
+
+# Future testing roadmap
+
+Planned testing includes:
+
+- Unit tests
+- Integration tests
+- API tests
+- End-to-end RAG evaluation
+- Hallucination detection
+- Prompt regression tests
+- Multi-language evaluation
+- Benchmark automation
+- CI/CD integration
+- Performance testing
+
+---
+
+# Recommended workflow
+
+After changing:
+
+- prompts
+- retriever
+- embeddings
+- reranker
+- chunking
+- metadata extraction
+
+run
 
 ```bash
-rag-benchmark validate
+python tests/run_tests.py
 ```
 
-Generate report
+before committing changes.
 
-```bash
-rag-benchmark report
-```
+---
 
-Export all artifacts
+# Continuous evaluation
 
-```bash
-rag-benchmark export
-```
+Every major change to the retrieval pipeline should be evaluated against the same dataset to detect regressions in:
 
-## Continuous Integration
+- Recall
+- Precision
+- Ranking quality
+- Latency
 
-Before opening a Pull Request, verify that:
-
-- all tests pass
-- benchmark generation succeeds
-- benchmark validation succeeds
-- lint passes
-- formatting passes
-
-Recommended commands
-
-```bash
-pytest
-
-ruff check .
-
-black --check .
-```
+Keeping the evaluation dataset stable allows results to be compared across versions.
