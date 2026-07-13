@@ -16,6 +16,23 @@ The system combines:
 - PDF Knowledge Base
 
 ---
+## Quick Start
+
+### Requirements
+
+- Docker & Docker Compose
+- Python 3.12+ (for local development)
+- Ollama
+- Qdrant
+
+### Start the application
+
+```bash
+docker compose up --build
+
+````
+---
+
 
 ## Features
 
@@ -35,11 +52,15 @@ The system combines:
 
 ✅ Docker deployment
 
+
+
+
+
 ---
 
 ## Architecture
 
-![architecture_diagram.png](docs/architecture_diagram.png)
+![architecture_diagram.png](docs/img/architecture_diagram.png)
 ```
 
 ---
