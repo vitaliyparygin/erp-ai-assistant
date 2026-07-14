@@ -2,7 +2,6 @@
 from rag_benchmark.diagnostics.models import (ReadinessReport)
 from rag_benchmark.diagnostics.inspect import InspectResult
 
-
 class ReadinessAnalyzer:
 
     @staticmethod

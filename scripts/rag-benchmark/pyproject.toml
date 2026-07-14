@@ -9,7 +9,7 @@ description = "Framework-agnostic benchmark dataset and evaluation asset generat
 readme = "README.md"
 requires-python = ">=3.12"
 license = { file = "LICENSE" }
-authors = [{ name = "RAG Benchmark Contributors" }]
+authors = [{ name = "vitaliy.parygin" }, { email = "vitalit.parygin@gmail.com"}]
 keywords = ["rag", "benchmark", "evaluation", "llm", "retrieval"]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -40,7 +40,7 @@ dev = [
 ]
 
 [project.scripts]
-rag-benchmark = "rag_benchmark.cli:app"
+rag-benchmark = "rag_benchmark.cli.main:app"
 
 [tool.setuptools.packages.find]
 where = ["src"]

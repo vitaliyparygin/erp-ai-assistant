@@ -2,6 +2,9 @@
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[project.scripts]
+rag-benchmark = "rag_benchmark.cli.main:app"
+
 [project]
 name = "erp-ai-assistant"
 version = "0.1.0"
@@ -10,6 +13,8 @@ readme = "README.md"
 requires-python = ">=3.12"
 langchain-ollama = "^0.3.3"
 ollama = "^0.4.7"
+authors = [{ name = "vitaliy.parygin" }, { email = "vitalit.parygin@gmail.com"}]
+
 
 dependencies = [
     "fastapi",

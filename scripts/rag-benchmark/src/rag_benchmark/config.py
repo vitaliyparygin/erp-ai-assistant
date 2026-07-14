@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field, field_validator
 class BenchmarkConfig(BaseModel):
     """Top-level configuration for a benchmark generation run."""
 
-    dataset: Path = Path("tests/datasets")
+    dataset: Path | None = None
     output: Path = Path("benchmarks")
     template: str = "generic"
     reader: str = "pdfplumber"
@@ -57,7 +57,7 @@ class BenchmarkConfig(BaseModel):
         This is meant to be fed CLI flags directly; any override that is
         None is ignored so CLI defaults never clobber a loaded config.
         """
-        clean = {key: value for key, value in overrides.items() if value is not None}
+        clean = {k: v for k, v in overrides.items() if v is not None}
         return self.model_copy(update=clean)
 
     def save(self, path: Path) -> None:
@@ -75,3 +75,19 @@ class BenchmarkConfig(BaseModel):
         }
         with path.open("w", encoding="utf-8") as handle:
             yaml.safe_dump(payload, handle, sort_keys=False)
+
+def build_config(
+    dataset: Path | None,
+    output: Path | None,
+    template: str | None,
+    config: Path | None,
+) -> BenchmarkConfig:
+
+    base = BenchmarkConfig.load(config)
+    cfg = base.with_overrides(dataset=dataset, output=output, template=template)
+    if cfg.dataset is None:
+        raise ValueError(
+            "Dataset directory is required. "
+            "Pass --dataset or specify it in benchmark.yaml."
+        )
+    return cfg

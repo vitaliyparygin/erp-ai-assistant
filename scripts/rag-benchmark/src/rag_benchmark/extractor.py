@@ -13,7 +13,8 @@ from dataclasses import dataclass
 
 from rag_benchmark.models import ExtractedField, ExtractedMetadata
 from rag_benchmark.models import Document as DocumentModel
-from rag_benchmark.utils import get_logger, normalize_whitespace
+from rag_benchmark.logging import get_logger
+from rag_benchmark.utils.text import normalize_whitespace
 
 logger = get_logger("extractor")
 

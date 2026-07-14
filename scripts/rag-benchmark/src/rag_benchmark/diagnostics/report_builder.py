@@ -1,4 +1,4 @@
-from rag_benchmark.utils import get_logger
+from rag_benchmark.logging import get_logger
 from rag_benchmark.config import BenchmarkConfig
 from rag_benchmark.pipeline import BenchmarkPipeline
 
@@ -34,8 +34,11 @@ def build_diagnostics_report(
         A complete DiagnosticsReport.
     """
     logger.info("Starting diagnostics run for dataset: %s", config.dataset)
-    diagnostics = run_diagnostics(pipeline, config, file)
-
+    diagnostics = run_diagnostics(pipeline=pipeline, config=config, file=file)
+    print("AFTER CALL")
+    print("builder.classified =", len(diagnostics.classified_documents))
+    print("builder.docs =", len(diagnostics.document_diagnostics))
+    print("builder.queries =", len(diagnostics.dataset.queries))
     classification = compute_classification_stats(diagnostics)
     metadata_coverage = compute_metadata_coverage(diagnostics)
     question_stats = compute_question_stats(diagnostics)

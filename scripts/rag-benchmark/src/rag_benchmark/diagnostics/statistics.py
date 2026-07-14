@@ -8,7 +8,7 @@ trivially testable.
 from __future__ import annotations
 
 from rag_benchmark.classifier import UNKNOWN_TYPE
-from rag_benchmark.utils import get_logger
+from rag_benchmark.logging import get_logger
 from rag_benchmark.diagnostics.models import (
     PipelineDiagnostics,
     DocumentDiagnostic,
@@ -44,11 +44,6 @@ def _mean(values: list[float]) -> float:
     if not values:
         return 0.0
     return round(sum(values) / len(values), 1)
-
-
-
-
-
 
 def compute_classification_stats(diagnostics: PipelineDiagnostics) -> ClassificationStats:
     """Tally how many documents landed in each document type.

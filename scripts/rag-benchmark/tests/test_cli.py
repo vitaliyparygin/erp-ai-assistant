@@ -7,7 +7,7 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
-from rag_benchmark.cli import app
+from rag_benchmark.cli.app import app
 
 runner = CliRunner()
 

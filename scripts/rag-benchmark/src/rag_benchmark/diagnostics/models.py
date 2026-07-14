@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from rag_benchmark.models import BenchmarkDataset, BenchmarkQuery, ClassifiedDocument
+from rag_benchmark.models import BenchmarkDataset, BenchmarkQuery, ClassifiedDocument, ScannedFile
 from rag_benchmark.classifier import UNKNOWN_TYPE
 from rag_benchmark.config import BenchmarkConfig
 from rag_benchmark.templates import TemplateDefinition
@@ -365,3 +365,10 @@ class MissingImprovement:
     category: str
     item: str
     suggestion: str
+
+@dataclass
+class PipelineResult:
+    template: TemplateDefinition
+    scanned_files: list[ScannedFile]
+    classified_documents: list[ClassifiedDocument]
+    dataset: BenchmarkDataset

@@ -1,87 +1,22 @@
 import re
-from collections import Counter, defaultdict
-from rich.table import Table
-from rich.markup import escape
+from collections import Counter
 from rag_benchmark.models import ClassifiedDocument
 from rag_benchmark.templates import TemplateDefinition
-from rag_benchmark.diagnostics.models import RegexStat, DocumentDiagnostic, RegexCandidate
+from rag_benchmark.diagnostics.models import RegexStat
 from rich.text import Text
-
 from rag_benchmark.suggestions.regex_suggestions import build_regex
+from rag_benchmark.models import ResourceGroup
+from rag_benchmark.utils.resources import load_json
 from rich.console import Console
+
 console = Console()
 LABEL_REGEX = re.compile(
     r"^([A-Za-z][A-Za-z0-9 _/\-]{2,40})\s*:",
     flags=re.MULTILINE,
 )
-FIELD_REGEX_HINTS: dict[str, list[str]] = {
-    "amount": [
-        "Amount",
-        "Total",
-        "Grand Total",
-        "Balance Due",
-        "Subtotal",
-    ],
-    "invoice_number": [
-        "Invoice Number",
-        "Invoice No",
-        "Invoice #",
-    ],
-    "contract_number": [
-        "Contract Number",
-        "Agreement Number",
-        "Reference Number",
-    ],
-    "customer": [
-        "Customer",
-        "Client",
-        "Buyer",
-        "Account Holder",
-    ],
-    "vendor": [
-        "Vendor",
-        "Supplier",
-        "Seller",
-        "Provider",
-    ],
-    "ticket_number": [
-        "Ticket Number",
-        "Case Number",
-        "Reference",
-    ],
-    "priority": [
-        "Priority",
-        "Priority Level",
-    ],
-    "status": [
-        "Status",
-        "Current Status",
-        "State",
-    ],
-    "delivery_date": [
-        "Delivery Date",
-        "Ship Date",
-        "Expected Delivery",
-    ],
-    "due_date": [
-        "Due Date",
-        "Payment Due",
-    ],
-    "start_date": [
-        "Start Date",
-        "Effective Date",
-        "Commencement Date",
-    ],
-    "end_date": [
-        "End Date",
-        "Expiration Date",
-        "Termination Date",
-    ],
-}
+FIELD_REGEX_HINTS: dict[str, list[str]] = load_json(ResourceGroup.REGEX,"field_regex_hints.json")
 def regex_text(regex: str) -> Text:
     return Text(regex)
-
-
 
 
 class RegexAnalyzer:
@@ -130,13 +65,7 @@ class RegexAnalyzer:
                     )
                 )
 
-
         return stats
-
-
-
-
-
 
     # @staticmethod
     @staticmethod

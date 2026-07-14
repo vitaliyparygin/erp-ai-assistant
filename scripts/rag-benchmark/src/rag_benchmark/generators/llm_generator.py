@@ -11,7 +11,8 @@ from typing import Protocol
 
 from rag_benchmark.generators.base import QuestionGenerator, QuestionTemplateMap
 from rag_benchmark.models import BenchmarkQuery, ClassifiedDocument, Difficulty
-from rag_benchmark.utils import get_logger, truncate
+from rag_benchmark.logging import get_logger
+from rag_benchmark.utils.text import  truncate
 
 logger = get_logger("generators.llm")
 

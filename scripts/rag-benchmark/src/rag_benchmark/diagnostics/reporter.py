@@ -7,18 +7,14 @@ number and piece of text it displays was already computed by
 """
 
 from __future__ import annotations
-
 from datetime import datetime
 from pathlib import Path
-
 from rich.columns import Columns
-from rich.console import Console
 from rich.panel import Panel
 from rich.rule import Rule
 from rich.syntax import Syntax
 from rich.table import Table
 from rich.tree import Tree
-
 from rag_benchmark.diagnostics.analyzer import DocumentDiagnostic
 from rag_benchmark.diagnostics.inspect import InspectResult
 from rag_benchmark.diagnostics.recommendations import (
@@ -31,7 +27,7 @@ from rag_benchmark.diagnostics.statistics import (
     STATUS_FAIR,
     STATUS_GOOD,
 )
-from rag_benchmark.utils import get_logger
+from rag_benchmark.logging import get_logger
 from rag_benchmark.suggestions.regex_suggestions import suggest_field_synonyms
 from rag_benchmark.diagnostics.models import Recommendation, DiagnosticsReport
 from rich.console import Console
@@ -50,10 +46,6 @@ _STATUS_COLORS = {
     STATUS_FAIR: "yellow",
 }
 _DEFAULT_STATUS_COLOR = "red"
-
-
-
-
 
 class DiagnosticsReporter:
     """Renders a DiagnosticsReport to a Rich console and/or Markdown."""

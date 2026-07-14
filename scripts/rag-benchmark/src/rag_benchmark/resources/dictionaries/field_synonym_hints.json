@@ -1,0 +1,14 @@
+{
+    "address": ["office", "registered office", "location"],
+    "phone": ["telephone", "contact number", "mobile"],
+    "email": ["e-mail", "contact email"],
+    "amount": ["total", "sum", "balance due", "grand total"],
+    "vendor": ["supplier", "seller", "provider"],
+    "customer": ["client", "buyer", "account holder"],
+    "start_date": ["effective date", "commencement date"],
+    "end_date": ["expiration date", "termination date"],
+    "status": ["state", "current status"],
+    "engineer": ["technician", "assigned to"],
+    "ticket_number": ["case number", "reference number"],
+    "contract_number": ["agreement number", "reference number"]
+}

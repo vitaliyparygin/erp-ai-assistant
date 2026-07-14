@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 
 from rag_benchmark.models import ClassificationResult,ClassificationCandidate, Document
 
-from rag_benchmark.utils import get_logger
+from rag_benchmark.logging import get_logger
 logger = get_logger("classifier")
 
 from rich.console import Console

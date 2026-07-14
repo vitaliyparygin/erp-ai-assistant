@@ -1,4 +1,3 @@
-from rag_benchmark.diagnostics.models import  RegexCandidate
 from rag_benchmark.diagnostics.models import RegexSuggestion
 from rag_benchmark.suggestions.regex_suggestions import suggest_regex
 

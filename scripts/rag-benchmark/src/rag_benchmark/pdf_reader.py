@@ -14,7 +14,8 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 
 from rag_benchmark.models import Document, DocumentFormat
-from rag_benchmark.utils import get_logger, stable_document_id
+from rag_benchmark.logging import get_logger
+from rag_benchmark.documents.ids import stable_document_id
 
 logger = get_logger("reader")
 

@@ -1,11 +1,8 @@
-from rag_benchmark.diagnostics.inspect import InspectResult
 from rag_benchmark.renderers.regex_renderer import RegexRenderer
 from rich.table import Table
-from rich.panel import Panel
 from rich.console import Console
 from rag_benchmark.diagnostics.models import Recommendation
 from rag_benchmark.diagnostics.reporter import InspectResult
-from rag_benchmark.diagnostics.reporter import _STATUS_COLORS
 console = Console()
 
 class CommonRenderer:
@@ -17,10 +14,8 @@ class CommonRenderer:
         recommendations: list[Recommendation],
     ) -> None:
 
-        # CommonRenderer.render_classification(report)
         CommonRenderer.render_regex(report)
         CommonRenderer.render_question_coverage(report)
-        # CommonRenderer.render_readiness(report)
 
 
     @staticmethod

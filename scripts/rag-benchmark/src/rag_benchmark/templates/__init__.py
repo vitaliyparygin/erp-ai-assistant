@@ -32,7 +32,7 @@ from types import ModuleType
 from rag_benchmark.classifier import ClassificationRule
 from rag_benchmark.extractor import FieldRule
 from rag_benchmark.generators.base import QuestionTemplateMap
-from rag_benchmark.utils import get_logger
+from rag_benchmark.logging import get_logger
 
 logger = get_logger("templates")
 

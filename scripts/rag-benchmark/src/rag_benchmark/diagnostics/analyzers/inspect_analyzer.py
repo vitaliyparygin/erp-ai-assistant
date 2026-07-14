@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 from rag_benchmark.diagnostics.inspect import InspectResult
 from rag_benchmark.analyzers.regex_analyzer import RegexAnalyzer
 from rag_benchmark.analyzers.regex_candidate_analyzer import RegexCandidateAnalyzer
@@ -8,7 +7,6 @@ from rag_benchmark.analyzers.unused_regex_analyzer import UnusedRegexAnalyzer
 from rag_benchmark.analyzers.metadata_coverage import MetadataCoverageAnalyzer
 from rag_benchmark.analyzers.question_coverage import QuestionCoverageAnalyzer
 from rag_benchmark.analyzers.readiness_analyzer import ReadinessAnalyzer
-from rag_benchmark.diagnostics.analyzers.keyword_analyzer import KeywordAnalyzer
 from rag_benchmark.diagnostics.analyzers.template_suggestion_analyzer import TemplateSuggestionAnalyzer
 from rag_benchmark.diagnostics.analyzers.metadata_details_analyzer import MetadataDetailsAnalyzer
 from rag_benchmark.diagnostics.analyzers.regex_analyzer import RegexCoverageAnalyzer
@@ -75,15 +73,9 @@ class InspectAnalyzer:
             )
         )
 
-        # result.matched_keywords = KeywordAnalyzer.analyze(
-        #     result.classified,
-        # )
-
         result.metadata_details = MetadataDetailsAnalyzer.analyze(
             result,
         )
-
-
 
         result.template_suggestions = TemplateSuggestionAnalyzer.analyze(
             result,

@@ -12,7 +12,7 @@ from rag_benchmark.models import (
     ValidationIssue,
     ValidationReport,
 )
-from rag_benchmark.utils import get_logger
+from rag_benchmark.logging import get_logger
 
 logger = get_logger("metrics")
 

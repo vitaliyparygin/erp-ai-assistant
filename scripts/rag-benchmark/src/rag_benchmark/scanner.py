@@ -6,7 +6,7 @@ from datetime import datetime
 from pathlib import Path
 
 from rag_benchmark.models import DocumentFormat, ScannedFile
-from rag_benchmark.utils import get_logger
+from rag_benchmark.logging import get_logger
 
 logger = get_logger("scanner")
 
@@ -55,6 +55,14 @@ class DocumentScanner:
             FileNotFoundError: If dataset_dir does not exist.
             NotADirectoryError: If dataset_dir is not a directory.
         """
+        from pathlib import Path
+        import os
+
+        print("cwd =", Path.cwd())
+        print("dataset =", dataset_dir)
+        print("exists =", dataset_dir.exists())
+        print("absolute =", dataset_dir.resolve())
+        
         dataset_dir = Path(dataset_dir)
         if not dataset_dir.exists():
             raise FileNotFoundError(f"Dataset directory not found: {dataset_dir}")

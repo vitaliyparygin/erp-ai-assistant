@@ -24,8 +24,8 @@ from rag_benchmark.extractor import RegexMetadataExtractor
 from rag_benchmark.models import BenchmarkQuery, ClassifiedDocument, DocumentFormat, ScannedFile
 from rag_benchmark.pipeline import BenchmarkPipeline
 from rag_benchmark.scanner import detect_format
-from rag_benchmark.utils import get_logger, truncate
-from rag_benchmark.templates import TemplateDefinition
+from rag_benchmark.logging import get_logger
+from rag_benchmark.utils.text import truncate
 from rag_benchmark.diagnostics.models import (
     TemplateSuggestion,
     RegexSuggestion,
@@ -160,10 +160,10 @@ def inspect_document(
         modified_at=datetime.fromtimestamp(stat.st_mtime),
     )
 
-    template = pipeline.resolve_template(config)
+    template = pipeline._resolve_template(config)
     document = pipeline.readers.read(path, fmt)
-    classifier = pipeline.build_classifier(template)
-    extractor = pipeline.build_extractor(template)
+    classifier = pipeline._build_classifier(template)
+    extractor = pipeline._build_extractor(template)
 
     classification = classifier.classify(document)
     metadata = extractor.extract(document, classification.document_type)

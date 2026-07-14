@@ -2,11 +2,7 @@
 
 from __future__ import annotations
 
-import hashlib
 import logging
-import re
-import unicodedata
-from pathlib import Path
 
 _LOGGER_NAME = "rag_benchmark"
 
@@ -52,32 +48,3 @@ def get_logger(name: str | None = None) -> logging.Logger:
     if name:
         return logging.getLogger(f"{_LOGGER_NAME}.{name}")
     return logging.getLogger(_LOGGER_NAME)
-
-
-def stable_document_id(path: Path) -> str:
-    """Derive a short, stable, content-independent id from a file path.
-
-    Uses the absolute path string so the same file always yields the same id
-    across runs, which keeps generated benchmark ids reproducible.
-    """
-    digest = hashlib.sha1(str(path.resolve()).encode("utf-8")).hexdigest()
-    return digest[:12]
-
-
-def slugify(value: str) -> str:
-    """Convert a string into a filesystem/tag-safe lowercase slug."""
-    normalized = unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
-    normalized = re.sub(r"[^\w\s-]", "", normalized).strip().lower()
-    return re.sub(r"[-\s]+", "-", normalized)
-
-
-def truncate(text: str, max_chars: int = 200) -> str:
-    """Truncate text to max_chars, appending an ellipsis if shortened."""
-    if len(text) <= max_chars:
-        return text
-    return text[: max_chars - 1].rstrip() + "\u2026"
-
-
-def normalize_whitespace(text: str) -> str:
-    """Collapse repeated whitespace and strip the result."""
-    return re.sub(r"\s+", " ", text).strip()

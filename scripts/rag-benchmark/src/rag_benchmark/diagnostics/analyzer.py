@@ -17,12 +17,12 @@ from rag_benchmark.classifier import UNKNOWN_TYPE
 from rag_benchmark.config import BenchmarkConfig
 from rag_benchmark.models import  BenchmarkQuery
 from rag_benchmark.pipeline import BenchmarkPipeline
-from rag_benchmark.utils import get_logger, normalize_whitespace, slugify
+from rag_benchmark.logging import get_logger
+from rag_benchmark.utils.text import normalize_whitespace, slugify
 from rag_benchmark.analyzers.regex_analyzer import RegexAnalyzer, LABEL_REGEX
 from rag_benchmark.suggestions.regex_suggestions import build_regex_candidates
 from rag_benchmark.analyzers.field_coverage import FieldCoverageAnalyzer
 from rag_benchmark.analyzers.question_generation import QuestionGenerationAnalyzer
-from rag_benchmark.analyzers.document_summary import DocumentSummaryAnalyzer
 from rag_benchmark.diagnostics.models import (
     DocumentSummary,
 )
@@ -70,9 +70,6 @@ def extract_keywords(text: str, max_keywords: int = DEFAULT_MAX_KEYWORDS) -> lis
     return [label for label, _ in counts.most_common(max_keywords)]
 
 
-
-
-
 def suggest_classification_rule(
     filename: str,
     keywords: list[str],
@@ -105,9 +102,6 @@ def suggest_classification_rule(
     )
 
 
-
-
-
 def run_diagnostics(
         pipeline: BenchmarkPipeline,
         config: BenchmarkConfig,
@@ -128,36 +122,47 @@ def run_diagnostics(
         A PipelineDiagnostics snapshot covering every document.
     """
     logger.debug("Resolving template: %s", config.template)
-    template = pipeline.resolve_template(config)
+    template = pipeline._resolve_template(config)
 
     logger.debug("Scanning dataset: %s", config.dataset)
-    scanned_files = pipeline.load_documents(config.dataset, recursive=config.recursive)
+    scanned_files = pipeline.scan(config.dataset, recursive=config.recursive)
     logger.info("Diagnostics: %d file(s) discovered", len(scanned_files))
 
     logger.debug("Classifying and extracting metadata for %d file(s)", len(scanned_files))
-    classified_documents = pipeline.classify_and_extract(scanned_files, template)
+    classified_documents = pipeline.classify(scanned_files, template)
+    # print("run_diagnostics")
+    # print(id(classified_documents), len(classified_documents))
     logger.info("Diagnostics: %d document(s) read successfully", len(classified_documents))
 
     logger.debug("Generating candidate questions")
     dataset = pipeline.generate(
         classified_documents, template, config.max_questions_per_document
     )
+
+    # print("generated queries =", len(dataset.queries))
     dataset.source_dataset = config.dataset
+
     logger.info("Diagnostics: %d question(s) generated", len(dataset.queries))
 
-    extractor = pipeline.build_extractor(template)
+    extractor = pipeline._build_extractor(template)
+
     questions_by_document: dict[str, list[BenchmarkQuery]] = defaultdict(list)
+
     for query in dataset.queries:
         questions_by_document[query.expected_document].append(query)
 
     document_diagnostics: list[DocumentDiagnostic] = []
-
+    # print("file =", repr(file))
+    # print("type =", type(file))
+    # print("bool =", bool(file))
     if file:
         classified_documents = [
             d
             for d in classified_documents
             if file.lower() in d.document.filename.lower()
         ]
+    # print("run_diagnostics111")
+    # print(id(classified_documents), len(classified_documents))
     for classified in classified_documents:
 
         expected_fields = extractor.expected_fields(
@@ -241,10 +246,21 @@ def run_diagnostics(
 
         build_regex_candidates(counter)
 
-    return PipelineDiagnostics(
+    # print("classified_documents =", len(classified_documents))
+    # print("document_diagnostics =", len(document_diagnostics))
+    # print("queries =", len(dataset.queries))
+
+    diag = PipelineDiagnostics(
         config=config,
         template=template,
         classified_documents=classified_documents,
         dataset=dataset,
         document_diagnostics=document_diagnostics,
     )
+
+    # print("diag.classified_documents =", len(diag.classified_documents))
+    # print("diag.document_diagnostics =", len(diag.document_diagnostics))
+    # print("RETURN")
+    # print(len(diag.dataset.queries))
+    # print(id(classified_documents), len(classified_documents))
+    return diag

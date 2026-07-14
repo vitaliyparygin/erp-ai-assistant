@@ -1,24 +1,12 @@
 import re
 from collections import Counter
 from rag_benchmark.diagnostics.models import  RegexCandidate
-
+from rag_benchmark.models import ResourceGroup
+from rag_benchmark.utils.resources import load_json
 #: Field name -> alternative phrasings worth adding to an extraction regex.
 #: A small, deliberately generic hint table — not meant to be exhaustive,
 #: just enough to unblock a developer looking at a 0%-coverage field.
-FIELD_SYNONYM_HINTS: dict[str, list[str]] = {
-    "address": ["office", "registered office", "location"],
-    "phone": ["telephone", "contact number", "mobile"],
-    "email": ["e-mail", "contact email"],
-    "amount": ["total", "sum", "balance due", "grand total"],
-    "vendor": ["supplier", "seller", "provider"],
-    "customer": ["client", "buyer", "account holder"],
-    "start_date": ["effective date", "commencement date"],
-    "end_date": ["expiration date", "termination date"],
-    "status": ["state", "current status"],
-    "engineer": ["technician", "assigned to"],
-    "ticket_number": ["case number", "reference number"],
-    "contract_number": ["agreement number", "reference number"],
-}
+FIELD_SYNONYM_HINTS: dict[str, list[str]] = load_json(ResourceGroup.DICTIONARIES, "field_synonym_hints.json")
 
 def build_regex(label: str) -> str:
     escaped = re.escape(label)

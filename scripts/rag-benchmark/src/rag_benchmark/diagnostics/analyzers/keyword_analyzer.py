@@ -3,10 +3,6 @@ from __future__ import annotations
 from rag_benchmark.models import ClassifiedDocument
 from rag_benchmark.diagnostics.models import MatchedKeyword
 
-
-
-
-
 class KeywordAnalyzer:
 
     @staticmethod
@@ -15,9 +11,6 @@ class KeywordAnalyzer:
     ) -> list[MatchedKeyword]:
 
         result = []
-        print(type(classified.classification))
-        print(classified.classification)
-        print(classified.classification.model_dump())
         scores = classified.classification.scores
 
         for doc_type, score in sorted(

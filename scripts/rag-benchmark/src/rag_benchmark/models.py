@@ -10,7 +10,7 @@ from __future__ import annotations
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-
+from enum import StrEnum
 from pydantic import BaseModel, Field, field_validator
 
 from dataclasses import dataclass, field
@@ -230,6 +230,12 @@ class Summary:
     skipped_questions: int
     coverage: float
 
+class ResourceGroup(StrEnum):
+    DICTIONARIES = "dictionaries"
+    PROMPTS = "prompts"
+    REGEX = "regex"
+    TEMPLATES = "templates"
+    EXAMPLES = "examples"
 
 
 

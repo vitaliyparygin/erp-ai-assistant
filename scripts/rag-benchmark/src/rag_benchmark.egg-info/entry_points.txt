@@ -1,2 +1,2 @@
 [console_scripts]
-rag-benchmark = rag_benchmark.cli:app
+rag-benchmark = rag_benchmark.cli.main:app

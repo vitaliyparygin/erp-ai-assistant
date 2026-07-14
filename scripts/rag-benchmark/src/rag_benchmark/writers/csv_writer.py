@@ -12,7 +12,7 @@ import csv
 from pathlib import Path
 
 from rag_benchmark.models import LatencyResult, RetrievalResult
-from rag_benchmark.utils import get_logger
+from rag_benchmark.logging import get_logger
 
 logger = get_logger("writers.csv")
 

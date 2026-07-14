@@ -25,7 +25,7 @@ from rag_benchmark.models import (
 from rag_benchmark.pdf_reader import ReaderRegistry
 from rag_benchmark.scanner import DocumentScanner
 from rag_benchmark.templates import TemplateDefinition, load_template
-from rag_benchmark.utils import get_logger
+from rag_benchmark.logging import get_logger
 
 logger = get_logger("pipeline")
 
@@ -44,7 +44,7 @@ class BenchmarkPipeline:
     extractor: MetadataExtractor | None = None
     generator: QuestionGenerator = field(default_factory=TemplateQuestionGenerator)
 
-    def resolve_template(self, config: BenchmarkConfig) -> TemplateDefinition:
+    def _resolve_template(self, config: BenchmarkConfig) -> TemplateDefinition:
         """Load the template referenced by a config.
 
         Exposed as its own method (rather than inlined in `run`) so other
@@ -54,17 +54,17 @@ class BenchmarkPipeline:
         """
         return load_template(config.template)
 
-    def build_classifier(self, template: TemplateDefinition) -> DocumentClassifier:
+    def _build_classifier(self, template: TemplateDefinition) -> DocumentClassifier:
         """Return the classifier that would be used for a given template."""
         return self.classifier or DefaultClassifier(rules=template.classification_rules or None)
 
-    def build_extractor(self, template: TemplateDefinition) -> MetadataExtractor:
+    def _build_extractor(self, template: TemplateDefinition) -> MetadataExtractor:
         """Return the extractor that would be used for a given template."""
         return self.extractor or RegexMetadataExtractor(
             extra_rules=template.extraction_rules or None
         )
 
-    def load_documents(self, dataset_dir: Path, recursive: bool = True) -> list[ScannedFile]:
+    def scan(self, dataset_dir: Path, recursive: bool = True) -> list[ScannedFile]:
         """Scan a dataset directory for supported files.
 
         Args:
@@ -75,7 +75,7 @@ class BenchmarkPipeline:
         scanner = self.scanner or DocumentScanner(recursive=recursive)
         return scanner.scan(dataset_dir)
 
-    def classify_and_extract(
+    def classify(
         self, scanned_files: list[ScannedFile], template: TemplateDefinition
     ) -> list[ClassifiedDocument]:
         """Read, classify, and extract metadata for every scanned file.
@@ -90,8 +90,8 @@ class BenchmarkPipeline:
             fail to read are logged and skipped rather than aborting the
             whole run.
         """
-        classifier = self.build_classifier(template)
-        extractor = self.build_extractor(template)
+        classifier = self._build_classifier(template)
+        extractor = self._build_extractor(template)
 
         results: list[ClassifiedDocument] = []
         for scanned in scanned_files:
@@ -132,9 +132,9 @@ class BenchmarkPipeline:
             (e.g. the CLI's `report` command) can compute statistics without
             re-running the pipeline.
         """
-        template = self.resolve_template(config)
-        scanned_files = self.load_documents(config.dataset, recursive=config.recursive)
-        classified_documents = self.classify_and_extract(scanned_files, template)
+        template = self._resolve_template(config)
+        scanned_files = self.scan(config.dataset, recursive=config.recursive)
+        classified_documents = self.classify(scanned_files, template)
         dataset = self.generate(
             classified_documents, template, config.max_questions_per_document
         )
