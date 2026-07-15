@@ -1,0 +1,11 @@
+dataset: tests/datasets
+output: benchmarks
+
+template: erp
+reader: pdfplumber
+question_generator: template
+
+language: en
+
+max_questions_per_document: 6
+recursive: true

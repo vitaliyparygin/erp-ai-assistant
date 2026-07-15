@@ -88,7 +88,7 @@ class LLMQuestionGenerator(QuestionGenerator):
                 continue
 
             for item in items[:max_questions_per_document]:
-                print(item)
+
                 try:
                     queries.append(
                         BenchmarkQuery(

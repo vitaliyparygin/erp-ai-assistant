@@ -135,13 +135,11 @@ def run_diagnostics(
     logger.info("Diagnostics: %d file(s) discovered", len(scanned_files))
 
     logger.debug("Classifying and extracting metadata for %d file(s)", len(scanned_files))
-    # print("run_diagnostics")
-    # print(id(classified_documents), len(classified_documents))
+
     logger.info("Diagnostics: %d document(s) read successfully", len(classified_documents))
 
     logger.debug("Generating candidate questions")
 
-    # print("generated queries =", len(dataset.queries))
     dataset.source_dataset = config.dataset
 
     logger.info("Diagnostics: %d question(s) generated", len(dataset.queries))
@@ -154,17 +152,14 @@ def run_diagnostics(
         questions_by_document[query.expected_document].append(query)
 
     document_diagnostics: list[DocumentDiagnostic] = []
-    # print("file =", repr(file))
-    # print("type =", type(file))
-    # print("bool =", bool(file))
+
     if file:
         classified_documents = [
             d
             for d in classified_documents
             if file.lower() in d.document.filename.lower()
         ]
-    # print("run_diagnostics111")
-    # print(id(classified_documents), len(classified_documents))
+
     for classified in classified_documents:
 
         expected_fields = extractor.expected_fields(
@@ -248,10 +243,6 @@ def run_diagnostics(
 
         build_regex_candidates(counter)
 
-    # print("classified_documents =", len(classified_documents))
-    # print("document_diagnostics =", len(document_diagnostics))
-    # print("queries =", len(dataset.queries))
-
     diag = PipelineDiagnostics(
         config=config,
         template=template,
@@ -260,9 +251,4 @@ def run_diagnostics(
         document_diagnostics=document_diagnostics,
     )
 
-    # print("diag.classified_documents =", len(diag.classified_documents))
-    # print("diag.document_diagnostics =", len(diag.document_diagnostics))
-    # print("RETURN")
-    # print(len(diag.dataset.queries))
-    # print(id(classified_documents), len(classified_documents))
     return diag

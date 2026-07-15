@@ -18,6 +18,8 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Topic :: Software Development :: Testing",
 ]
+Repository = "https://github.com/vitaliyparygin/rag-benchmark"
+Issues = "https://github.com/vitaliyparygin/rag-benchmark/issues"
 
 dependencies = [
     "typer>=0.12.0",

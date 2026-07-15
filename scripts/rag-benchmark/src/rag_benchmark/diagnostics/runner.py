@@ -35,10 +35,7 @@ def build_diagnostics_report(
     """
     logger.info("Starting diagnostics run for dataset: %s", config.dataset)
     diagnostics = run_diagnostics(pipeline=pipeline, config=config, file=file)
-    print("AFTER CALL")
-    print("builder.classified =", len(diagnostics.classified_documents))
-    print("builder.docs =", len(diagnostics.document_diagnostics))
-    print("builder.queries =", len(diagnostics.dataset.queries))
+
     classification = compute_classification_stats(diagnostics)
     metadata_coverage = compute_metadata_coverage(diagnostics)
     question_stats = compute_question_stats(diagnostics)
