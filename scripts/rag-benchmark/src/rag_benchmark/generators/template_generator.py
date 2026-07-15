@@ -5,9 +5,8 @@ from __future__ import annotations
 from rag_benchmark.generators.base import QuestionGenerator, QuestionTemplateMap
 from rag_benchmark.models import (BenchmarkQuery,
                                   ClassifiedDocument,
-                                  QuestionGenerationResult,
                                   GenerationStats)
-from rag_benchmark.utils import get_logger
+from rag_benchmark.logging import get_logger
 from rich.console import Console
 logger = get_logger("generators.template")
 
@@ -27,6 +26,8 @@ class TemplateQuestionGenerator(QuestionGenerator):
         template_map: QuestionTemplateMap,
         max_questions_per_document: int,
     ) -> list[BenchmarkQuery]:
+        print('generate')
+        print(id(documents), len(documents))
         queries: list[BenchmarkQuery] = []
         stats: list[GenerationStats] = []
         next_id = 1
@@ -36,7 +37,15 @@ class TemplateQuestionGenerator(QuestionGenerator):
         )
         for classified in documents:
             doc_type = classified.classification.document_type
+            # print("=" * 80)
+            # print(classified.document.filename)
+            # print("doc_type:", doc_type)
+
             specs = template_map.get(doc_type, [])
+
+            # print("specs:", len(specs))
+            # print("metadata:", classified.metadata.as_plain_dict())
+
             if not specs:
                 logger.debug(
                     "No question specs for document_type=%s (%s)",
@@ -53,6 +62,8 @@ class TemplateQuestionGenerator(QuestionGenerator):
             generated_for_doc = 0
             logger.debug(f"generate.specs specs={specs} max_questions_per_document={max_questions_per_document}")
             for spec in specs:
+                # print("spec:", spec.key)
+                # print("required fields:", [f.name for f in spec.fields])
                 if generated_for_doc >= max_questions_per_document:
                     logger.debug(f"generated_for_doc >= max_questions_per_document1"
                           f"generated_for_doc={generated_for_doc} max_questions_per_document={max_questions_per_document}")
@@ -62,7 +73,11 @@ class TemplateQuestionGenerator(QuestionGenerator):
 
                     if generated_for_doc >= max_questions_per_document:
                         break
-
+                    # print(
+                    #     field.name,
+                    #     field.required,
+                    #     field.name in available_fields
+                    # )
                     if field.name not in available_fields:
                         if field.required:
                             doc_stats.missing_fields.append(field.name)
@@ -97,13 +112,13 @@ class TemplateQuestionGenerator(QuestionGenerator):
                     next_id += 1
                     generated_for_doc += 1
 
-                stats.append(doc_stats)
-                logger.debug(
-                    "Document=%s generated=%d generated_fields=%s missing=%s",
-                    doc_stats.document_name,
-                    doc_stats.generated_questions,
-                    doc_stats.generated_fields,
-                    doc_stats.missing_fields,
-                )
-        # return queries
+            stats.append(doc_stats)
+            logger.debug(
+                "Document=%s generated=%d generated_fields=%s missing=%s",
+                doc_stats.document_name,
+                doc_stats.generated_questions,
+                doc_stats.generated_fields,
+                doc_stats.missing_fields,
+            )
+        # print(id(documents), len(documents))
         return queries

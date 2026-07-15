@@ -22,6 +22,7 @@ from rag_benchmark.models import (
     ClassifiedDocument,
     ScannedFile,
 )
+from rag_benchmark.pipeline_models import PipelineResult
 from rag_benchmark.pdf_reader import ReaderRegistry
 from rag_benchmark.scanner import DocumentScanner
 from rag_benchmark.templates import TemplateDefinition, load_template
@@ -124,19 +125,58 @@ class BenchmarkPipeline:
         )
         return BenchmarkDataset(queries=queries, template=template.name)
 
-    def run(self, config: BenchmarkConfig) -> tuple[list[ClassifiedDocument], BenchmarkDataset, TemplateDefinition]:
-        """Run the full pipeline end-to-end for a given configuration.
+    # def run(self, config: BenchmarkConfig) -> tuple[list[ClassifiedDocument], BenchmarkDataset, TemplateDefinition]:
+    #     """Run the full pipeline end-to-end for a given configuration.
+    #
+    #     Returns:
+    #         A tuple of (classified_documents, benchmark_dataset) so callers
+    #         (e.g. the CLI's `report` command) can compute statistics without
+    #         re-running the pipeline.
+    #     """
+    #     template = self._resolve_template(config)
+    #     scanned_files = self.scan(config.dataset, recursive=config.recursive)
+    #     classified_documents = self.classify(scanned_files, template)
+    #     dataset = self.generate(
+    #         classified_documents, template, config.max_questions_per_document
+    #     )
+    #     dataset.source_dataset = config.dataset
+    #     return classified_documents, dataset, template
 
-        Returns:
-            A tuple of (classified_documents, benchmark_dataset) so callers
-            (e.g. the CLI's `report` command) can compute statistics without
-            re-running the pipeline.
-        """
-        template = self._resolve_template(config)
-        scanned_files = self.scan(config.dataset, recursive=config.recursive)
-        classified_documents = self.classify(scanned_files, template)
-        dataset = self.generate(
-            classified_documents, template, config.max_questions_per_document
+    def run(self, config: BenchmarkConfig):
+        result = self.execute(config)
+
+        return (
+            result.classified_documents,
+            result.dataset,
+            result.template,
         )
+
+
+    def execute(self, config: BenchmarkConfig) -> PipelineResult:
+        template = self._resolve_template(config)
+
+        scanned_files = self.scan(
+            config.dataset,
+            recursive=config.recursive,
+        )
+
+        classified = self.classify(
+            scanned_files,
+            template,
+        )
+
+        dataset = self.generate(
+            classified,
+            template,
+            config.max_questions_per_document,
+        )
+
         dataset.source_dataset = config.dataset
-        return classified_documents, dataset, template
+
+        return PipelineResult(
+            config=config,
+            template=template,
+            scanned_files=scanned_files,
+            classified_documents=classified,
+            dataset=dataset,
+        )

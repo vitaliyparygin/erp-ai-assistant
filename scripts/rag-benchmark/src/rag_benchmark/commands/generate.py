@@ -3,7 +3,6 @@ import typer
 from rag_benchmark.pipeline import BenchmarkPipeline
 from rag_benchmark.logging import configure_logging, get_logger
 from rag_benchmark.analyzers.regex_analyzer import RegexAnalyzer
-from rag_benchmark.config import build_config
 from rag_benchmark.io import ensure_writable
 from rich.console import Console
 from rag_benchmark.config import BenchmarkConfig
@@ -24,12 +23,13 @@ def run_generate(
     configure_logging(verbose=verbose)
 
     pipeline = BenchmarkPipeline()
-    classified_documents, dataset_result, template_def = pipeline.run(cfg)
-
+    result = pipeline.execute(cfg)
+    dataset_result = result.dataset
+    classified_documents = result.classified_documents
+    template_def = result.template
     console.rule("[bold blue]Regex diagnostics")
-    print("======================")
-    stats = []
 
+    stats = []
     for document in classified_documents:
         stats.extend(
             RegexAnalyzer.analyze(

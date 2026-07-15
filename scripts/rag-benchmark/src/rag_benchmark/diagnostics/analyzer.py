@@ -28,8 +28,8 @@ from rag_benchmark.diagnostics.models import (
 )
 from rag_benchmark.diagnostics.models import (
     SuggestedClassificationRule,
-    PipelineDiagnostics,
-    DocumentDiagnostic
+    DocumentDiagnostic,
+    PipelineDiagnostics
 )
 
 logger = get_logger("diagnostics.analyzer")
@@ -125,19 +125,21 @@ def run_diagnostics(
     template = pipeline._resolve_template(config)
 
     logger.debug("Scanning dataset: %s", config.dataset)
-    scanned_files = pipeline.scan(config.dataset, recursive=config.recursive)
+    result = pipeline.execute(config)
+
+    classified_documents = result.classified_documents
+    dataset = result.dataset
+    template = result.template
+    scanned_files = result.scanned_files
+
     logger.info("Diagnostics: %d file(s) discovered", len(scanned_files))
 
     logger.debug("Classifying and extracting metadata for %d file(s)", len(scanned_files))
-    classified_documents = pipeline.classify(scanned_files, template)
     # print("run_diagnostics")
     # print(id(classified_documents), len(classified_documents))
     logger.info("Diagnostics: %d document(s) read successfully", len(classified_documents))
 
     logger.debug("Generating candidate questions")
-    dataset = pipeline.generate(
-        classified_documents, template, config.max_questions_per_document
-    )
 
     # print("generated queries =", len(dataset.queries))
     dataset.source_dataset = config.dataset

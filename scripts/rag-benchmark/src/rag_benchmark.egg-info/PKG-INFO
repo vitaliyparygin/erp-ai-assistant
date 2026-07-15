@@ -2,7 +2,8 @@ Metadata-Version: 2.4
 Name: rag-benchmark
 Version: 0.1.0
 Summary: Framework-agnostic benchmark dataset and evaluation asset generator for RAG systems.
-Author: RAG Benchmark Contributors
+Author: vitaliy.parygin
+Author-email: vitalit.parygin@gmail.com
 License: MIT License
         
         Copyright (c) 2026 RAG Benchmark Contributors

@@ -127,20 +127,7 @@ class DocumentDiagnostic:
             return 0.0
         return self.question_generation.coverage
 
-@dataclass
-class PipelineDiagnostics:
-    """Complete, descriptive snapshot of a single (dry) pipeline run."""
 
-    config: BenchmarkConfig
-    template: TemplateDefinition
-    classified_documents: list[ClassifiedDocument]
-    dataset: BenchmarkDataset
-    document_diagnostics: list[DocumentDiagnostic]
-    generated_at: datetime = field(default_factory=datetime.utcnow)
-
-    @property
-    def unknown_diagnostics(self) -> list[DocumentDiagnostic]:
-        return [d for d in self.document_diagnostics if d.is_unknown]
 
 @dataclass
 class ClassificationStats:
@@ -151,9 +138,6 @@ class ClassificationStats:
     classified_count: int
     unknown_count: int
     classification_rate: float
-
-
-
 
 
 @dataclass
@@ -366,9 +350,18 @@ class MissingImprovement:
     item: str
     suggestion: str
 
+
 @dataclass
-class PipelineResult:
+class PipelineDiagnostics:
+    """Complete, descriptive snapshot of a single (dry) pipeline run."""
+
+    config: BenchmarkConfig
     template: TemplateDefinition
-    scanned_files: list[ScannedFile]
     classified_documents: list[ClassifiedDocument]
     dataset: BenchmarkDataset
+    document_diagnostics: list[DocumentDiagnostic]
+    generated_at: datetime = field(default_factory=datetime.utcnow)
+
+    @property
+    def unknown_diagnostics(self) -> list[DocumentDiagnostic]:
+        return [d for d in self.document_diagnostics if d.is_unknown]
