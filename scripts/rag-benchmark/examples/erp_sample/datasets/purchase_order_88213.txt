@@ -1,8 +1,0 @@
-PURCHASE ORDER
-
-PO Number: PO-88213
-Vendor: Alpine Components Ltd.
-Total: $12,050.00
-Delivery Date: 2026-08-01
-
-Ship to: Warehouse 4, Denver Distribution Center

@@ -38,7 +38,8 @@ dependencies = [
     "langchain-ollama",
     "ollama",
     "qdrant_client",
-    "green"
+    "green",
+    "rag-benchmark",
 ]
 
 [project.optional-dependencies]
@@ -75,3 +76,6 @@ dev = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["app"]
+
+[tool.uv.sources]
+rag-benchmark = { git = "https://github.com/vitaliyparygin/rag-benchmark.git" }

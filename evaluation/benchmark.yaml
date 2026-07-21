@@ -1,6 +1,6 @@
-dataset: ../../tests/datasets
-output: my-benchmark/benchmarks
-template: erp
+dataset: datasets
+output: benchmarks
+template: generic
 reader: pdfplumber
 question_generator: template
 language: en

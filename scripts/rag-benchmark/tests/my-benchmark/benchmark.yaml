@@ -1,8 +1,0 @@
-dataset: my-benchmark/datasets
-output: my-benchmark/benchmarks
-template: erp
-reader: pdfplumber
-question_generator: template
-language: en
-max_questions_per_document: 6
-recursive: true

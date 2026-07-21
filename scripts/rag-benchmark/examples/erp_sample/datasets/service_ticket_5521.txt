@@ -1,8 +1,0 @@
-SERVICE TICKET
-
-Ticket Number: TCK-5521
-Status: In Progress
-Assigned Engineer: Priya Nair
-Priority: High
-
-Customer reports intermittent connectivity loss on line 3 conveyor sensor.
