@@ -4,14 +4,12 @@ Handles the full pipeline: parse → chunk → embed → index.
 """
 import time
 import uuid
-from pathlib import Path
 
 from celery.utils.log import get_task_logger
 
 from app.core.config import get_settings
 from app.workers.celery_app import celery_app
 import inspect
-from app.db.session import AsyncSessionLocal
 from app.models.orm import DocumentModel,DocumentChunkModel
 from sqlalchemy import select
 settings = get_settings()
@@ -81,12 +79,11 @@ async def _ingest_document_async(
     document_name: str,
     chunk_size: int | None,
     chunk_overlap: int | None,
-    original_filename:str | None = None,
+    original_filename: str | None,
 ) -> dict:
     """Async implementation of the ingestion pipeline."""
     from app.core.logging import get_logger
     from app.db.session import get_sessionmaker
-    from app.models.orm import DocumentModel
     from app.observability.metrics import (
         DOCUMENTS_INGESTED_TOTAL,
         INGESTION_CHUNKS_CREATED,
@@ -96,7 +93,6 @@ async def _ingest_document_async(
     from app.rag.embeddings import EmbeddingService
     from app.rag.retriever import VectorStore
     from qdrant_client import AsyncQdrantClient
-    from sqlalchemy import select
 
     logger = get_logger(__name__)
     start_time = time.monotonic()

@@ -13,7 +13,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 langchain-ollama = "^0.3.3"
 ollama = "^0.4.7"
-authors = [{ name = "vitaliy.parygin" }, { email = "vitalit.parygin@gmail.com"}]
+authors = [{ name = "vitaliy.parygin" }, { email = "vitaliy.parygin@gmail.com"}]
 
 
 dependencies = [
@@ -40,6 +40,7 @@ dependencies = [
     "qdrant_client",
     "green",
     "rag-benchmark",
+    "rules @ git+ssh://git@github.com/vitaliyparygin/rules.git@v0.1.2",
 ]
 
 [project.optional-dependencies]
@@ -79,3 +80,13 @@ packages = ["app"]
 
 [tool.uv.sources]
 rag-benchmark = { git = "https://github.com/vitaliyparygin/rag-benchmark.git" }
+
+[tool.mypy]
+disable_error_code = ["import-untyped"]
+
+[[tool.mypy.overrides]]
+module = [
+    "langfuse",
+    "langfuse.*",
+]
+ignore_missing_imports = true

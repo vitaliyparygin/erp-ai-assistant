@@ -5,7 +5,6 @@ Wraps OpenAI embeddings with batching, retry logic, and caching.
 import asyncio
 import hashlib
 import json
-from typing import Any
 
 import redis.asyncio as aioredis
 from langchain_ollama import OllamaEmbeddings
@@ -17,7 +16,6 @@ from tenacity import (
 )
 
 from app.core.config import get_settings
-from app.core.exceptions import EmbeddingError
 from app.core.logging import get_logger
 import httpx
 

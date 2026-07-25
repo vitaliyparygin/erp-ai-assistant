@@ -28,5 +28,4 @@ celery_app.conf.update(
     },
 )
 
-import app.workers.ingestion_worker
 

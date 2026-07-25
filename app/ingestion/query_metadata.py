@@ -14,10 +14,8 @@ def extract_query_metadata(question: str) -> dict:
     #
     # structured ids
     #
-
-    for field, definition in FIELD_DEFINITIONS.items():
-
-        for pattern in definition["patterns"]:
+    for field_name, definition in FIELD_DEFINITIONS.items():
+        for pattern in definition.patterns:
 
             m = re.search(
                 pattern,
@@ -25,18 +23,22 @@ def extract_query_metadata(question: str) -> dict:
                 re.IGNORECASE,
             )
 
-            print(f"pattern: {pattern}, question: {question}, field: {field}")
+            print(f"pattern: {pattern}, question: {question}, field: {definition}")
             print(m)
             if not m:
                 continue
 
-            print(field)
+            print(definition)
+            print(definition.name)
+
             if m.lastindex:
                 value = m.group(1)
             else:
                 value = m.group(0)
 
-            metadata[field] = value.strip()
+            metadata[definition.name] = value.strip()
+            print(value)
+            print(metadata)
 
             break
 

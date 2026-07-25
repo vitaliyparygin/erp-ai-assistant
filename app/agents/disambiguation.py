@@ -26,7 +26,6 @@ def _extract_contract_number(
 
     return None
 
-import re
 
 
 def _extract_valid_until(

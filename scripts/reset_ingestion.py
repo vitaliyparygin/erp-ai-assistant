@@ -1,13 +1,11 @@
 import asyncio
 import sys
 from pathlib import Path
-
-ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT))
-
 from sqlalchemy import text
 from app.db.session import AsyncSessionLocal
 
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
 
 async def main():
     async with AsyncSessionLocal() as db:

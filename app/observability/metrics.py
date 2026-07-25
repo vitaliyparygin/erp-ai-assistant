@@ -59,7 +59,7 @@ RETRIEVAL_CHUNKS_RETURNED = Histogram(
 LLM_TOKENS_TOTAL = Counter(
     "erp_llm_tokens_total",
     "Total LLM tokens consumed",
-    labelnames=["model", "type"],  # type: prompt | completion
+    labelnames=["model", "type"],
 )
 
 LLM_REQUESTS_TOTAL = Counter(

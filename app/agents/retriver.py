@@ -1,12 +1,10 @@
 import json
 import time
 import re
-from langgraph.graph import END, START, StateGraph
-from tenacity import retry, stop_after_attempt, wait_exponential
 from app.agents.state import AgentState
 from app.core.config import get_settings
 from app.core.logging import get_logger
-from app.models.schemas import Citation, RetrievedChunk
+from app.models.schemas import RetrievedChunk
 from langchain_ollama import ChatOllama
 from app.rag.prompts import (
     QUERY_REWRITE_TEMPLATE,
@@ -16,6 +14,7 @@ from app.rag.retriever import Reranker, VectorRetriever
 import traceback
 from app.ingestion.query_metadata import extract_query_metadata
 from app.utils.resources import load_json
+
 logger = get_logger(__name__)
 
 REWRITE_MAP = load_json("rewrite_map.json")
@@ -70,8 +69,11 @@ def requires_contract_disambiguation(
     return len(contract_docs) > 1
 
 
-def get_unique_docs(reranked: list) -> list:
-    unique_docs = {}
+
+def get_unique_docs(
+    reranked: list[RetrievedChunk],
+) -> dict[str, RetrievedChunk]:
+    unique_docs: dict[str, RetrievedChunk] = {}
 
     for chunk in reranked:
         unique_docs[chunk.document_name] = chunk
@@ -388,8 +390,13 @@ class RetrieverAgent:
             "query": state.query,
             "conversation_context": context[:3000],
         })
+        content = result.content
 
-        rewritten = result.content.strip()
+        if not isinstance(content, str):
+            raise TypeError(
+                f"Expected string response, got {type(content).__name__}"
+            )
+        rewritten = content.strip()
 
         logger.debug(
             "RETRIEVAL_QUERY",
@@ -406,9 +413,14 @@ class RetrieverAgent:
 
         chain = RETRIEVAL_ANALYSIS_TEMPLATE | self._llm
         result = await chain.ainvoke({"query": query, "context": context[:3000]})
+        content = result.content
 
+        if not isinstance(content, str):
+            raise TypeError(
+                f"Expected string response, got {type(content).__name__}"
+            )
         try:
-            analysis = json.loads(result.content)
+            analysis = json.loads(content)
         except json.JSONDecodeError:
             analysis = {"has_sufficient_context": True, "needs_research": False}
 

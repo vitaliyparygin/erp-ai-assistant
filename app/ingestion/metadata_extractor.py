@@ -13,15 +13,10 @@ class MetadataExtractor:
 
     @staticmethod
     def extract(text: str, filename: str) -> dict:
-        print(f"MetadataExtractor start " )
-
         metadata = {
             "document_name": filename,
         }
-
-        # lower_name = filename.lower()
         text_lower = text.lower()
-
         if (
             "service agreement" in text_lower
             or "contract number" in text_lower
@@ -35,30 +30,22 @@ class MetadataExtractor:
 
         elif "opportunity" in text_lower:
             metadata["document_type"] = "opportunity"
-
+        print(type(FIELD_DEFINITIONS))
+        print(FIELD_DEFINITIONS)
+        print(type(FIELD_DEFINITIONS["invoice_number"]))
         for field, definition in FIELD_DEFINITIONS.items():
-
-            for pattern in definition["patterns"]:
-
+            for pattern in definition.patterns:
                 m = re.search(
                     pattern,
                     text,
                     re.IGNORECASE | re.MULTILINE,
                 )
-
                 if not m:
                     continue
-
                 if m.lastindex:
                     value = m.group(1)
-
                 else:
                     value = m.group(0)
-
-                metadata[field] = value.strip()
-
+                metadata[definition.name] = value.strip()
                 break
-
-        print('MetadataExtractor.metadata:')
-        print(metadata)
         return metadata

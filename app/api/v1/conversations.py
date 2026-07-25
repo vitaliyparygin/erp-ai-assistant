@@ -4,7 +4,7 @@ Retrieve session history, list conversations, and delete sessions.
 """
 import uuid
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, status
 from sqlalchemy import select, delete
 from sqlalchemy.orm import selectinload
 
@@ -13,7 +13,7 @@ from app.core.exceptions import ConversationNotFoundError
 from app.core.logging import get_logger
 from app.memory.redis_memory import RedisMemoryStore
 from app.models.orm import ConversationModel, MessageModel
-from app.models.schemas import Conversation, Message, MessageRole
+from app.models.schemas import Conversation
 
 router = APIRouter()
 logger = get_logger(__name__)

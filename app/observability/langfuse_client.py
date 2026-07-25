@@ -2,10 +2,7 @@
 LangFuse observability integration.
 Tracks agent traces, token usage, latency, and evaluation scores.
 """
-import time
-from contextlib import asynccontextmanager
-from functools import lru_cache
-from typing import Any
+from typing import Any, cast
 
 from app.core.logging import get_logger
 
@@ -27,12 +24,12 @@ class LangFuseTracer:
         if enabled and secret_key and public_key:
             try:
                 from langfuse import Langfuse
-                self._client = Langfuse(
+                self._client = cast(Any, Langfuse(
                     secret_key=secret_key,
                     public_key=public_key,
                     host=host,
                     debug=False,
-                )
+                ))
                 logger.info("langfuse_initialized", host=host)
             except ImportError:
                 logger.warning("langfuse_not_installed")

@@ -13,7 +13,7 @@ from qdrant_client import AsyncQdrantClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings, get_settings
-from app.core.exceptions import AuthenticationError, RateLimitError
+from app.core.exceptions import RateLimitError
 from app.core.logging import get_logger
 from app.db.session import AsyncSessionLocal
 from app.observability.langfuse_client import get_langfuse_client
@@ -144,7 +144,7 @@ async def get_current_user_optional(
         return None
 
     try:
-        from jose import JWTError, jwt
+        from jose import jwt
         payload = jwt.decode(
             credentials.credentials,
             settings.secret_key,

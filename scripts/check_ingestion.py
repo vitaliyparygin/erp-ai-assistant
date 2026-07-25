@@ -19,8 +19,6 @@ from sqlalchemy import func, select
 
 from app.models.orm import DocumentChunkModel, DocumentModel
 from app.db.session import AsyncSessionLocal
-from app.rag.embeddings import EmbeddingService
-from app.rag.retriever import VectorRetriever
 from qdrant_client import AsyncQdrantClient
 from app.core.config import get_settings
 

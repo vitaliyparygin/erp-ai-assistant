@@ -9,7 +9,6 @@ import redis.asyncio as aioredis
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 
 from app.core.config import get_settings
-from app.core.exceptions import SessionExpiredError
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)

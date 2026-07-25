@@ -5,14 +5,13 @@ Used by Docker healthchecks, load balancers, and monitoring systems.
 """
 import time
 from typing import Any
-
+import httpx
 import redis.asyncio as aioredis
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 from qdrant_client import AsyncQdrantClient
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 
-from app.core.config import Settings, get_settings
 from app.core.dependencies import DBSessionDep, QdrantDep, RedisDep, SettingsDep
 from app.core.logging import get_logger
 from app.models.schemas import HealthResponse, ServiceHealth
@@ -70,16 +69,22 @@ async def _check_qdrant(qdrant: AsyncQdrantClient, collection: str) -> ServiceHe
         return ServiceHealth(service="qdrant", status="unhealthy", details={"error": str(e)})
 
 
-async def _check_ollama(base_url: str) -> bool:
+async def _check_ollama(base_url: str) -> ServiceHealth:
     try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=60) as client:
             response = await client.get(f"{base_url}/api/tags")
-            return response.status_code == 200
-    except Exception :
 
-        import traceback
-        traceback.print_exc()
-        raise
+        return ServiceHealth(
+            service="ollama",
+            status="healthy" if response.status_code == 200 else "unhealthy",
+        )
+
+    except Exception as e:
+        return ServiceHealth(
+            service="ollama",
+            status="unhealthy",
+            details={"error": str(e)},
+        )
 
 
 # =============================================================================
@@ -195,7 +200,8 @@ async def full_health(
         details: dict[str, Any] = {"collections": names}
         if col_name in names:
             col_info = await qdrant.get_collection(col_name)
-            details["vectors_count"] = col_info.vectors_count
+            details["points_count"] = col_info.points_count
+            details["indexed_vectors_count"] = col_info.indexed_vectors_count
             details["indexed_vectors"] = col_info.indexed_vectors_count
             details["status"] = col_info.status
         checks.append(ServiceHealth(

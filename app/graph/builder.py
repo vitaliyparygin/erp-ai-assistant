@@ -3,20 +3,11 @@ LangGraph multi-agent orchestration graph.
 Implements: Retriever → Research → Summarizer → Citation → Memory pipeline
 with conditional routing, retry handling, and full observability.
 """
-import json
-import time
 from typing import Any, Literal
-from uuid import UUID
 from langgraph.graph import END, START, StateGraph
-from tenacity import retry, stop_after_attempt, wait_exponential
-from typing import Any
 from app.agents.state import AgentState
-import re
 from app.core.config import get_settings
-from app.core.exceptions import AgentError, AgentTimeoutError
 from app.core.logging import get_logger
-from app.models.schemas import Citation, RetrievedChunk
-from app.observability.langfuse_client import LangFuseTracer
 from langchain_ollama import ChatOllama
 
 from app.rag.retriever import Reranker, VectorRetriever
@@ -63,7 +54,6 @@ class ERPAssistantGraph:
             model=settings.ollama_model,
             base_url=settings.ollama_base_url,
             temperature=settings.ollama_temperature,
-            request_timeout = settings.ollama_request_timeout,
         )
 
         self._memory_agent = MemoryAgent(self._llm, memory_store)
@@ -114,13 +104,14 @@ class ERPAssistantGraph:
         Execute the LangGraph pipeline.
         """
 
-        initial_state = {
-            "user_query": message,
-            "session_id": session_id,
-            "retrieved_chunks": [],
-            "citations": [],
-            "answer": "",
-        }
+        initial_state = AgentState(
+            session_id=session_id or "",
+            query=message,
+            original_query=message,
+            retrieved_chunks=[],
+            citations=[],
+            final_answer=None,
+        )
 
         result = await self._graph.ainvoke(initial_state)
 

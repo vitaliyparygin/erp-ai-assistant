@@ -74,7 +74,7 @@ class VectorStore:
         embeddings: list[list[float]],
         document_id: str,
         document_name: str,
-        original_filename: str
+        original_filename: str | None
     ) -> list[str]:
         """
         Upsert document chunks with their embeddings into Qdrant.
@@ -267,16 +267,19 @@ class VectorRetriever:
             )
             results = response.points
             for hit in results:
+                payload = hit.payload or {}
+                if payload is None:
+                    continue
                 logger.debug(
                     "retrieved_doc",
                     score=hit.score,
-                    chunk=hit.payload["content"][:200]
+                    chunk=str(payload["content"])[:200]
                 )
                 logger.debug(
                     "QDRANT_RESULTS",
                     docs=[
                         {
-                            "doc": p.payload.get("document_name"),
+                            "doc": payload.get("document_name"),
                             "score": p.score,
                         }
                         for p in results
@@ -303,21 +306,24 @@ class VectorRetriever:
         chunks = []
 
         for result in results:
+            res_payload = result.payload
+            if res_payload is None:
+                continue
             logger.debug(
                 "RAW_QDRANT_PAYLOAD",
-                payload=result.payload,
+                payload=res_payload,
             )
 
             chunks.append(
                 RetrievedChunk(
                     chunk_id=str(result.id),
-                    document_id=result.payload.get("document_id", ""),
-                    document_name=result.payload.get("original_filename", ""),
-                    content=result.payload.get("content", ""),
-                    page_number=result.payload.get("page_number"),
+                    document_id=res_payload.get("document_id", ""),
+                    document_name=res_payload.get("original_filename", ""),
+                    content=res_payload.get("content", ""),
+                    page_number=res_payload.get("page_number"),
                     score=result.score,
-                    chunk_index=result.payload.get("chunk_index", 0),
-                    metadata=result.payload,
+                    chunk_index=res_payload.get("chunk_index", 0),
+                    metadata=res_payload,
                 )
             )
         logger.debug(
@@ -340,10 +346,11 @@ class VectorRetriever:
         )
 
         if query.lower().startswith("debug:"):
-            return {
-                "retrieved_chunks": chunks,
-                "execution_path": ["retriever"],
-            }
+            logger.debug(
+                "retriever_debug",
+                retrieved_chunks=chunks,
+                execution_path=["retriever"],
+            )
         return chunks
 
     async def get_contract_documents(self):
@@ -430,7 +437,7 @@ class Reranker:
         Uses a simple relevance scoring approach; swap in a cross-encoder
         (e.g. Cohere Rerank) for production-grade reranking.
         """
-        start_time = time.monotonic()
+        # start_time = time.monotonic()
         k = top_k or self._settings.rag_rerank_top_k
         logger.debug(
             "rerank start",

@@ -8,7 +8,6 @@ from pathlib import Path
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
 from sqlalchemy import func, select
 
-from app.core.config import Settings
 from app.core.dependencies import DBSessionDep, RateLimitDep, SettingsDep
 from app.core.exceptions import DocumentNotFoundError, FileSizeLimitExceededError, UnsupportedFileTypeError
 from app.core.logging import get_logger
@@ -108,7 +107,10 @@ async def upload_document(
         },
     )
 
-    doc.metadata = {"celery_task_id": task.id}
+    doc.document_metadata = {
+        **(doc.document_metadata or {}),
+        "celery_task_id": task.id,
+    }
     await db.commit()
 
     logger.info(

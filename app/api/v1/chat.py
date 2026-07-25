@@ -6,16 +6,13 @@ import asyncio
 import json
 import time
 import uuid
-from uuid import uuid4
 from typing import AsyncGenerator
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi.responses import StreamingResponse
 from sse_starlette.sse import EventSourceResponse
 
 from app.agents.state import AgentState
-from app.core.config import get_settings, Settings
 from app.core.dependencies import DBSessionDep, QdrantDep, RedisDep, RateLimitDep, SettingsDep
 from app.core.logging import get_logger
 from app.graph.builder import ERPAssistantGraph
@@ -29,15 +26,12 @@ from app.models.schemas import (
 )
 from app.observability.metrics import GRAPH_EXECUTIONS_TOTAL, GRAPH_LATENCY_SECONDS
 from app.rag.retriever import Reranker, VectorRetriever
-
+from sqlalchemy import select
 from app.rag.embeddings import EmbeddingService
-from app.rag.retriever import VectorRetriever
-from app.services.llm_service import LLMService
 
-from qdrant_client import AsyncQdrantClient
 router = APIRouter()
 logger = get_logger(__name__)
-from sqlalchemy import select
+
 
 # =============================================================================
 # Dependency: build the agent graph per request
@@ -99,7 +93,7 @@ async def _save_messages(
     model: str,
 ) -> uuid.UUID:
     """Persist user + assistant messages and update conversation stats."""
-    from sqlalchemy import select, update
+    from sqlalchemy import update
 
     message_id = uuid.uuid4()
 
@@ -215,7 +209,7 @@ async def chat(
 
     return ChatResponse(
         session_id=str(session_id),
-        message_id=str(message_id),
+        message_id=message_id,
         answer=answer,
         citations=citations,
         tokens_used=tokens_used,
