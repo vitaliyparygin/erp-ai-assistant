@@ -1,12 +1,11 @@
 import re
 from app.parsers.field_dictionary import FIELD_DEFINITIONS
+from rules import detect_document_type
+
 PERSON_PATTERNS = [
     r"[А-ЯІЇЄҐ][а-яіїєґ']+\s+[А-ЯІЇЄҐ][а-яіїєґ']+\s+[А-ЯІЇЄҐ][а-яіїєґ']+",
     r"[A-Z][a-z]+\s+[A-Z][a-z]+",
-
 ]
-
-
 
 def extract_query_metadata(question: str) -> dict:
     metadata = {}
@@ -52,25 +51,11 @@ def extract_query_metadata(question: str) -> dict:
             metadata["person"] = m.group(0)
             break
 
-    #
-    # intent
-    #
+    document_type = detect_document_type(
+        text=question.lower(),
+    )
 
-    q = question.lower()
-
-    if any(x in q for x in ("зарплат", "salary")):
-        metadata["intent"] = "salary"
-
-    elif any(x in q for x in ("паспорт", "passport")):
-        metadata["intent"] = "passport"
-
-    elif any(x in q for x in ("тікет", "ticket")):
-        metadata["intent"] = "ticket"
-
-    elif any(x in q for x in ("інвойс", "invoice")):
-        metadata["intent"] = "invoice"
-
-    elif any(x in q for x in ("purchase order", "замовлен")):
-        metadata["intent"] = "purchase_order"
+    if document_type:
+        metadata["document_type"] = document_type
 
     return metadata

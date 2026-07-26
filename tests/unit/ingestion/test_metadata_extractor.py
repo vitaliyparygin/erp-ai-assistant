@@ -19,7 +19,7 @@ class TestMetadataExtractor:
             "invoice.pdf",
         )
 
-        assert metadata["document_type"] == "invoice"
+        assert metadata["document_type"] == "Invoice"
 
     def test_detects_contract(self):
         metadata = MetadataExtractor.extract(
@@ -27,7 +27,7 @@ class TestMetadataExtractor:
             "contract.pdf",
         )
 
-        assert metadata["document_type"] == "contract"
+        assert metadata["document_type"] == "Contract"
 
     def test_detects_opportunity(self):
         metadata = MetadataExtractor.extract(
@@ -35,7 +35,7 @@ class TestMetadataExtractor:
             "crm.pdf",
         )
 
-        assert metadata["document_type"] == "opportunity"
+        assert metadata["document_type"] == "CRM Opportunity"
 
     def test_unknown_document_type(self):
         metadata = MetadataExtractor.extract(
@@ -141,12 +141,13 @@ class TestMetadataExtractor:
     @pytest.mark.parametrize(
         ("text", "expected"),
         [
-            ("Invoice", "invoice"),
-            ("Service Agreement", "contract"),
-            ("Договір", "contract"),
-            ("Opportunity", "opportunity"),
+            ("Invoice Number: INV-100", "Invoice"),
+            ("Service Agreement\nContract Number: C-001", "Contract"),
+            ("Opportunity Stage: Qualified", "CRM Opportunity"),
+            ("Договір", "Contract"),
         ],
     )
+
     def test_document_type(self, text, expected):
         metadata = MetadataExtractor.extract(text, "doc.pdf")
         assert metadata["document_type"] == expected

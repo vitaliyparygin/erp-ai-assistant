@@ -4,3 +4,4 @@
 cheatnote.txt
 tests/report.csv
 __pycache__/
+frontend/node_modules/
