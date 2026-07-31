@@ -3,6 +3,7 @@ LangGraph multi-agent orchestration graph.
 Implements: Retriever → Research → Summarizer → Citation → Memory pipeline
 with conditional routing, retry handling, and full observability.
 """
+
 from typing import Any, Literal
 from langgraph.graph import END, START, StateGraph
 from app.agents.state import AgentState
@@ -12,24 +13,29 @@ from langchain_ollama import ChatOllama
 
 from app.rag.retriever import Reranker, VectorRetriever
 
-from app.agents.retriver import RetrieverAgent
+from app.agents.retriever import RetrieverAgent
 from app.agents.memory import MemoryAgent
 from app.agents.research import ResearchAgent
 from app.agents.summarize import SummarizerAgent
 from app.agents.citation import CitationAgent
 from app.utils.resources import load_json
+
 logger = get_logger(__name__)
 
 REWRITE_MAP = load_json("rewrite_map.json")
 FIELD_PATTERNS = load_json("field_patterns.json")
 PROTECTED_TERMS = load_json("protected_terms.json")
+
+
 # =============================================================================
 # Graph Builder
 # =============================================================================
 def should_summarize(
-        state: AgentState,
+    state: AgentState,
 ):
     return not state.disambiguated
+
+
 class ERPAssistantGraph:
     """
     LangGraph orchestration graph for the ERP AI Assistant.
@@ -43,6 +49,7 @@ class ERPAssistantGraph:
         retriever: VectorRetriever,
         reranker: Reranker,
         memory_store: Any,
+        llm=None,
     ) -> None:
         settings = get_settings()
         logger.debug(
@@ -50,7 +57,7 @@ class ERPAssistantGraph:
             model=settings.ollama_model,
             base_url=settings.ollama_base_url,
         )
-        self._llm = ChatOllama(
+        self._llm = llm or ChatOllama(
             model=settings.ollama_model,
             base_url=settings.ollama_base_url,
             temperature=settings.ollama_temperature,
@@ -63,8 +70,6 @@ class ERPAssistantGraph:
         self._citation_agent = CitationAgent(self._llm)
 
         self._graph = self._build_graph()
-
-
 
     def _build_graph(self) -> Any:
         """Construct and compile the LangGraph state machine."""
@@ -94,11 +99,10 @@ class ERPAssistantGraph:
 
         return builder.compile()
 
-
     async def invoke(
-            self,
-            message: str,
-            session_id: str | None = None,
+        self,
+        message: str,
+        session_id: str | None = None,
     ) -> dict:
         """
         Execute the LangGraph pipeline.
@@ -125,7 +129,7 @@ class ERPAssistantGraph:
             "ROUTER_RESULT",
             state=state,
             needs_research=state.needs_research,
-            has_sufficient_context=state.has_sufficient_context
+            has_sufficient_context=state.has_sufficient_context,
         )
         logger.debug(
             "ROUTER_DEBUG",
@@ -133,9 +137,7 @@ class ERPAssistantGraph:
             final_answer=state.final_answer,
         )
         if state.requires_clarification:
-            logger.warning(
-                "ROUTER_RETURN_END"
-            )
+            logger.warning("ROUTER_RETURN_END")
             return "end"
 
         if state.needs_research:
@@ -165,11 +167,7 @@ class ERPAssistantGraph:
             return AgentState(**result)
 
         except Exception as e:
-            logger.debug(
-                "GRAPH FAILED",
-                type=type(e),
-                str =str(e)
-            )
+            logger.debug("GRAPH FAILED", type=type(e), str=str(e))
             raise
 
     async def stream(self, state: AgentState):
@@ -177,3 +175,5 @@ class ERPAssistantGraph:
         async for event in self._graph.astream_events(state, version="v2"):
             yield event
 
+    def build_graph(self) -> Any:
+        return self._build_graph()

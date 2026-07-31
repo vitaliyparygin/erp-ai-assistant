@@ -2,6 +2,7 @@
 Core application configuration.
 Uses pydantic-settings for type-safe environment variable management.
 """
+
 from functools import lru_cache
 from typing import Literal
 from app.core.logging import get_logger
@@ -9,6 +10,7 @@ from pydantic import Field, computed_field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logger = get_logger(__name__)
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -39,38 +41,22 @@ class Settings(BaseSettings):
     # -------------------------------------------------------------------------
     # OpenAI
     # -------------------------------------------------------------------------
-    openai_api_key: str | None = Field(
-        default=None,
-        alias="OPENAI_API_KEY"
-    )
+    openai_api_key: str | None = Field(default=None, alias="OPENAI_API_KEY")
     # openai_model: str = "gpt-4o"
     # openai_embedding_model: str = "text-embedding-3-large"
     # openai_embedding_dimensions: int = 3072
     # openai_max_tokens: int = 4096
     # openai_temperature: float = 0.1
-    llm_provider: str = Field(
-        default="ollama",
-        alias="LLM_PROVIDER"
-    )
+    llm_provider: str = Field(default="ollama", alias="LLM_PROVIDER")
 
-    use_ollama: bool = Field(
-        default=True,
-        alias="USE_OLLAMA"
-    )
+    use_ollama: bool = Field(default=True, alias="USE_OLLAMA")
 
-    ollama_base_url: str = Field(
-        default="http://ollama:11434",
-        alias="OLLAMA_BASE_URL"
-    )
+    ollama_base_url: str = Field(default="http://ollama:11434", alias="OLLAMA_BASE_URL")
 
-    ollama_model: str = Field(
-        default="qwen2.5:7b",
-        alias="OLLAMA_MODEL"
-    )
+    ollama_model: str = Field(default="qwen2.5:7b", alias="OLLAMA_MODEL")
 
     ollama_embedding_model: str = Field(
-        default="nomic-embed-text",
-        alias="OLLAMA_EMBEDDING_MODEL"
+        default="nomic-embed-text", alias="OLLAMA_EMBEDDING_MODEL"
     )
 
     ollama_embedding_dimensions: int = 768
@@ -90,8 +76,8 @@ class Settings(BaseSettings):
     # Redis
     # -------------------------------------------------------------------------
     redis_url: str = "redis://redis:6379/0"
-    redis_session_ttl: int = 86400    # 24 hours
-    redis_cache_ttl: int = 3600       # 1 hour
+    redis_session_ttl: int = 86400  # 24 hours
+    redis_cache_ttl: int = 3600  # 1 hour
 
     # -------------------------------------------------------------------------
     # Qdrant

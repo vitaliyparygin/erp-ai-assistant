@@ -2,6 +2,7 @@
 Chat API endpoints.
 Supports both standard JSON responses and Server-Sent Events (SSE) streaming.
 """
+
 import asyncio
 import json
 import time
@@ -13,7 +14,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sse_starlette.sse import EventSourceResponse
 
 from app.agents.state import AgentState
-from app.core.dependencies import DBSessionDep, QdrantDep, RedisDep, RateLimitDep, SettingsDep
+from app.core.dependencies import (
+    DBSessionDep,
+    QdrantDep,
+    RedisDep,
+    RateLimitDep,
+    SettingsDep,
+)
 from app.core.logging import get_logger
 from app.graph.builder import ERPAssistantGraph
 from app.memory.redis_memory import RedisMemoryStore
@@ -37,21 +44,27 @@ logger = get_logger(__name__)
 # Dependency: build the agent graph per request
 # =============================================================================
 
+
 async def get_agent_graph(
     qdrant: QdrantDep,
     redis: RedisDep,
     settings: SettingsDep,
 ) -> ERPAssistantGraph:
     embedding_service = EmbeddingService(redis_client=redis)
-    retriever = VectorRetriever(qdrant_client=qdrant, embedding_service=embedding_service)
+    retriever = VectorRetriever(
+        qdrant_client=qdrant, embedding_service=embedding_service
+    )
     reranker = Reranker()
     memory_store = RedisMemoryStore(redis_client=redis)
-    return ERPAssistantGraph(retriever=retriever, reranker=reranker, memory_store=memory_store)
+    return ERPAssistantGraph(
+        retriever=retriever, reranker=reranker, memory_store=memory_store
+    )
 
 
 # =============================================================================
 # Helper: ensure/create conversation session
 # =============================================================================
+
 
 async def _get_or_create_session(
     session_id: str | None,
@@ -59,13 +72,10 @@ async def _get_or_create_session(
 ) -> tuple[str, uuid.UUID]:
     """Return (session_id, conversation_db_id), creating a new record if needed."""
 
-
     new_session_id = session_id or str(uuid.uuid4())
 
     result = await db.execute(
-        select(ConversationModel).where(
-            ConversationModel.session_id == new_session_id
-        )
+        select(ConversationModel).where(ConversationModel.session_id == new_session_id)
     )
     conv = result.scalar_one_or_none()
 
@@ -135,6 +145,7 @@ async def _save_messages(
 # Standard Chat Endpoint
 # =============================================================================
 
+
 @router.post(
     "/",
     response_model=ChatResponse,
@@ -180,7 +191,9 @@ async def chat(
         type=type(result_state).__name__,
         value=str(result_state)[:5000],
     )
-    answer = result_state.final_answer or "I couldn't generate a response. Please try again."
+    answer = (
+        result_state.final_answer or "I couldn't generate a response. Please try again."
+    )
     citations = result_state.citations or []
     tokens_used = result_state.total_tokens
 
@@ -221,6 +234,7 @@ async def chat(
 # =============================================================================
 # Streaming Chat Endpoint (SSE)
 # =============================================================================
+
 
 @router.get(
     "/stream",
@@ -270,7 +284,13 @@ async def chat_stream(
                 # Stream agent status updates
                 if event_name == "on_chain_start":
                     node = event_data.get("name", "")
-                    if node in {"memory", "retriever", "research", "summarizer", "citation"}:
+                    if node in {
+                        "memory",
+                        "retriever",
+                        "research",
+                        "summarizer",
+                        "citation",
+                    }:
                         yield {
                             "event": "agent_start",
                             "data": json.dumps({"agent": node}),
@@ -284,14 +304,20 @@ async def chat_stream(
                         full_answer = output["final_answer"]
                         # Stream the answer in chunks
                         for i in range(0, len(full_answer), 20):
-                            chunk = full_answer[i: i + 20]
+                            chunk = full_answer[i : i + 20]
                             yield {
                                 "event": "token",
                                 "data": json.dumps({"token": chunk}),
                             }
                             await asyncio.sleep(0.01)
 
-                    if node in {"memory", "retriever", "research", "summarizer", "citation"}:
+                    if node in {
+                        "memory",
+                        "retriever",
+                        "research",
+                        "summarizer",
+                        "citation",
+                    }:
                         yield {
                             "event": "agent_end",
                             "data": json.dumps({"agent": node}),
@@ -302,10 +328,12 @@ async def chat_stream(
             # Final event with metadata
             yield {
                 "event": "done",
-                "data": json.dumps({
-                    "session_id": resolved_session_id,
-                    "latency_ms": latency_ms,
-                }),
+                "data": json.dumps(
+                    {
+                        "session_id": resolved_session_id,
+                        "latency_ms": latency_ms,
+                    }
+                ),
             }
 
             # Persist to memory

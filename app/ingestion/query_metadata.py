@@ -7,28 +7,22 @@ PERSON_PATTERNS = [
     r"[A-Z][a-z]+\s+[A-Z][a-z]+",
 ]
 
+
 def extract_query_metadata(question: str) -> dict:
     metadata = {}
-    print("== extract_query_metadata ==")
     #
     # structured ids
     #
     for field_name, definition in FIELD_DEFINITIONS.items():
         for pattern in definition.patterns:
-
             m = re.search(
                 pattern,
                 question,
                 re.IGNORECASE,
             )
 
-            print(f"pattern: {pattern}, question: {question}, field: {definition}")
-            print(m)
             if not m:
                 continue
-
-            print(definition)
-            print(definition.name)
 
             if m.lastindex:
                 value = m.group(1)
@@ -36,8 +30,6 @@ def extract_query_metadata(question: str) -> dict:
                 value = m.group(0)
 
             metadata[definition.name] = value.strip()
-            print(value)
-            print(metadata)
 
             break
 

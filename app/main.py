@@ -2,13 +2,14 @@
 FastAPI application entrypoint.
 Configures middleware, exception handlers, routers, and startup events.
 """
+
 import time
 import uuid
 from contextlib import asynccontextmanager
 from typing import Any
 from prometheus_client import make_asgi_app
 import traceback
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -20,9 +21,16 @@ from app.core.exceptions import (
     ERPAssistantError,
     RateLimitError,
 )
-from app.core.logging import bind_request_context, clear_request_context, get_logger, setup_logging
+from app.core.logging import (
+    get_logger,
+    setup_logging,
+)
 from app.db.session import create_tables
-from app.observability.metrics import APP_INFO, HTTP_REQUEST_DURATION_SECONDS, HTTP_REQUESTS_TOTAL
+from app.observability.metrics import (
+    APP_INFO,
+)
+from app.core.exceptions import ConversationNotFoundError
+
 
 settings = get_settings()
 logger = get_logger(__name__)
@@ -31,6 +39,7 @@ logger = get_logger(__name__)
 # =============================================================================
 # Application Lifecycle
 # =============================================================================
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -41,11 +50,13 @@ async def lifespan(app: FastAPI):
         json_logs=settings.is_production,
     )
 
-    APP_INFO.info({
-        "name": settings.app_name,
-        "version": settings.app_version,
-        "env": settings.app_env,
-    })
+    APP_INFO.info(
+        {
+            "name": settings.app_name,
+            "version": settings.app_version,
+            "env": settings.app_env,
+        }
+    )
 
     logger.info(
         "application_starting",
@@ -92,6 +103,15 @@ async def global_exception_handler(request: Request, exc: Exception):
         },
     )
 
+
+@app.exception_handler(ConversationNotFoundError)
+async def conversation_not_found_handler(request, exc):
+    return JSONResponse(
+        status_code=404,
+        content={"detail": str(exc)},
+    )
+
+
 # =============================================================================
 # Middleware
 # =============================================================================
@@ -106,66 +126,27 @@ app.add_middleware(
 
 
 @app.middleware("http")
-async def request_context_middleware(request: Request, call_next) -> Response:
-    """
-    Per-request middleware that:
-    - Assigns a unique request ID
-    - Binds structured log context
-    - Records Prometheus HTTP metrics
-    - Injects X-Request-ID into response headers
-    """
+async def request_context_middleware(request: Request, call_next):
+
     request_id = str(uuid.uuid4())
-    request.state.request_id = request_id
-
-    bind_request_context(
-        request_id=request_id,
-        path=request.url.path,
-        method=request.method,
-    )
-
-    start_time = time.monotonic()
+    start = time.perf_counter()
 
     try:
-        response: Response = await call_next(request)
-        status_code = response.status_code
-    except Exception:
-        import traceback
-        traceback.print_exc()
-
-        status_code = 500
-        raise
+        response = await call_next(request)
     finally:
-        latency = time.monotonic() - start_time
-
-        # Prometheus metrics
-        HTTP_REQUESTS_TOTAL.labels(
-            method=request.method,
-            path=request.url.path,
-            status_code=str(status_code),
-        ).inc()
-        HTTP_REQUEST_DURATION_SECONDS.labels(
-            method=request.method,
-            path=request.url.path,
-        ).observe(latency)
-
         logger.info(
             "http_request",
-            method=request.method,
-            path=request.url.path,
-            status_code=status_code,
-            latency_ms=round(latency * 1000, 2),
             request_id=request_id,
+            latency_ms=round((time.perf_counter() - start) * 1000, 2),
         )
 
-        clear_request_context()
-
-    response.headers["X-Request-ID"] = request_id
     return response
 
 
 # =============================================================================
 # Exception Handlers
 # =============================================================================
+
 
 @app.exception_handler(RateLimitError)
 async def rate_limit_handler(request: Request, exc: RateLimitError) -> JSONResponse:
@@ -177,7 +158,9 @@ async def rate_limit_handler(request: Request, exc: RateLimitError) -> JSONRespo
 
 
 @app.exception_handler(DocumentNotFoundError)
-async def document_not_found_handler(request: Request, exc: DocumentNotFoundError) -> JSONResponse:
+async def document_not_found_handler(
+    request: Request, exc: DocumentNotFoundError
+) -> JSONResponse:
     return JSONResponse(
         status_code=404,
         content={"detail": exc.message, "code": exc.code},
@@ -193,16 +176,25 @@ async def auth_error_handler(request: Request, exc: AuthorizationError) -> JSONR
 
 
 @app.exception_handler(ERPAssistantError)
-async def app_error_handler(request: Request, exc: ERPAssistantError) -> JSONResponse:
+async def app_error_handler(
+    request: Request,
+    exc: ERPAssistantError,
+) -> JSONResponse:
+
     logger.error(
         "application_error",
         code=exc.code,
         message=exc.message,
         details=exc.details,
     )
+
     return JSONResponse(
-        status_code=500,
-        content={"detail": exc.message, "code": exc.code, "details": exc.details},
+        status_code=exc.status_code,
+        content={
+            "detail": exc.message,
+            "code": exc.code,
+            "details": exc.details,
+        },
     )
 
 
@@ -220,6 +212,7 @@ app.mount("/metrics", metrics_app)
 # =============================================================================
 # Health Check
 # =============================================================================
+
 
 @app.get("/health", tags=["Health"], include_in_schema=False)
 async def health_check() -> dict[str, Any]:

@@ -2,6 +2,7 @@
 Document management API endpoints.
 Handles uploads, ingestion status, listing, and deletion.
 """
+
 import uuid
 from pathlib import Path
 
@@ -9,10 +10,19 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
 from sqlalchemy import func, select
 
 from app.core.dependencies import DBSessionDep, RateLimitDep, SettingsDep
-from app.core.exceptions import DocumentNotFoundError, FileSizeLimitExceededError, UnsupportedFileTypeError
+from app.core.exceptions import (
+    DocumentNotFoundError,
+    FileSizeLimitExceededError,
+    UnsupportedFileTypeError,
+)
 from app.core.logging import get_logger
 from app.models.orm import DocumentModel
-from app.models.schemas import Document, DocumentListResponse, DocumentStatus, DocumentUploadResponse
+from app.models.schemas import (
+    Document,
+    DocumentListResponse,
+    DocumentStatus,
+    DocumentUploadResponse,
+)
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -21,7 +31,7 @@ MIME_TYPE_MAP = {
     "pdf": "application/pdf",
     "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     "txt": "text/plain",
-    "md":  "text/markdown",
+    "md": "text/markdown",
 }
 
 
@@ -41,44 +51,34 @@ async def upload_document(
 ) -> DocumentUploadResponse:
     if not file.filename:
         raise HTTPException(status_code=400, detail="Filename required")
-    logger.debug(
-        "-upload_document-",
-        documfileent_id=file
-    )
+
     extension = Path(file.filename).suffix.lstrip(".").lower()
+
     if extension not in settings.allowed_extensions:
         raise UnsupportedFileTypeError(
             f"File type '{extension}' not supported. Allowed: {settings.allowed_extensions}"
         )
-    document_id = uuid.uuid4()
-    upload_dir = Path("/app/uploads")
-    upload_dir.mkdir(parents=True, exist_ok=True)
 
-    file_extension = Path(file.filename).suffix
-    stored_filename = f"{document_id}{file_extension}"
-    file_path = upload_dir / stored_filename
+    document_id = uuid.uuid4()
 
     content = await file.read()
 
-    with open(file_path, "wb") as f:
-        f.write(content)
-
     if len(content) > settings.max_upload_size_bytes:
         raise FileSizeLimitExceededError(
-            f"File {len(content)/1024/1024:.1f}MB exceeds limit of {settings.max_upload_size_mb}MB"
+            f"File {len(content) / 1024 / 1024:.1f}MB exceeds "
+            f"limit of {settings.max_upload_size_mb}MB"
         )
 
     mime_type = MIME_TYPE_MAP.get(extension, "application/octet-stream")
 
-
     upload_dir = Path(settings.upload_dir)
     upload_dir.mkdir(parents=True, exist_ok=True)
+
     safe_filename = f"{document_id}.{extension}"
     file_path = upload_dir / safe_filename
     file_path.write_bytes(content)
 
-    tag_list = [t.strip() for t in tags.split(",") if t.strip()] if tags else []
-
+    tag_list = [tag.strip() for tag in tags.split(",") if tag.strip()] if tags else []
 
     doc = DocumentModel(
         id=document_id,
@@ -90,12 +90,13 @@ async def upload_document(
         status=DocumentStatus.PENDING,
         tags=tag_list,
     )
+
     db.add(doc)
     await db.commit()
     await db.refresh(doc)
 
-    # Dispatch via send_task — no direct import of the worker module
     from app.workers.celery_app import celery_app
+
     task = celery_app.send_task(
         "ingest_document",
         kwargs={
@@ -111,6 +112,7 @@ async def upload_document(
         **(doc.document_metadata or {}),
         "celery_task_id": task.id,
     }
+
     await db.commit()
 
     logger.info(
@@ -158,21 +160,29 @@ async def list_documents(
 
 @router.get("/{document_id}", response_model=Document, summary="Get document details")
 async def get_document(document_id: uuid.UUID, db: DBSessionDep) -> Document:
-    result = await db.execute(select(DocumentModel).where(DocumentModel.id == document_id))
+    result = await db.execute(
+        select(DocumentModel).where(DocumentModel.id == document_id)
+    )
     doc = result.scalar_one_or_none()
     if not doc:
         raise DocumentNotFoundError(f"Document {document_id} not found")
     return Document.model_validate(doc)
 
 
-@router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete a document")
+@router.delete(
+    "/{document_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete a document",
+)
 async def delete_document(
     document_id: uuid.UUID,
     *,
     db: DBSessionDep,
     settings: SettingsDep,
 ) -> None:
-    result = await db.execute(select(DocumentModel).where(DocumentModel.id == document_id))
+    result = await db.execute(
+        select(DocumentModel).where(DocumentModel.id == document_id)
+    )
     doc = result.scalar_one_or_none()
     if not doc:
         raise DocumentNotFoundError(f"Document {document_id} not found")
@@ -180,6 +190,7 @@ async def delete_document(
     try:
         from app.rag.retriever import VectorStore
         from qdrant_client import AsyncQdrantClient
+
         client = AsyncQdrantClient(url=settings.qdrant_url)
         await VectorStore(client).delete_document(str(document_id))
         await client.close()

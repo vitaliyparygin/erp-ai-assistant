@@ -2,6 +2,7 @@
 Prometheus metrics for the ERP AI Assistant.
 Tracks request rates, latencies, token usage, and agent performance.
 """
+
 from prometheus_client import Counter, Gauge, Histogram, Info
 
 # =============================================================================

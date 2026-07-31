@@ -18,35 +18,32 @@ class ResearchAgent:
     def __init__(self, llm: ChatOllama) -> None:
         self._llm = llm
 
+    def _build_chain(self):
+        return RESEARCH_TEMPLATE | self._llm
+
     async def __call__(self, state: AgentState) -> dict:
         start = time.monotonic()
         logger.debug("research_agent_start", query=state.query[:60])
 
         try:
-            chain = RESEARCH_TEMPLATE | self._llm
+            chain = self._build_chain()
 
-            result = await chain.ainvoke({
-                "query": state.query,
-                "context": state.context_str,
-                "history": state.messages[-6:],
-                "research_notes": "\n".join(state.research_notes),
-            })
+            result = await chain.ainvoke(
+                {
+                    "query": state.query,
+                    "context": state.context_str,
+                    "history": state.messages[-6:],
+                    "research_notes": "\n".join(state.research_notes),
+                }
+            )
             logger.debug(
                 "ROUTER_DECISION",
                 needs_research=state.needs_research,
                 query=state.query,
             )
-            logger.debug(
-                "AGENT_result",
-                agent="research_agent",
-                latency_ms=result
-            )
+            logger.debug("AGENT_result", agent="research_agent", latency_ms=result)
             latency_ms = round((time.monotonic() - start) * 1000, 2)
-            logger.debug(
-                "AGENT_TIMING",
-                agent="research_agent",
-                latency_ms=latency_ms
-            )
+            logger.debug("AGENT_TIMING", agent="research_agent", latency_ms=latency_ms)
             return {
                 "research_notes": [result.content],
                 "execution_path": ["research"],
@@ -54,7 +51,8 @@ class ResearchAgent:
             }
 
         except Exception as e:
-            logger.error("research_agent_error", error=str(e))
-            return {"errors": [f"ResearchAgent: {e}"], "execution_path": ["research"]}
-
-
+            logger.error(
+                "research_agent_error",
+                error=str(e),
+            )
+            raise

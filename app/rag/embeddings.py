@@ -2,6 +2,7 @@
 Embedding generation service.
 Wraps OpenAI embeddings with batching, retry logic, and caching.
 """
+
 import asyncio
 import hashlib
 import json
@@ -65,11 +66,7 @@ class EmbeddingService:
             )
         response.raise_for_status()
         data = response.json()
-        logger.debug(
-            "data[embeddings]",
-            data=data,
-            model=self._model
-        )
+        logger.debug("data[embeddings]", data=data, model=self._model)
         embeddings = data["embeddings"]
 
         if not embeddings:
@@ -89,7 +86,7 @@ class EmbeddingService:
         embeddings: list[list[float] | None] = [None] * len(texts)
         uncached_indices: list[int] = []
         uncached_texts: list[str] = []
-
+        new_embeddings: list[list[float]] = []
         if self._redis:
             for i, text in enumerate(texts):
                 cached = await self._get_cached_embedding(text)
@@ -103,8 +100,8 @@ class EmbeddingService:
             uncached_texts = texts
         logger.debug(
             "embed_batch lens",
-            len_texts=len(texts),
-            model_embeddings=len(embeddings)
+            new_embeddings_len=len(uncached_texts),
+            embeddings_len=len(embeddings),
         )
 
         # Process uncached texts in batches
@@ -122,7 +119,7 @@ class EmbeddingService:
         logger.debug(
             "embed_batch lens",
             new_embeddings_len=len(new_embeddings),
-            embeddings_len=len(embeddings)
+            embeddings_len=len(embeddings),
         )
         return [e for e in embeddings if e is not None]
 
@@ -131,7 +128,7 @@ class EmbeddingService:
         all_embeddings: list[list[float]] = []
 
         for i in range(0, len(texts), OPENAI_EMBEDDING_BATCH_SIZE):
-            batch = texts[i: i + OPENAI_EMBEDDING_BATCH_SIZE]
+            batch = texts[i : i + OPENAI_EMBEDDING_BATCH_SIZE]
             batch_embeddings = await self._call_ollama_embedding(batch)
             all_embeddings.extend(batch_embeddings)
 
@@ -147,10 +144,7 @@ class EmbeddingService:
         wait=wait_exponential(multiplier=1, min=2, max=30),
         reraise=True,
     )
-    async def _call_ollama_embedding(
-            self,
-            texts: list[str]
-    ) -> list[list[float]]:
+    async def _call_ollama_embedding(self, texts: list[str]) -> list[list[float]]:
 
         embeddings = []
 
@@ -199,6 +193,7 @@ class EmbeddingService:
                 error_type=type(e).__name__,
             )
             import traceback
+
             traceback.print_exc()
             raise
         return None
@@ -220,4 +215,3 @@ class EmbeddingService:
                 error=str(e),
                 error_type=type(e).__name__,
             )
-

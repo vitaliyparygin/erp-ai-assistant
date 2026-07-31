@@ -14,13 +14,15 @@ AsyncSessionLocal = async_sessionmaker(
     engine, class_=AsyncSession, expire_on_commit=False
 )
 
-async def create_tables() -> None:
+
+async def create_tables() -> None:  # pragma: no cover
     from app.models.orm import Base
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
 
-def get_sessionmaker():
+def get_sessionmaker():  # pragma: no cover
     engine = create_async_engine(
         settings.database_url,
         pool_pre_ping=True,

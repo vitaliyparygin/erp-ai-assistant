@@ -13,9 +13,7 @@ def load_json(name: str):
 
     if not path.is_file():
         available = sorted(
-            p.name
-            for p in files(dictionaries).iterdir()
-            if p.name.endswith(".json")
+            p.name for p in files(dictionaries).iterdir() if p.name.endswith(".json")
         )
 
         raise FileNotFoundError(

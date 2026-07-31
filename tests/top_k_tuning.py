@@ -16,11 +16,13 @@ for top_k in TOP_K_VALUES:
 
     passed, total = run_single_turn()
 
-    results.append({
-        "top_k": top_k,
-        "passed": passed,
-        "total": total,
-    })
+    results.append(
+        {
+            "top_k": top_k,
+            "passed": passed,
+            "total": total,
+        }
+    )
 
 with open("tests/results/top_k_results.csv", "w", newline="") as f:
     writer = csv.DictWriter(
@@ -29,11 +31,10 @@ with open("tests/results/top_k_results.csv", "w", newline="") as f:
             "top_k",
             "passed",
             "total",
-        ]
+        ],
     )
 
     writer.writeheader()
 
     for row in results:
         writer.writerow(row)
-

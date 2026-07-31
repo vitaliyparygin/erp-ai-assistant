@@ -2,11 +2,14 @@
 Domain-specific exceptions for the ERP AI Assistant.
 All exceptions map to appropriate HTTP status codes in the API layer.
 """
+
 from typing import Any
 
 
 class ERPAssistantError(Exception):
     """Base exception for all application errors."""
+
+    status_code = 400
 
     def __init__(
         self,
@@ -24,6 +27,7 @@ class ERPAssistantError(Exception):
 # Document / Ingestion Errors
 # -----------------------------------------------------------------------------
 
+
 class DocumentNotFoundError(ERPAssistantError):
     """Raised when a requested document does not exist."""
 
@@ -35,14 +39,19 @@ class DocumentIngestionError(ERPAssistantError):
 class UnsupportedFileTypeError(ERPAssistantError):
     """Raised when the uploaded file type is not supported."""
 
+    status_code = 415
+
 
 class FileSizeLimitExceededError(ERPAssistantError):
     """Raised when the uploaded file exceeds the size limit."""
+
+    status_code = 413
 
 
 # -----------------------------------------------------------------------------
 # Conversation / Memory Errors
 # -----------------------------------------------------------------------------
+
 
 class ConversationNotFoundError(ERPAssistantError):
     """Raised when a conversation session cannot be found."""
@@ -55,6 +64,7 @@ class SessionExpiredError(ERPAssistantError):
 # -----------------------------------------------------------------------------
 # RAG / Retrieval Errors
 # -----------------------------------------------------------------------------
+
 
 class VectorStoreError(ERPAssistantError):
     """Raised when vector store operations fail."""
@@ -76,6 +86,7 @@ class NoRelevantDocumentsError(ERPAssistantError):
 # Agent / Orchestration Errors
 # -----------------------------------------------------------------------------
 
+
 class AgentError(ERPAssistantError):
     """Base error for agent execution failures."""
 
@@ -96,6 +107,7 @@ class GraphExecutionError(AgentError):
 # External Service Errors
 # -----------------------------------------------------------------------------
 
+
 class LLMError(ERPAssistantError):
     """Raised when LLM API calls fail."""
 
@@ -111,6 +123,7 @@ class CacheError(ERPAssistantError):
 # -----------------------------------------------------------------------------
 # Auth Errors
 # -----------------------------------------------------------------------------
+
 
 class AuthenticationError(ERPAssistantError):
     """Raised when authentication fails."""

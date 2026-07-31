@@ -3,6 +3,7 @@ Document chunking pipeline.
 Supports PDF, DOCX, TXT, and Markdown with configurable chunking strategies.
 Preserves metadata (page numbers, section headings, document hierarchy).
 """
+
 import re
 import uuid
 from dataclasses import dataclass, field
@@ -44,7 +45,7 @@ class TextChunk:
 class ParsedDocument:
     """Result of parsing a document file."""
 
-    pages: list[dict]   # [{page_number, text, metadata}]
+    pages: list[dict]  # [{page_number, text, metadata}]
     total_pages: int
     file_path: str
     mime_type: str
@@ -85,14 +86,16 @@ class DocumentParser:
                     text = page.extract_text() or ""
                     text = self._clean_text(text)
                     if text.strip():
-                        pages.append({
-                            "page_number": i,
-                            "text": text,
-                            "metadata": {
-                                "page_width": page.width,
-                                "page_height": page.height,
-                            },
-                        })
+                        pages.append(
+                            {
+                                "page_number": i,
+                                "text": text,
+                                "metadata": {
+                                    "page_width": page.width,
+                                    "page_height": page.height,
+                                },
+                            }
+                        )
         except Exception as e:
             raise DocumentIngestionError(f"PDF parsing failed: {e}") from e
 
@@ -108,6 +111,7 @@ class DocumentParser:
         """Extract text from DOCX with paragraph-level metadata."""
         try:
             from docx import Document
+
             doc = Document(str(path))
         except Exception as e:
             raise DocumentIngestionError(f"DOCX parsing failed: {e}") from e
@@ -181,16 +185,9 @@ class DocumentChunker:
         logger.debug(
             "CHUNKER_METHOD_ENTERED",
         )
-        full_text = "\n".join(
-            page["text"]
-            for page in document.pages
-        )
+        full_text = "\n".join(page["text"] for page in document.pages)
 
-        logger.debug(
-            "document_debug",
-            document=document,
-            file_path=document.file_path
-        )
+        logger.debug("document_debug", document=document, file_path=document.file_path)
         document_metadata = MetadataExtractor.extract(
             full_text,
             Path(document.file_path).name,
@@ -231,8 +228,6 @@ class DocumentChunker:
                 )
                 chunks.append(chunk)
                 chunk_index += 1
-
-
 
         logger.info(
             "document_chunked",

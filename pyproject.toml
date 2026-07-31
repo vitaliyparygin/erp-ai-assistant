@@ -39,6 +39,7 @@ dependencies = [
     "green",
     "rag-benchmark",
     "rules @ git+ssh://git@github.com/vitaliyparygin/rules.git@v0.1.2",
+    "python-multipart>=0.0.20",
 ]
 
 [project.optional-dependencies]
@@ -88,3 +89,17 @@ module = [
     "langfuse.*",
 ]
 ignore_missing_imports = true
+
+[tool.coverage.run]
+source = ["app"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+omit = [
+    "*/tests/*",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "strict"

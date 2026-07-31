@@ -1,6 +1,5 @@
 import json
 import time
-import re
 from app.agents.state import AgentState
 from app.core.config import get_settings
 from app.core.logging import get_logger
@@ -11,118 +10,21 @@ from app.rag.prompts import (
     RETRIEVAL_ANALYSIS_TEMPLATE,
 )
 from app.rag.retriever import Reranker, VectorRetriever
-import traceback
 from app.ingestion.query_metadata import extract_query_metadata
 from app.utils.resources import load_json
+from app.retrieval.contracts import (
+    get_unique_docs,
+    requires_contract_disambiguation,
+    build_contract_disambiguation,
+)
+
 
 logger = get_logger(__name__)
-
+MAX_CONTEXT = 20_000
 REWRITE_MAP = load_json("rewrite_map.json")
 FIELD_PATTERNS = load_json("field_patterns.json")
 PROTECTED_TERMS = load_json("protected_terms.json")
 
-def is_contract_query(query: str) -> bool:
-    q = query.lower()
-    keywords = load_json("contract_keywords.json")
-    return any(k in q for k in keywords)
-
-
-def has_contract_identifier(query: str) -> bool:
-    return bool(
-        re.search(
-            r"[A-Z]{1,5}-\d{4}-\d+",
-            query,
-            re.IGNORECASE,
-        )
-    )
-def is_ambiguous_contract_query(query: str) -> bool:
-    if not isinstance(query, str):
-        return False
-
-    return (
-        is_contract_query(query)
-        and not has_contract_identifier(query)
-    )
-
-def requires_contract_disambiguation(
-    query: str,
-    docs: list,
-) -> bool:
-    if not is_ambiguous_contract_query(query):
-        return False
-    logger.warning(
-        "RETRIEVED_DOCS",
-        docs=[
-            {
-                "doc": c.metadata.get("document_name"),
-                "score": c.score,
-            }
-            for c in docs[:10]
-        ]
-    )
-    contract_docs = [
-        d
-        for d in docs
-        if d.metadata.get("document_type") == "contract"
-    ]
-
-    return len(contract_docs) > 1
-
-
-
-def get_unique_docs(
-    reranked: list[RetrievedChunk],
-) -> dict[str, RetrievedChunk]:
-    unique_docs: dict[str, RetrievedChunk] = {}
-
-    for chunk in reranked:
-        unique_docs[chunk.document_name] = chunk
-
-    return unique_docs
-
-def build_contract_disambiguation(contracts):
-    logger.debug(
-        "build_contract_disambiguation:start"
-    )
-
-    logger.debug(
-        "build_contract_disambiguation:len",
-        len=len(contracts),
-    )
-
-    if not contracts:
-        return None
-    traceback.print_stack()
-    lines = ["I found some contracts:\n"]
-
-    for idx, contract in enumerate(
-        contracts,
-        start=1,
-    ):
-        lines.append(
-            f"{idx}. {contract['document_name']}"
-        )
-
-        if contract.get("contract_number"):
-            lines.append(
-                f"   Number: {contract['contract_number']}"
-            )
-
-        if contract.get("valid_until"):
-            lines.append(
-                f"   Valid until: {contract['valid_until']}"
-            )
-
-        lines.append("")
-
-    lines.append(
-        "Specify what you are talking about."
-    )
-    logger.debug(
-        "build_contract_disambiguation:result",
-        len=len(lines),
-    )
-    return "\n".join(lines)
 
 class RetrieverAgent:
     """
@@ -141,6 +43,9 @@ class RetrieverAgent:
         self._reranker = reranker
         self._settings = get_settings()
 
+    def _build_rewrite_chain(self):
+        return QUERY_REWRITE_TEMPLATE | self._llm
+
     async def __call__(self, state: AgentState) -> dict:
 
         logger.debug("retriever_agent_start", query=state.query[:60])
@@ -153,7 +58,6 @@ class RetrieverAgent:
                 if ua in rewritten_query:
                     rewritten_query += " " + " ".join(synonyms)
 
-
             if self._settings.query_rewrite_enabled:
                 start_time = time.monotonic()
                 rewritten_query = await self._rewrite_query(state)
@@ -163,7 +67,7 @@ class RetrieverAgent:
                     "REWRITTEN_QUERY2",
                     original=state.query,
                     rewritten=rewritten_query,
-                    latency=latency
+                    latency=latency,
                 )
             logger.warning(
                 "FINAL_RETRIEVAL_QUERY",
@@ -212,7 +116,7 @@ class RetrieverAgent:
             # 3. Reranking
             start_time = time.monotonic()
 
-            #dedub
+            # dedub
             seen = set()
             unique_chunks = []
             for chunk in chunks:
@@ -232,22 +136,21 @@ class RetrieverAgent:
                 "RETRIEVED_DOCS",
                 docs=[
                     {
-                        "doc": c.metadata.get("document_name"),
+                        "doc": chunk.document_name,
                         "score": c.score,
                     }
                     for c in reranked[:10]
-            ])
+                ],
+            )
             logger.warning(
                 "UNIQUE_DOCS_AFTER_RERANK",
                 docs=list(unique_docs.keys()),
             )
             if requires_contract_disambiguation(
-                    state.query,
-                    reranked,
+                state.query,
+                reranked,
             ):
-                logger.warning(
-                    "is_ambiguous_contract_query:true"
-                )
+                logger.warning("is_ambiguous_contract_query:true")
                 all_contracts = await self._retriever.get_contract_documents()
                 logger.warning(
                     "CONTRACTS_FOUND",
@@ -256,40 +159,33 @@ class RetrieverAgent:
                 )
                 unique = {}
                 for contract in all_contracts:
-                    key = (
-                            contract.get("contract_number")
-                            or contract.get("document_name")
+                    key = contract.get("contract_number") or contract.get(
+                        "document_name"
                     )
                     unique[key] = contract
 
                 contracts = list(unique.values())
 
-                answer = build_contract_disambiguation(
-                    contracts
-                )
-                logger.warning(
-                    "is_ambiguous_contract_query:answer",
-                    answer=answer
-                )
+                answer = build_contract_disambiguation(contracts)
+                logger.warning("is_ambiguous_contract_query:answer", answer=answer)
                 return {
                     "final_answer": answer,
                     "requires_clarification": True,
                     "agent_trace": {
                         "disambiguation": True,
                     },
-                    "total_tokens": getattr(state.query, "usage_metadata", {}).get("total_tokens", 0),
+                    "total_tokens": getattr(state.query, "usage_metadata", {}).get(
+                        "total_tokens", 0
+                    ),
                     "citations": [],
                 }
 
             logger.debug(
                 "RERANKED_CHUNKS",
                 chunks=[
-                    {
-                        "doc": c.document_name,
-                        "score": round(c.score, 3)
-                    }
+                    {"doc": c.document_name, "score": round(c.score, 3)}
                     for c in reranked[:5]
-                ]
+                ],
             )
             logger.debug(
                 "RERANK_OUTPUT",
@@ -299,24 +195,21 @@ class RetrieverAgent:
                         "score": round(c.score, 3),
                     }
                     for c in reranked
-                ]
+                ],
             )
             latency = time.monotonic() - start_time
-            logger.debug(
-                "RERANKED_CHUNKS",latency=latency)
+            logger.debug("RERANKED_CHUNKS", latency=latency)
 
             # 4. Analyze context sufficiency
             start_time = time.monotonic()
             context_str = self._format_context(reranked[:2])
             latency = time.monotonic() - start_time
-            logger.debug(
-                "self._format_context:", latency=latency)
+            logger.debug("self._format_context:", latency=latency)
             start_time = time.monotonic()
             analysis = await self._analyze_context(state.query, context_str)
             latency = time.monotonic() - start_time
 
-            logger.debug(
-                "ANALYZE_CONTEXT_TIME:", latency=latency)
+            logger.debug("ANALYZE_CONTEXT_TIME:", latency=latency)
             analysis["has_sufficient_context"] = bool(reranked)
             analysis["needs_research"] = False
 
@@ -338,32 +231,28 @@ class RetrieverAgent:
                 "retrieved_chunks": chunks,
                 "reranked_chunks": reranked,
                 "context_str": context_str,
-                "has_sufficient_context": analysis.get("has_sufficient_context", bool(reranked)),
+                "has_sufficient_context": analysis.get(
+                    "has_sufficient_context", bool(reranked)
+                ),
                 "needs_research": analysis.get("needs_research", False),
                 "retrieval_latency_ms": latency_ms,
                 "execution_path": ["retriever"],
-                "agent_trace": {"retriever": {
-                    "query": rewritten_query,
-                    "chunks_retrieved": len(chunks),
-                    "chunks_reranked": len(reranked),
-                    "latency_ms": latency_ms,
-                }},
+                "agent_trace": {
+                    "retriever": {
+                        "query": rewritten_query,
+                        "chunks_retrieved": len(chunks),
+                        "chunks_reranked": len(reranked),
+                        "latency_ms": latency_ms,
+                    }
+                },
             }
-
         except Exception as e:
             logger.error("retriever_agent_error", error=str(e))
-            return {
-                "errors": [f"RetrieverAgent: {e}"],
-                "has_sufficient_context": False,
-                "execution_path": ["retriever"],
-            }
+            raise
 
     async def _rewrite_query(self, state: AgentState) -> str:
         """Rewrite the query for better retrieval."""
-        if any(
-                term in state.query.lower()
-                for term in PROTECTED_TERMS
-        ):
+        if any(term in state.query.lower() for term in PROTECTED_TERMS):
             logger.debug(
                 "QUERY_REWRITE_SKIPPED",
                 query=state.query,
@@ -372,30 +261,27 @@ class RetrieverAgent:
             return state.query
 
         context = (
-            "\n".join(
-                f"{m.type}: {m.content[:200]}"
-                for m in state.messages[-4:]
-            )
+            "\n".join(f"{m.type}: {m.content[:200]}" for m in state.messages[-4:])
             if state.messages
             else "No prior context"
         )
 
-        chain = QUERY_REWRITE_TEMPLATE | self._llm
+        chain = self._build_rewrite_chain()
         logger.debug(
             "QUERY_USED_FOR_SEARCH",
             query=state.query,
         )
 
-        result = await chain.ainvoke({
-            "query": state.query,
-            "conversation_context": context[:3000],
-        })
+        result = await chain.ainvoke(
+            {
+                "query": state.query,
+                "conversation_context": context[:3000],
+            }
+        )
         content = result.content
 
         if not isinstance(content, str):
-            raise TypeError(
-                f"Expected string response, got {type(content).__name__}"
-            )
+            raise TypeError(f"Expected string response, got {type(content).__name__}")
         rewritten = content.strip()
 
         logger.debug(
@@ -416,9 +302,7 @@ class RetrieverAgent:
         content = result.content
 
         if not isinstance(content, str):
-            raise TypeError(
-                f"Expected string response, got {type(content).__name__}"
-            )
+            raise TypeError(f"Expected string response, got {type(content).__name__}")
         try:
             analysis = json.loads(content)
         except json.JSONDecodeError:
@@ -439,4 +323,5 @@ class RetrieverAgent:
                 f"[Source {i}: {chunk.document_name}{page_info}, score={chunk.score:.3f}]\n"
                 f"{chunk.content}"
             )
-        return "\n\n---\n\n".join(parts)
+        context = "\n\n---\n\n".join(parts)
+        return context[:MAX_CONTEXT]

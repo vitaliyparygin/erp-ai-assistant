@@ -3,6 +3,7 @@ FastAPI dependency injection.
 Provides reusable dependencies for database sessions, caches,
 vector stores, and service instances.
 """
+
 from collections.abc import AsyncGenerator
 from typing import Annotated
 
@@ -33,6 +34,7 @@ SettingsDep = Annotated[Settings, Depends(get_settings)]
 # Database Session
 # =============================================================================
 
+
 async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
     """Provide an async SQLAlchemy session per request."""
     async with AsyncSessionLocal() as session:
@@ -50,6 +52,7 @@ DBSessionDep = Annotated[AsyncSession, Depends(get_db_session)]
 # =============================================================================
 # Redis
 # =============================================================================
+
 
 async def get_redis_client(
     settings: SettingsDep,
@@ -75,6 +78,7 @@ RedisDep = Annotated[aioredis.Redis, Depends(get_redis_client)]  # type: ignore[
 # Qdrant
 # =============================================================================
 
+
 async def get_qdrant_client(
     settings: SettingsDep,
 ) -> AsyncGenerator[AsyncQdrantClient, None]:
@@ -96,6 +100,7 @@ QdrantDep = Annotated[AsyncQdrantClient, Depends(get_qdrant_client)]
 # =============================================================================
 # Rate Limiting
 # =============================================================================
+
 
 async def check_rate_limit(
     request: Request,
@@ -132,6 +137,7 @@ RateLimitDep = Depends(check_rate_limit)
 # Authentication (Optional — JWT)
 # =============================================================================
 
+
 async def get_current_user_optional(
     credentials: HTTPAuthorizationCredentials | None = Depends(security),
     settings: Settings = Depends(get_settings),
@@ -145,6 +151,7 @@ async def get_current_user_optional(
 
     try:
         from jose import jwt
+
         payload = jwt.decode(
             credentials.credentials,
             settings.secret_key,
@@ -153,6 +160,7 @@ async def get_current_user_optional(
         return payload
     except Exception:
         import traceback
+
         traceback.print_exc()
         raise
 
@@ -179,6 +187,7 @@ CurrentUserOptionalDep = Annotated[dict | None, Depends(get_current_user_optiona
 # =============================================================================
 # Observability
 # =============================================================================
+
 
 async def get_trace_client(settings: SettingsDep):  # type: ignore[return]
     """Provide the LangFuse tracing client."""

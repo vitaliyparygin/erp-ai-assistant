@@ -2,6 +2,7 @@
 Celery workers for async document ingestion.
 Handles the full pipeline: parse → chunk → embed → index.
 """
+
 import time
 import uuid
 
@@ -10,13 +11,12 @@ from celery.utils.log import get_task_logger
 from app.core.config import get_settings
 from app.workers.celery_app import celery_app
 import inspect
-from app.models.orm import DocumentModel,DocumentChunkModel
+from app.models.orm import DocumentModel, DocumentChunkModel
 from sqlalchemy import select
+
 settings = get_settings()
 
 task_logger = get_task_logger(__name__)
-
-
 
 
 @celery_app.task(
@@ -62,13 +62,12 @@ def ingest_document(
                 document_name=document_name,
                 chunk_size=chunk_size,
                 chunk_overlap=chunk_overlap,
-                original_filename=original_filename
+                original_filename=original_filename,
             )
         )
     except Exception as e:
         task_logger.exception(e)
         raise e
-
 
 
 async def _ingest_document_async(
@@ -104,7 +103,7 @@ async def _ingest_document_async(
         "ingestion_started",
         document_id=document_id,
         file_path=file_path,
-        mime_type=mime_type
+        mime_type=mime_type,
     )
     logger.debug(
         "INGEST_START",
@@ -125,14 +124,9 @@ async def _ingest_document_async(
         )
 
         chunker = DocumentChunker(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
-        logger.debug(
-            "ingestion_worker chunks begin"
-        )
+        logger.debug("ingestion_worker chunks begin")
         chunks = chunker.chunk(parsed_doc, document_id)
-        logger.debug(
-            "ingestion_worker chunks end/chunks=",
-            chunks=chunks
-        )
+        logger.debug("ingestion_worker chunks end/chunks=", chunks=chunks)
 
         if not chunks:
             raise ValueError(f"No chunks extracted from document {document_id}")
@@ -164,10 +158,7 @@ async def _ingest_document_async(
         )
         for i, chunk in enumerate(chunks):
             logger.debug(
-                "CHUNK",
-                document=document_name,
-                index=i,
-                content=chunk.content[:300]
+                "CHUNK", document=document_name, index=i, content=chunk.content[:300]
             )
 
         point_ids = await vector_store.upsert_chunks(
@@ -175,11 +166,10 @@ async def _ingest_document_async(
             embeddings=embeddings,
             document_id=document_id,
             document_name=document_name,
-            original_filename=original_filename
+            original_filename=original_filename,
         )
         SessionLocal = get_sessionmaker()
         async with SessionLocal.begin() as db:
-
             for chunk, point_id in zip(chunks, point_ids):
                 db.add(
                     DocumentChunkModel(
@@ -200,13 +190,9 @@ async def _ingest_document_async(
             points=len(point_ids),
         )
         await qdrant_client.close()
-        #logger.warning("STEP_A")
         import asyncio
 
-        logger.debug(
-            "EVENT_LOOP",
-            loop=id(asyncio.get_running_loop())
-        )
+        logger.debug("EVENT_LOOP", loop=id(asyncio.get_running_loop()))
         logger.debug("BEFORE_EXECUTE")
         SessionLocal = get_sessionmaker()
         async with SessionLocal() as db:
@@ -221,31 +207,20 @@ async def _ingest_document_async(
                 bind=id(db.bind),
             )
             result = await db.execute(
-                select(DocumentModel).where(
-                    DocumentModel.id == uuid.UUID(document_id)
-                )
+                select(DocumentModel).where(DocumentModel.id == uuid.UUID(document_id))
             )
-            # logger.warning("STEP_A-2")
             doc = result.scalar_one_or_none()
-            # logger.warning("STEP_A-3")
             if doc:
-                # logger.warning("STEP_A-4")
                 doc.status = "indexed"
                 doc.chunk_count = len(chunks)
                 doc.page_count = parsed_doc.total_pages
                 doc.qdrant_collection = settings.qdrant_collection_name
                 await db.commit()
-                # logger.warning("STEP_A-5")
-        # logger.warning("AFTER_EXECUTE")
         # ---- Metrics ----
         latency = time.monotonic() - start_time
-        # logger.warning("STEP_A-6")
         DOCUMENTS_INGESTED_TOTAL.labels(status="success", mime_type=mime_type).inc()
-        # logger.warning("STEP_A-7")
         INGESTION_CHUNKS_CREATED.observe(len(chunks))
-        # logger.warning("STEP_A-8")
         INGESTION_LATENCY_SECONDS.observe(latency)
-        # logger.warning("STEP_A-9")
         logger.debug(
             "ingestion_completed",
             document_id=document_id,
@@ -253,11 +228,7 @@ async def _ingest_document_async(
             pages=parsed_doc.total_pages,
             latency_s=round(latency, 2),
         )
-        logger.debug(
-            "DOCUMENT_CHUNKS",
-            file=document_name,
-            chunks=len(chunks)
-        )
+        logger.debug("DOCUMENT_CHUNKS", file=document_name, chunks=len(chunks))
         res = {
             "document_id": document_id,
             "status": "indexed",
@@ -306,10 +277,11 @@ async def _ingest_document_async(
                 error_type=type(e).__name__,
             )
             import traceback
+
             traceback.print_exc()
             raise
         # logger.warning("STEP_C-1")
         DOCUMENTS_INGESTED_TOTAL.labels(status="error", mime_type=mime_type).inc()
         # logger.warning("STEP_C-2")
         # Retry with exponential backoff
-        raise task.retry(exc=exc, countdown=2 ** task.request.retries * 30)
+        raise task.retry(exc=exc, countdown=2**task.request.retries * 30)

@@ -77,10 +77,7 @@ latencies = []
 rows = []
 
 for item in queries:
-
-    payload = {
-        "message": item["query"]
-    }
+    payload = {"message": item["query"]}
 
     start = time.perf_counter()
 
@@ -99,20 +96,21 @@ for item in queries:
 
     success = top_document == item["expected_document"]
 
-    rows.append({
-        "query": item["query"],
-        "expected": item["expected_document"],
-        "returned": top_document,
-        "success": success,
-        "latency": round(elapsed, 2),
-        "tokens": data.get("tokens_used", 0),
-        "sources": len(citations),
-    })
+    rows.append(
+        {
+            "query": item["query"],
+            "expected": item["expected_document"],
+            "returned": top_document,
+            "success": success,
+            "latency": round(elapsed, 2),
+            "tokens": data.get("tokens_used", 0),
+            "sources": len(citations),
+        }
+    )
 
     latencies.append(elapsed)
 
 with open(LATENCY_CSV, "w", newline="") as f:
-
     writer = csv.DictWriter(
         f,
         fieldnames=[
@@ -126,7 +124,6 @@ with open(LATENCY_CSV, "w", newline="") as f:
     writer.writeheader()
 
     for row in rows:
-
         writer.writerow(
             {
                 "query": row["query"],
@@ -137,7 +134,6 @@ with open(LATENCY_CSV, "w", newline="") as f:
         )
 
 with open(RETRIEVAL_CSV, "w", newline="") as f:
-
     writer = csv.DictWriter(
         f,
         fieldnames=[
@@ -151,7 +147,6 @@ with open(RETRIEVAL_CSV, "w", newline="") as f:
     writer.writeheader()
 
     for row in rows:
-
         writer.writerow(
             {
                 "query": row["query"],
@@ -187,12 +182,7 @@ Date: {today}
 """
 
 for r in rows:
-
-    report += (
-        f"| {r['query']} | "
-        f"{r['returned']} | "
-        f"{r['latency']} ms |\n"
-    )
+    report += f"| {r['query']} | {r['returned']} | {r['latency']} ms |\n"
 
 LATEST_MD.write_text(report)
 

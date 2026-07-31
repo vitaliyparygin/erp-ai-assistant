@@ -10,8 +10,8 @@ from rules import detect_document_type
 #     r"серії\s*([А-ЯІЇЄ]{2})\s*№?\s*(\d{6})",
 # ]
 
-class MetadataExtractor:
 
+class MetadataExtractor:
     @staticmethod
     def extract(text: str, filename: str) -> dict:
         metadata = {

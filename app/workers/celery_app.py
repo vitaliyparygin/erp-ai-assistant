@@ -3,6 +3,7 @@ Celery application instance.
 Kept in its own module so the FastAPI process can import it
 without triggering task registration or broker connections.
 """
+
 from celery import Celery
 from app.core.config import get_settings
 
@@ -27,5 +28,3 @@ celery_app.conf.update(
         "app.workers.ingestion_worker.ingest_document": {"queue": "ingestion"},
     },
 )
-
-

@@ -3,6 +3,7 @@ Health check endpoints.
 Provides liveness, readiness, and deep dependency checks.
 Used by Docker healthchecks, load balancers, and monitoring systems.
 """
+
 import time
 from typing import Any
 import httpx
@@ -31,7 +32,9 @@ async def _check_postgres(db: AsyncSession) -> ServiceHealth:
         )
     except Exception as e:
         logger.error("health_postgres_failed", error=str(e))
-        return ServiceHealth(service="postgres", status="unhealthy", details={"error": str(e)})
+        return ServiceHealth(
+            service="postgres", status="unhealthy", details={"error": str(e)}
+        )
 
 
 async def _check_redis(redis: aioredis.Redis) -> ServiceHealth:  # type: ignore[type-arg]
@@ -47,7 +50,9 @@ async def _check_redis(redis: aioredis.Redis) -> ServiceHealth:  # type: ignore[
         )
     except Exception as e:
         logger.error("health_redis_failed", error=str(e))
-        return ServiceHealth(service="redis", status="unhealthy", details={"error": str(e)})
+        return ServiceHealth(
+            service="redis", status="unhealthy", details={"error": str(e)}
+        )
 
 
 async def _check_qdrant(qdrant: AsyncQdrantClient, collection: str) -> ServiceHealth:
@@ -66,7 +71,9 @@ async def _check_qdrant(qdrant: AsyncQdrantClient, collection: str) -> ServiceHe
         )
     except Exception as e:
         logger.error("health_qdrant_failed", error=str(e))
-        return ServiceHealth(service="qdrant", status="unhealthy", details={"error": str(e)})
+        return ServiceHealth(
+            service="qdrant", status="unhealthy", details={"error": str(e)}
+        )
 
 
 async def _check_ollama(base_url: str) -> ServiceHealth:
@@ -91,6 +98,7 @@ async def _check_ollama(base_url: str) -> ServiceHealth:
 # Liveness probe — is the process alive?
 # =============================================================================
 
+
 @router.get(
     "/live",
     summary="Liveness probe",
@@ -104,6 +112,7 @@ async def liveness(settings: SettingsDep) -> dict[str, str]:
 # =============================================================================
 # Readiness probe — can the service handle traffic?
 # =============================================================================
+
 
 @router.get(
     "/ready",
@@ -128,7 +137,11 @@ async def readiness(
     all_healthy = all(c.status == "healthy" for c in checks)
     overall = "healthy" if all_healthy else "degraded"
 
-    logger.info("readiness_check", status=overall, services={c.service: c.status for c in checks})
+    logger.info(
+        "readiness_check",
+        status=overall,
+        services={c.service: c.status for c in checks},
+    )
 
     return HealthResponse(
         status=overall,
@@ -140,6 +153,7 @@ async def readiness(
 # =============================================================================
 # Deep health — full dependency diagnostics
 # =============================================================================
+
 
 @router.get(
     "/",
@@ -161,16 +175,20 @@ async def full_health(
     try:
         result = await db.execute(text("SELECT COUNT(*) FROM documents"))
         doc_count = result.scalar() or 0
-        checks.append(ServiceHealth(
-            service="postgres",
-            status="healthy",
-            latency_ms=round((time.monotonic() - start) * 1000, 2),
-            details={"document_count": doc_count},
-        ))
+        checks.append(
+            ServiceHealth(
+                service="postgres",
+                status="healthy",
+                latency_ms=round((time.monotonic() - start) * 1000, 2),
+                details={"document_count": doc_count},
+            )
+        )
     except Exception as e:
-        checks.append(ServiceHealth(
-            service="postgres", status="unhealthy", details={"error": str(e)}
-        ))
+        checks.append(
+            ServiceHealth(
+                service="postgres", status="unhealthy", details={"error": str(e)}
+            )
+        )
 
     # Redis — memory + keyspace stats
     start = time.monotonic()
@@ -178,18 +196,24 @@ async def full_health(
         await redis.ping()
         info = await redis.info("memory")
         key_count = await redis.dbsize()
-        checks.append(ServiceHealth(
-            service="redis",
-            status="healthy",
-            latency_ms=round((time.monotonic() - start) * 1000, 2),
-            details={
-                "used_memory_human": info.get("used_memory_human"),
-                "maxmemory_human": info.get("maxmemory_human"),
-                "active_keys": key_count,
-            },
-        ))
+        checks.append(
+            ServiceHealth(
+                service="redis",
+                status="healthy",
+                latency_ms=round((time.monotonic() - start) * 1000, 2),
+                details={
+                    "used_memory_human": info.get("used_memory_human"),
+                    "maxmemory_human": info.get("maxmemory_human"),
+                    "active_keys": key_count,
+                },
+            )
+        )
     except Exception as e:
-        checks.append(ServiceHealth(service="redis", status="unhealthy", details={"error": str(e)}))
+        checks.append(
+            ServiceHealth(
+                service="redis", status="unhealthy", details={"error": str(e)}
+            )
+        )
 
     # Qdrant — collection info
     start = time.monotonic()
@@ -204,14 +228,20 @@ async def full_health(
             details["indexed_vectors_count"] = col_info.indexed_vectors_count
             details["indexed_vectors"] = col_info.indexed_vectors_count
             details["status"] = col_info.status
-        checks.append(ServiceHealth(
-            service="qdrant",
-            status="healthy",
-            latency_ms=round((time.monotonic() - start) * 1000, 2),
-            details=details,
-        ))
+        checks.append(
+            ServiceHealth(
+                service="qdrant",
+                status="healthy",
+                latency_ms=round((time.monotonic() - start) * 1000, 2),
+                details=details,
+            )
+        )
     except Exception as e:
-        checks.append(ServiceHealth(service="qdrant", status="unhealthy", details={"error": str(e)}))
+        checks.append(
+            ServiceHealth(
+                service="qdrant", status="unhealthy", details={"error": str(e)}
+            )
+        )
 
     # OpenAI key
     checks.append(await _check_ollama(settings.ollama_base_url))
@@ -219,11 +249,13 @@ async def full_health(
     # LangFuse (optional)
     if settings.langfuse_enabled:
         lf_ok = bool(settings.langfuse_secret_key and settings.langfuse_public_key)
-        checks.append(ServiceHealth(
-            service="langfuse",
-            status="healthy" if lf_ok else "degraded",
-            details={"configured": lf_ok, "host": settings.langfuse_host},
-        ))
+        checks.append(
+            ServiceHealth(
+                service="langfuse",
+                status="healthy" if lf_ok else "degraded",
+                details={"configured": lf_ok, "host": settings.langfuse_host},
+            )
+        )
 
     unhealthy = [c for c in checks if c.status == "unhealthy"]
     degraded = [c for c in checks if c.status == "degraded"]

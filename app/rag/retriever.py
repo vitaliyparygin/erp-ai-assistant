@@ -3,6 +3,7 @@ Qdrant-backed vector retriever.
 Supports dense retrieval, hybrid (sparse+dense) search, metadata filtering,
 and cross-encoder reranking.
 """
+
 import time
 import uuid
 import re
@@ -28,13 +29,11 @@ from app.utils.resources import load_json
 logger = get_logger(__name__)
 
 TERM_EXPANSIONS = load_json("term_expansions.json")
-STOP_WORDS = {
-    "the", "is", "with", "which",
-    "a", "an", "of", "to", "in"
-}
+STOP_WORDS = {"the", "is", "with", "which", "a", "an", "of", "to", "in"}
 IMPORTANT_TERMS = load_json("important_terms_with_bust.json")
 
 DOCUMENT_HINTS = load_json("document_hints.json")
+
 
 class VectorStore:
     """
@@ -74,7 +73,7 @@ class VectorStore:
         embeddings: list[list[float]],
         document_id: str,
         document_name: str,
-        original_filename: str | None
+        original_filename: str | None,
     ) -> list[str]:
         """
         Upsert document chunks with their embeddings into Qdrant.
@@ -85,7 +84,7 @@ class VectorStore:
             "upsert_debug",
             chunks=len(chunks),
             embeddings=len(embeddings),
-            original_filename=original_filename
+            original_filename=original_filename,
         )
 
         if len(chunks) != len(embeddings):
@@ -96,9 +95,7 @@ class VectorStore:
 
         for chunk, embedding in zip(chunks, embeddings):
             logger.debug(
-                "UPSERT_POINT",
-                document=document_name,
-                chunk_index=chunk.chunk_index
+                "UPSERT_POINT", document=document_name, chunk_index=chunk.chunk_index
             )
             point_id = str(uuid.uuid4())
             point_ids.append(point_id)
@@ -113,13 +110,8 @@ class VectorStore:
                 "page_number": chunk.page_number,
                 "chunk_metadata": chunk.metadata,
                 **chunk.metadata,
-
-
             }
-            logger.debug(
-                "UPSERT_POINT payload",
-                payload=payload
-            )
+            logger.debug("UPSERT_POINT payload", payload=payload)
             points.append(
                 PointStruct(
                     id=point_id,
@@ -218,7 +210,7 @@ class VectorRetriever:
             "query_embedding_debug",
             len=len(query_embedding),
             type=type(query_embedding),
-            type_first_item=type(query_embedding[0])
+            type_first_item=type(query_embedding[0]),
         )
         logger.debug(
             "QUERY_EMBEDDING",
@@ -227,7 +219,7 @@ class VectorRetriever:
         )
         # Build optional document filter
 
-        search_filter = self.get_filter_condition( query_metadata, document_ids)
+        search_filter = self.get_filter_condition(query_metadata, document_ids)
 
         try:
             logger.debug(
@@ -235,14 +227,8 @@ class VectorRetriever:
                 type=str(type(query_embedding)),
             )
 
-            logger.debug(
-                "query_embedding_len",
-                len=len(query_embedding)
-            )
-            logger.debug(
-                "query_embedding_threshold",
-                threshold=threshold
-            )
+            logger.debug("query_embedding_len", len=len(query_embedding))
+            logger.debug("query_embedding_threshold", threshold=threshold)
             logger.debug(
                 "query_embedding_first",
                 value=query_embedding[:5],
@@ -267,13 +253,13 @@ class VectorRetriever:
             )
             results = response.points
             for hit in results:
-                payload = hit.payload or {}
-                if payload is None:
+                payload = hit.payload
+                if not payload:
                     continue
                 logger.debug(
                     "retrieved_doc",
                     score=hit.score,
-                    chunk=str(payload["content"])[:200]
+                    chunk=str(payload.get("content", ""))[:200],
                 )
                 logger.debug(
                     "QDRANT_RESULTS",
@@ -283,20 +269,17 @@ class VectorRetriever:
                             "score": p.score,
                         }
                         for p in results
-                    ]
+                    ],
                 )
             logger.debug(
                 "retrieval_debug",
                 found=len(results),
             )
-            count = await self._client.count(
-                collection_name="erp_documents"
-            )
+            count = await self._client.count(collection_name="erp_documents")
             logger.debug(
                 "count erp_documents",
                 found=count,
             )
-
 
         except Exception as e:
             raise RetrievalError(f"Qdrant search failed: {e}") from e
@@ -335,7 +318,7 @@ class VectorRetriever:
                     "score": c.score,
                 }
                 for c in chunks[:10]
-            ]
+            ],
         )
         logger.debug(
             "retrieval_completed",
@@ -354,34 +337,26 @@ class VectorRetriever:
         return chunks
 
     async def get_contract_documents(self):
-        logger.debug(
-            "get_contract_documents started"
-        )
-        points, _ = await (self._client.scroll(
+        logger.debug("get_contract_documents started")
+        points, _ = await self._client.scroll(
             collection_name=self._collection,
             limit=100,
             with_payload=True,
-        ))
+        )
         contracts = {}
 
         for point in points:
-
             md = point.payload
 
             if md.get("document_type") != "contract":
                 continue
 
-            contracts[
-                md["document_name"]
-            ] = {
+            contracts[md["document_name"]] = {
                 "document_name": md["document_name"],
                 "contract_number": md.get("contract_number"),
                 "valid_until": md.get("valid_until"),
             }
-        logger.debug(
-            "get_contract_documents:",
-            len_contracts=len(contracts)
-        )
+        logger.debug("get_contract_documents:", len_contracts=len(contracts))
         return list(contracts.values())
 
     def get_filter_condition(self, query_metadata=None, document_ids=None):
@@ -398,7 +373,6 @@ class VectorRetriever:
 
         if query_metadata:
             for key, value in query_metadata.items():
-
                 if key == "intent":
                     continue
 
@@ -413,8 +387,6 @@ class VectorRetriever:
             return None
 
         return Filter(must=must)
-
-
 
 
 class Reranker:
@@ -439,33 +411,20 @@ class Reranker:
         """
         # start_time = time.monotonic()
         k = top_k or self._settings.rag_rerank_top_k
-        logger.debug(
-            "rerank start",
-            chunks=chunks,
-            query=query,
-            top_k=top_k,
-            k=k
-        )
+        logger.debug("rerank start", chunks=chunks, query=query, top_k=top_k, k=k)
 
         if not chunks:
             return []
 
         # Score-based reranking: boost chunks where query terms appear
         query_terms = {
-            t
-            for t in re.findall(r"\w+", query.lower())
-            if t not in STOP_WORDS
+            t for t in re.findall(r"\w+", query.lower()) if t not in STOP_WORDS
         }
         expanded_terms = set(query_terms)
 
         for term in list(query_terms):
-            expanded_terms.update(
-                TERM_EXPANSIONS.get(term, set())
-            )
-        logger.debug(
-            "rerank query_terms",
-            query_terms=query_terms
-        )
+            expanded_terms.update(TERM_EXPANSIONS.get(term, set()))
+        logger.debug("rerank query_terms", query_terms=query_terms)
 
         def rerank_score(chunk: RetrievedChunk) -> float:
             FIELD_HINTS = {
@@ -480,20 +439,16 @@ class Reranker:
 
             score = chunk.score
             for term in expanded_terms:
-
                 if term not in FIELD_HINTS:
                     continue
 
                 markers = FIELD_HINTS[term]
 
                 for marker in markers:
-
                     if marker in content_lower:
                         score += 1.0
                         break
-            content_terms = set(
-                re.findall(r"\w+", content_lower)
-            )
+            content_terms = set(re.findall(r"\w+", content_lower))
 
             # common coincidences of terms
             term_matches = len(expanded_terms & content_terms)
@@ -549,7 +504,7 @@ class Reranker:
                 "rerank document_name+score",
                 document_name=chunk.document_name,
                 score=score,
-                chunk_score=chunk.score
+                chunk_score=chunk.score,
             )
 
             return score
@@ -557,18 +512,10 @@ class Reranker:
         logger.debug(
             "rerank.chunks:",
             chunks=[
-                {
-                    "doc": c.document_name,
-                    "score": round(c.score, 3)
-                }
-                for c in chunks
-            ]
+                {"doc": c.document_name, "score": round(c.score, 3)} for c in chunks
+            ],
         )
         reranked = sorted(chunks, key=rerank_score, reverse=True)
-        logger.debug(
-            "rerank reranked",
-            reranked=reranked,
-            reranked_k=reranked[:k]
-        )
+        logger.debug("rerank reranked", reranked=reranked, reranked_k=reranked[:k])
 
         return reranked[:k]

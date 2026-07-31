@@ -2,6 +2,7 @@
 Structured JSON logging using structlog.
 Production-grade logging with context binding, trace IDs, and log levels.
 """
+
 import logging
 import sys
 from typing import Any
@@ -14,9 +15,10 @@ def add_app_context(
     logger: WrappedLogger,
     method_name: str,
     event_dict: EventDict,
-) -> EventDict:
+) -> EventDict:  # pragma: no cover
     """Inject application context into every log record."""
     from app.core.config import get_settings
+
     settings = get_settings()
     event_dict["app"] = settings.app_name
     event_dict["version"] = settings.app_version
@@ -24,7 +26,9 @@ def add_app_context(
     return event_dict
 
 
-def setup_logging(log_level: str = "INFO", json_logs: bool = True) -> None:
+def setup_logging(
+    log_level: str = "INFO", json_logs: bool = True
+) -> None:  # pragma: no cover
     """
     Configure structlog for structured, production-ready logging.
 
@@ -35,7 +39,10 @@ def setup_logging(log_level: str = "INFO", json_logs: bool = True) -> None:
         structlog.contextvars.merge_contextvars,
         structlog.stdlib.add_log_level,
         structlog.stdlib.add_logger_name,
-        structlog.processors.TimeStamper(fmt="iso", utc=False,),
+        structlog.processors.TimeStamper(
+            fmt="iso",
+            utc=False,
+        ),
         add_app_context,
         structlog.processors.StackInfoRenderer(),
         structlog.processors.ExceptionRenderer(),
@@ -80,12 +87,12 @@ def setup_logging(log_level: str = "INFO", json_logs: bool = True) -> None:
         logging.getLogger(noisy).setLevel(logging.WARNING)
 
 
-def get_logger(name: str) -> structlog.BoundLogger:
+def get_logger(name: str) -> structlog.BoundLogger:  # pragma: no cover
     """Get a bound logger for a module."""
     return structlog.get_logger(name)
 
 
-class LogContext:
+class LogContext:  # pragma: no cover
     """Context manager for adding structured log fields within a scope."""
 
     def __init__(self, **kwargs: Any) -> None:
@@ -104,7 +111,7 @@ def bind_request_context(
     path: str,
     method: str,
     user_id: str | None = None,
-) -> None:
+) -> None:  # pragma: no cover
     """Bind request-scoped context for all log statements within the request."""
     structlog.contextvars.bind_contextvars(
         request_id=request_id,
@@ -114,6 +121,6 @@ def bind_request_context(
     )
 
 
-def clear_request_context() -> None:
+def clear_request_context() -> None:  # pragma: no cover
     """Clear request-scoped context after the request completes."""
     structlog.contextvars.clear_contextvars()

@@ -42,7 +42,6 @@ async def run():
     ok = True
 
     async with AsyncSessionLocal() as db:
-
         print()
         print("=" * 65)
         print(" INGESTION HEALTH")
@@ -55,11 +54,9 @@ async def run():
 
         status_rows = (
             await db.execute(
-                select(
-                    DocumentModel.status,
-                    func.count()
+                select(DocumentModel.status, func.count()).group_by(
+                    DocumentModel.status
                 )
-                .group_by(DocumentModel.status)
             )
         ).all()
 
@@ -68,18 +65,12 @@ async def run():
         for s, c in status_rows:
             status[s] = c
 
-        total_documents = (
-            await db.scalar(
-                select(func.count())
-                .select_from(DocumentModel)
-            )
+        total_documents = await db.scalar(
+            select(func.count()).select_from(DocumentModel)
         )
 
-        total_chunks = (
-            await db.scalar(
-                select(func.count())
-                .select_from(DocumentChunkModel)
-            )
+        total_chunks = await db.scalar(
+            select(func.count()).select_from(DocumentChunkModel)
         )
 
         print("Documents")
@@ -128,12 +119,10 @@ async def run():
         # chunks without qdrant id
         #
 
-        missing_vectors = (
-            await db.scalar(
-                select(func.count())
-                .select_from(DocumentChunkModel)
-                .where(DocumentChunkModel.qdrant_point_id.is_(None))
-            )
+        missing_vectors = await db.scalar(
+            select(func.count())
+            .select_from(DocumentChunkModel)
+            .where(DocumentChunkModel.qdrant_point_id.is_(None))
         )
 
         #
@@ -172,7 +161,6 @@ async def run():
         print()
 
         if indexed_without_chunks:
-
             ok = False
 
             print("Documents missing chunks")
@@ -183,7 +171,6 @@ async def run():
             print()
 
         if status["failed"]:
-
             ok = False
 
             failed = (
@@ -200,15 +187,11 @@ async def run():
             print("Failed documents")
 
             for doc in failed:
-
-                print(
-                    f"  • {doc.original_filename}"
-                )
+                print(f"  • {doc.original_filename}")
 
             print()
 
         if missing_vectors:
-
             ok = False
 
         #

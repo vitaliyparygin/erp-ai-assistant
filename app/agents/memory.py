@@ -9,6 +9,7 @@ import time
 
 logger = get_logger(__name__)
 
+
 class MemoryAgent:
     """
     Manages conversational context.
@@ -19,6 +20,9 @@ class MemoryAgent:
         self._llm = llm
         self._memory = memory_store
         self._settings = get_settings()
+
+    def _build_summary_chain(self):
+        return CONVERSATION_SUMMARY_TEMPLATE | self._llm
 
     async def __call__(self, state: AgentState) -> dict:
         start = time.monotonic()
@@ -36,39 +40,27 @@ class MemoryAgent:
                         "content": str(m.content)[:100],
                     }
                     for m in history
-                ]
+                ],
             )
             logger.debug(
                 "MEMORY_DEBUG",
                 session_id=str(state.session_id),
                 count=len(history),
-                message_types=[
-                    type(m).__name__
-                    for m in history
-                ]
+                message_types=[type(m).__name__ for m in history],
             )
             logger.debug(
                 "MEMORY_LAST_MESSAGES",
                 messages=[
-                    {
-                        "type": type(m).__name__,
-                        "content": str(m.content)[:100]
-                    }
+                    {"type": type(m).__name__, "content": str(m.content)[:100]}
                     for m in history[-4:]
-                ]
+                ],
             )
             latency = time.monotonic() - start_time
             logger.debug("_memory.get_history:", latency=latency)
             message_count = len(history)
-            logger.debug(
-                "FINAL_CONTEXT",
-                context=history[-4:]
-            )
+            logger.debug("FINAL_CONTEXT", context=history[-4:])
 
-            logger.debug(
-                "FINAL_QUERY",
-                query=state.query
-            )
+            logger.debug("FINAL_QUERY", query=state.query)
             summary = None
             if message_count >= self._settings.memory_summarization_threshold:
                 start = time.monotonic()
@@ -103,19 +95,19 @@ class MemoryAgent:
             return updates
 
         except Exception as e:
-            logger.error("memory_agent_error", error=str(e))
-            return {"errors": [f"MemoryAgent: {e}"], "execution_path": ["memory"]}
+            logger.error(
+                "memory_agent_error",
+                error=str(e),
+            )
+            raise
 
     async def _summarize_history(self, history: list) -> str:
         """Use LLM to summarize a long conversation."""
         conversation_text = "\n".join(
             f"{msg.type.upper()}: {msg.content}" for msg in history
         )
-        chain = CONVERSATION_SUMMARY_TEMPLATE | self._llm
-        logger.debug(
-            "SUMMARIZER_PROMPT",
-            context=conversation_text[:2000]
-        )
+        chain = self._build_summary_chain()
+        logger.debug("SUMMARIZER_PROMPT", context=conversation_text[:2000])
 
         result = await chain.ainvoke({"conversation": conversation_text})
         return result.content

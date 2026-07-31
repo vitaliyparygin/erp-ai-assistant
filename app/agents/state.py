@@ -2,13 +2,14 @@
 LangGraph typed state models for the multi-agent orchestration graph.
 All state transitions are fully typed and validated.
 """
+
 from typing import Annotated, Any
 from operator import add
 
 from langchain_core.messages import BaseMessage
 from langgraph.graph.message import add_messages
 from pydantic import BaseModel, Field
-
+from pydantic import ConfigDict
 from app.models.schemas import Citation, RetrievedChunk
 
 
@@ -16,7 +17,11 @@ from app.models.schemas import Citation, RetrievedChunk
 # Agent State
 # =============================================================================
 
+
 class AgentState(BaseModel):
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+    )
     """
     Immutable typed state object passed between LangGraph nodes.
 
@@ -76,10 +81,8 @@ class AgentState(BaseModel):
     needs_research: bool = False
     has_sufficient_context: bool = False
     requires_clarification: bool = False
-    
+
     disambiguated: bool = False
-    class Config:
-        arbitrary_types_allowed = True
 
 
 class NodeResult(BaseModel):

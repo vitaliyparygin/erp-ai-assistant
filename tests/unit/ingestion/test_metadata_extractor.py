@@ -1,10 +1,10 @@
 import pytest
-
+from unittest.mock import patch
 from app.ingestion.metadata_extractor import MetadataExtractor
+from rules.models import DocumentType
 
 
 class TestMetadataExtractor:
-
     def test_returns_document_name(self):
         metadata = MetadataExtractor.extract(
             "Hello world",
@@ -19,7 +19,7 @@ class TestMetadataExtractor:
             "invoice.pdf",
         )
 
-        assert metadata["document_type"] == "Invoice"
+        assert metadata["document_type"] == DocumentType.INVOICE
 
     def test_detects_contract(self):
         metadata = MetadataExtractor.extract(
@@ -27,7 +27,7 @@ class TestMetadataExtractor:
             "contract.pdf",
         )
 
-        assert metadata["document_type"] == "Contract"
+        assert metadata["document_type"] == DocumentType.CONTRACT
 
     def test_detects_opportunity(self):
         metadata = MetadataExtractor.extract(
@@ -35,7 +35,7 @@ class TestMetadataExtractor:
             "crm.pdf",
         )
 
-        assert metadata["document_type"] == "CRM Opportunity"
+        assert metadata["document_type"] == DocumentType.CRM_OPPORTUNITY
 
     def test_unknown_document_type(self):
         metadata = MetadataExtractor.extract(
@@ -130,7 +130,7 @@ class TestMetadataExtractor:
 
     def test_missing_fields_are_not_added(self):
         metadata = MetadataExtractor.extract(
-            "Invoice",
+            DocumentType.INVOICE,
             "invoice.pdf",
         )
 
@@ -141,13 +141,12 @@ class TestMetadataExtractor:
     @pytest.mark.parametrize(
         ("text", "expected"),
         [
-            ("Invoice Number: INV-100", "Invoice"),
-            ("Service Agreement\nContract Number: C-001", "Contract"),
-            ("Opportunity Stage: Qualified", "CRM Opportunity"),
-            ("Договір", "Contract"),
+            ("Invoice Number: INV-100", DocumentType.INVOICE),
+            ("Service Agreement\nContract Number: C-001", DocumentType.CONTRACT),
+            ("Opportunity Stage: Qualified", DocumentType.CRM_OPPORTUNITY),
+            ("Договір", DocumentType.CONTRACT),
         ],
     )
-
     def test_document_type(self, text, expected):
         metadata = MetadataExtractor.extract(text, "doc.pdf")
         assert metadata["document_type"] == expected
@@ -165,3 +164,41 @@ class TestMetadataExtractor:
         metadata = MetadataExtractor.extract(text, "doc.pdf")
         assert metadata[field] == value
 
+    @patch("app.ingestion.metadata_extractor.detect_document_type")
+    def test_calls_rules(self, mock_detect):
+        mock_detect.return_value = DocumentType.INVOICE
+
+        metadata = MetadataExtractor.extract(
+            "Invoice Number: INV-1",
+            "invoice.pdf",
+        )
+
+        mock_detect.assert_called_once()
+        assert metadata["document_type"] == DocumentType.INVOICE
+
+    @patch("app.ingestion.metadata_extractor.detect_document_type")
+    def test_without_document_type(self, mock_detect):
+        mock_detect.return_value = None
+
+        metadata = MetadataExtractor.extract(
+            "Some text",
+            "doc.pdf",
+        )
+
+        assert "document_type" not in metadata
+
+    @patch("app.ingestion.metadata_extractor.detect_document_type")
+    def test_filename_has_priority_over_content(self, mock_detect):
+        mock_detect.return_value = DocumentType.INVOICE
+
+        metadata = MetadataExtractor.extract(
+            "Contract Number: C-001",
+            "invoice.pdf",
+        )
+
+        mock_detect.assert_called_once_with(
+            text="contract number: c-001",
+            filename="invoice.pdf",
+        )
+
+        assert metadata["document_type"] == DocumentType.INVOICE

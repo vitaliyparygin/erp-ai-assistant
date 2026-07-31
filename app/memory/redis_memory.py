@@ -2,6 +2,7 @@
 Conversational memory backed by Redis.
 Stores message history per session with automatic TTL and summarization support.
 """
+
 import json
 from typing import Any
 
@@ -48,7 +49,9 @@ class RedisMemoryStore:
             messages_data = json.loads(raw)
             return [self._deserialize_message(m) for m in messages_data]
         except Exception as e:
-            logger.error("memory_get_history_error", session_id=session_id, error=str(e))
+            logger.error(
+                "memory_get_history_error", session_id=session_id, error=str(e)
+            )
             return []
 
     async def add_user_message(self, session_id: str, content: str) -> None:

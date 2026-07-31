@@ -2,6 +2,7 @@
 SQLAlchemy ORM models.
 All models use async-compatible patterns with UUID primary keys.
 """
+
 import uuid
 from datetime import datetime
 from typing import Any
@@ -49,6 +50,7 @@ class TimestampMixin:
 # Document Models
 # =============================================================================
 
+
 class DocumentModel(Base, TimestampMixin):
     """Represents an uploaded business document."""
 
@@ -69,7 +71,9 @@ class DocumentModel(Base, TimestampMixin):
     page_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
     chunk_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
     tags: Mapped[list[str] | None] = mapped_column(ARRAY(String), nullable=True)
-    document_metadata: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    document_metadata: Mapped[dict[str, Any] | None] = mapped_column(
+        JSON, nullable=True
+    )
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     qdrant_collection: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
@@ -91,7 +95,9 @@ class DocumentChunkModel(Base, TimestampMixin):
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     document_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True),
+        ForeignKey("documents.id", ondelete="CASCADE"),
+        nullable=False,
     )
     content: Mapped[str] = mapped_column(Text, nullable=False)
     page_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
@@ -104,12 +110,15 @@ class DocumentChunkModel(Base, TimestampMixin):
     embedding_version = mapped_column(Integer, default=1)
 
     # Relationships
-    document: Mapped["DocumentModel"] = relationship("DocumentModel", back_populates="chunks")
+    document: Mapped["DocumentModel"] = relationship(
+        "DocumentModel", back_populates="chunks"
+    )
 
 
 # =============================================================================
 # Conversation Models
 # =============================================================================
+
 
 class ConversationModel(Base, TimestampMixin):
     """Represents a chat session."""
@@ -126,12 +135,16 @@ class ConversationModel(Base, TimestampMixin):
     message_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     total_tokens: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
-    conversations_metadata: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    conversations_metadata: Mapped[dict[str, Any] | None] = mapped_column(
+        JSON, nullable=True
+    )
 
     # Relationships
     messages: Mapped[list["MessageModel"]] = relationship(
-        "MessageModel", back_populates="conversation", cascade="all, delete-orphan",
-        order_by="MessageModel.created_at"
+        "MessageModel",
+        back_populates="conversation",
+        cascade="all, delete-orphan",
+        order_by="MessageModel.created_at",
     )
 
     def __repr__(self) -> str:
@@ -147,16 +160,22 @@ class MessageModel(Base, TimestampMixin):
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     conversation_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True),
+        ForeignKey("conversations.id", ondelete="CASCADE"),
+        nullable=False,
     )
-    role: Mapped[str] = mapped_column(String(20), nullable=False)  # user | assistant | system
+    role: Mapped[str] = mapped_column(
+        String(20), nullable=False
+    )  # user | assistant | system
     content: Mapped[str] = mapped_column(Text, nullable=False)
     tokens_used: Mapped[int | None] = mapped_column(Integer, nullable=True)
     latency_ms: Mapped[float | None] = mapped_column(Float, nullable=True)
     model: Mapped[str | None] = mapped_column(String(100), nullable=True)
     citations: Mapped[list[dict] | None] = mapped_column(JSON, nullable=True)
     agent_trace: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
-    evaluation_scores: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    evaluation_scores: Mapped[dict[str, Any] | None] = mapped_column(
+        JSON, nullable=True
+    )
 
     # Relationships
     conversation: Mapped["ConversationModel"] = relationship(
@@ -168,6 +187,7 @@ class MessageModel(Base, TimestampMixin):
 # Evaluation Model
 # =============================================================================
 
+
 class EvaluationModel(Base, TimestampMixin):
     """Stores RAGAS evaluation results for responses."""
 
@@ -177,7 +197,9 @@ class EvaluationModel(Base, TimestampMixin):
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     message_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("messages.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True),
+        ForeignKey("messages.id", ondelete="CASCADE"),
+        nullable=False,
     )
     question: Mapped[str] = mapped_column(Text, nullable=False)
     answer: Mapped[str] = mapped_column(Text, nullable=False)

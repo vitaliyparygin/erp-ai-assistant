@@ -1,107 +1,64 @@
-import re
-import traceback
-from app.utils.resources import load_json
-
-CONTRACT_TERMS = load_json("contract_keywords.json")
-
-def _extract_contract_number(
-    text: str,
-) -> str | None:
-
-    patterns = [
-        r"Contract Number:\s*([A-Z0-9\-]+)",
-        r"Номер договору:\s*([A-Z0-9\-]+)",
-    ]
-
-    for pattern in patterns:
-
-        match = re.search(
-            pattern,
-            text,
-            re.IGNORECASE,
-        )
-
-        if match:
-            return match.group(1)
-
-    return None
-
-
-
-def _extract_valid_until(
-    text: str,
-) -> str | None:
-
-    patterns = [
-        r"Valid Until:\s*([0-9\-]+)",
-        r"Діє до:\s*([0-9\-]+)",
-    ]
-
-    for pattern in patterns:
-
-        match = re.search(
-            pattern,
-            text,
-            re.IGNORECASE,
-        )
-
-        if match:
-            return match.group(1)
-
-    return None
+from __future__ import annotations
+from rules.models import DocumentType
+from rules import extract_metadata
+from app.utils.messages import MESSAGES
 
 
 def build_disambiguation_answer(
     query: str,
     chunks: list,
 ) -> str | None:
-
-    contracts = {}
+    contracts: dict[str, dict[str, str | None]] = {}
 
     for chunk in chunks:
+        metadata = dict(chunk.metadata)
+        document_type = metadata.get("document_type")
 
-        md = chunk.metadata
+        if not isinstance(document_type, str):
+            continue
+        # if ingestion not found all rows, found it from rules
+        extracted = extract_metadata(
+            text=chunk.page_content,
+            document_type=document_type,
+        )
+        metadata.update(extracted)
 
-        if md.get("document_type") != "contract":
+        if metadata.get("document_type") != DocumentType.CONTRACT:
             continue
 
-        contracts[
-            md["document_name"]
-        ] = {
-            "contract_number": md.get("contract_number"),
-            "valid_until": md.get("valid_until"),
+        contracts[metadata["document_name"]] = {
+            "contract_number": metadata.get("contract_number"),
+            "valid_until": metadata.get("valid_until"),
         }
 
     if len(contracts) <= 1:
         return None
-    traceback.print_stack()
+
+    return _render_contract_list(contracts)
+
+
+def _render_contract_list(
+    contracts: dict[str, dict[str, str | None]],
+) -> str:
     lines = [
-        "I found some contracts:",
+        MESSAGES["contract"]["found"],
         "",
     ]
 
-    idx = 1
+    for index, (name, data) in enumerate(
+        contracts.items(),
+        start=1,
+    ):
+        lines.append(f"{index}. {name}")
 
-    for doc_name, data in contracts.items():
+        if number := data.get("contract_number"):
+            lines.append(f"   Number: {number}")
 
-        lines.append(f"{idx}. {doc_name}")
-
-        if data.get("contract_number"):
-            lines.append(
-                f"   Number: {data['contract_number']}"
-            )
-
-        if data.get("valid_until"):
-            lines.append(
-                f"   Valid until: {data['valid_until']}"
-            )
+        if valid_until := data.get("valid_until"):
+            lines.append(f"   Valid until: {valid_until}")
 
         lines.append("")
 
-        idx += 1
-
-    lines.append(
-        "Please clarify which contract you are talking about."
-    )
+    lines.append(MESSAGES["contract"]["clarify"])
 
     return "\n".join(lines)

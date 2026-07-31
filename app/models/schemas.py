@@ -2,6 +2,7 @@
 Pydantic v2 domain models — request/response schemas and domain entities.
 Strict validation, serialization aliases, and computed fields.
 """
+
 import uuid
 from datetime import datetime
 from enum import StrEnum
@@ -13,6 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field, computed_field
 # =============================================================================
 # Enums
 # =============================================================================
+
 
 class DocumentStatus(StrEnum):
     PENDING = "pending"
@@ -39,6 +41,7 @@ class AgentType(StrEnum):
 # Base
 # =============================================================================
 
+
 class DomainModel(BaseModel):
     model_config = ConfigDict(
         from_attributes=True,
@@ -51,6 +54,7 @@ class DomainModel(BaseModel):
 # =============================================================================
 # Document Schemas
 # =============================================================================
+
 
 class DocumentChunk(DomainModel):
     id: uuid.UUID
@@ -74,7 +78,10 @@ class Document(DomainModel):
     page_count: int | None = None
     chunk_count: int | None = None
     tags: list[str] = Field(default_factory=list)
-    metadata: dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(
+        default_factory=dict,
+        validation_alias="document_metadata",
+    )
     error_message: str | None = None
     created_at: datetime
     updated_at: datetime
@@ -103,6 +110,7 @@ class DocumentListResponse(DomainModel):
 # =============================================================================
 # Chat / Conversation Schemas
 # =============================================================================
+
 
 class Citation(DomainModel):
     document_id: uuid.UUID
@@ -160,8 +168,10 @@ class ChatResponse(DomainModel):
 # RAG Pipeline Schemas
 # =============================================================================
 
+
 class RetrievedChunk(DomainModel):
     """A chunk returned by the vector retriever."""
+
     chunk_id: str
     document_id: str
     document_name: str
@@ -184,6 +194,7 @@ class RetrievalResult(DomainModel):
 # Evaluation Schemas
 # =============================================================================
 
+
 class EvaluationRequest(DomainModel):
     question: str
     answer: str
@@ -203,7 +214,8 @@ class EvaluationResult(DomainModel):
     @property
     def overall_score(self) -> float | None:
         scores = [
-            s for s in [
+            s
+            for s in [
                 self.answer_relevancy,
                 self.faithfulness,
                 self.context_precision,
@@ -216,6 +228,7 @@ class EvaluationResult(DomainModel):
 # =============================================================================
 # Health / Status
 # =============================================================================
+
 
 class ServiceHealth(DomainModel):
     service: str

@@ -2,6 +2,7 @@ from app.agents.state import AgentState
 from app.core.logging import get_logger
 from app.models.schemas import Citation
 from langchain_ollama import ChatOllama
+from app.rag.prompts import CITATION_EXTRACTION_TEMPLATE
 from uuid import UUID
 
 logger = get_logger(__name__)
@@ -15,10 +16,16 @@ class CitationAgent:
     def __init__(self, llm: ChatOllama) -> None:
         self._llm = llm
 
-    async def __call__(self, state: AgentState) -> dict:
-        if not state.final_answer or not state.reranked_chunks:
-            return {"citations": [], "execution_path": ["citation"]}
+    def _build_chain(self):
+        return CITATION_EXTRACTION_TEMPLATE | self._llm
 
+    async def __call__(self, state: AgentState):
+
+        if not state.final_answer or not state.reranked_chunks:
+            return {
+                "citations": [],
+                "execution_path": ["citation"],
+            }
         return {
             "citations": [
                 Citation(

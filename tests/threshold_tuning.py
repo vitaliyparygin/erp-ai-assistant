@@ -17,11 +17,13 @@ for threshold in THRESHOLDS:
 
     passed, total = run_single_turn()
 
-    results.append({
-        "threshold": threshold,
-        "passed": passed,
-        "total": total,
-    })
+    results.append(
+        {
+            "threshold": threshold,
+            "passed": passed,
+            "total": total,
+        }
+    )
 
 with open("tests/results/threshold_results.csv", "w", newline="") as f:
     writer = csv.DictWriter(
@@ -30,11 +32,10 @@ with open("tests/results/threshold_results.csv", "w", newline="") as f:
             "threshold",
             "passed",
             "total",
-        ]
+        ],
     )
 
     writer.writeheader()
 
     for row in results:
         writer.writerow(row)
-

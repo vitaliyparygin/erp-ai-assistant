@@ -17,7 +17,6 @@ def erp_template():
     return load_template("erp")
 
 
-
 def flat_extraction_rules() -> dict[str, FieldRule]:
     result: dict[str, FieldRule] = {}
 

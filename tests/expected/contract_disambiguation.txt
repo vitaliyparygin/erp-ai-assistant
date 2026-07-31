@@ -1,0 +1,11 @@
+I found several contracts:
+
+1. Maintenance.pdf
+   Number: C-001
+   Valid until: 2027-01-01
+
+2. Support.pdf
+   Number: C-002
+   Valid until: 2028-01-01
+
+Please clarify which contract you are talking about.
