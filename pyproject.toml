@@ -71,7 +71,9 @@ dev = [
     "prometheus-client",
     "python-jose[cryptography]",
     "passlib[bcrypt]",
-    "tiktoken"
+    "tiktoken",
+    "pytest",
+    "pytest-asyncio"
 
 ]
 
