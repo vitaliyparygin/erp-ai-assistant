@@ -1,4 +1,4 @@
-from app.rag.retriever import VectorStore
+from app.rag.retriever.vector_store import VectorStore
 from qdrant_client.models import MatchAny
 from qdrant_client.models import MatchValue
 from types import SimpleNamespace
@@ -9,9 +9,9 @@ from app.core.exceptions import RetrievalError
 from app.rag.embeddings import EmbeddingService
 import pytest
 from unittest.mock import AsyncMock, MagicMock
-from app.rag.retriever import VectorRetriever
 from app.models.schemas import RetrievedChunk
-from app.rag.retriever import Reranker
+from app.rag.retriever.vector_retriever import VectorRetriever
+from app.rag.retriever.reranker import Reranker
 
 
 @pytest.mark.asyncio
@@ -140,17 +140,17 @@ async def test_retrieve_with_query_metadata_filter():
 
     retriever = VectorRetriever(client, embedder)
 
-    await retriever.retrieve(
-        "invoice",
+    query_filter = retriever.get_filter_condition(
         query_metadata={
             "customer_name": "ACME",
             "intent": "search",
-        },
+        }
     )
 
-    kwargs = client.query_points.await_args.kwargs
-
-    assert kwargs["query_filter"] is not None
+    assert query_filter is not None
+    assert len(query_filter.must) == 1
+    assert query_filter.must[0].key == "customer_name"
+    assert query_filter.must[0].match.value == "ACME"
 
 
 @pytest.mark.asyncio

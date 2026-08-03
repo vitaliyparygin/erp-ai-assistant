@@ -4,12 +4,11 @@ Strict validation, serialization aliases, and computed fields.
 """
 
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field
-
 
 # =============================================================================
 # Enums
@@ -241,4 +240,4 @@ class HealthResponse(DomainModel):
     status: str
     version: str
     services: list[ServiceHealth]
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))

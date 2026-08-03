@@ -10,17 +10,13 @@ sys.path.insert(0, str(ROOT))
 
 async def main():
     async with AsyncSessionLocal() as db:
-        await db.execute(
-            text("""
+        await db.execute(text("""
                 TRUNCATE document_chunks CASCADE;
-            """)
-        )
+            """))
 
-        await db.execute(
-            text("""
+        await db.execute(text("""
                 TRUNCATE documents CASCADE;
-            """)
-        )
+            """))
 
         await db.commit()
 

@@ -9,7 +9,8 @@ from app.rag.prompts import (
     QUERY_REWRITE_TEMPLATE,
     RETRIEVAL_ANALYSIS_TEMPLATE,
 )
-from app.rag.retriever import Reranker, VectorRetriever
+from app.rag.retriever.vector_retriever import VectorRetriever
+from app.rag.retriever.reranker import Reranker
 from app.ingestion.query_metadata import extract_query_metadata
 from app.utils.resources import load_json
 from app.retrieval.contracts import (
@@ -17,13 +18,14 @@ from app.retrieval.contracts import (
     requires_contract_disambiguation,
     build_contract_disambiguation,
 )
-
+from app.rag.query_rewriter import QueryRewriter
+from app.config.constants import MAX_CONTEXT
+from app.rag.context.assembler import ContextAssembler
 
 logger = get_logger(__name__)
-MAX_CONTEXT = 20_000
-REWRITE_MAP = load_json("rewrite_map.json")
+# REWRITE_MAP = load_json("rewrite_map.json")
 FIELD_PATTERNS = load_json("field_patterns.json")
-PROTECTED_TERMS = load_json("protected_terms.json")
+# PROTECTED_TERMS = load_json("protected_terms.json")
 
 
 class RetrieverAgent:
@@ -37,11 +39,17 @@ class RetrieverAgent:
         llm: ChatOllama,
         retriever: VectorRetriever,
         reranker: Reranker,
+        query_rewriter: QueryRewriter | None = None,
     ) -> None:
         self._llm = llm
         self._retriever = retriever
         self._reranker = reranker
+        self._query_rewriter = query_rewriter or QueryRewriter(llm)
         self._settings = get_settings()
+        self._context_assembler = ContextAssembler(
+            max_context=MAX_CONTEXT,
+        )
+        self._query_rewriter = query_rewriter or QueryRewriter(llm=llm)
 
     def _build_rewrite_chain(self):
         return QUERY_REWRITE_TEMPLATE | self._llm
@@ -52,32 +60,42 @@ class RetrieverAgent:
         start = time.monotonic()
         try:
             # 1. Query rewriting
-            rewritten_query = state.query.lower()
-
-            for ua, synonyms in REWRITE_MAP.items():
-                if ua in rewritten_query:
-                    rewritten_query += " " + " ".join(synonyms)
+            rewrite_start = time.monotonic()
 
             if self._settings.query_rewrite_enabled:
-                start_time = time.monotonic()
                 rewritten_query = await self._rewrite_query(state)
+            else:
+                rewritten_query = state.query.strip().lower()
 
-                latency = time.monotonic() - start_time
-                logger.debug(
-                    "REWRITTEN_QUERY2",
-                    original=state.query,
-                    rewritten=rewritten_query,
-                    latency=latency,
-                )
-            logger.warning(
-                "FINAL_RETRIEVAL_QUERY",
+            rewrite_latency_ms = round(
+                (time.monotonic() - rewrite_start) * 1000,
+                2,
+            )
+
+            logger.debug(
+                "query_rewrite_completed",
+                original=state.query,
+                rewritten=rewritten_query,
+                latency_ms=rewrite_latency_ms,
+                enabled=self._settings.query_rewrite_enabled,
+            )
+
+            latency = time.monotonic() - start
+            logger.debug(
+                "retrieval_query",
+                original=state.query,
+                rewritten=rewritten_query,
+                latency=latency,
+            )
+            logger.debug(
+                "low_retrieval_confidence",
                 original=state.query,
                 retrieval_query=rewritten_query,
             )
             start_time = time.monotonic()
 
             query_metadata = extract_query_metadata(rewritten_query)
-            logger.warning(
+            logger.debug(
                 "query_metadata",
                 query_metadata=query_metadata,
             )
@@ -88,7 +106,7 @@ class RetrieverAgent:
                 query_metadata=query_metadata,
             )
             logger.debug(
-                "RETRIEVED_RAW",
+                "retrieval_raw",
                 query=rewritten_query,
                 docs=[
                     {
@@ -130,10 +148,13 @@ class RetrieverAgent:
                 unique_chunks.append(chunk)
             chunks = unique_chunks
 
-            reranked = await self._reranker.rerank(rewritten_query, chunks)
+            reranked = await self._reranker.rerank(
+                query=rewritten_query,
+                chunks=chunks,
+            )
             unique_docs = get_unique_docs(chunks)
-            logger.warning(
-                "RETRIEVED_DOCS",
+            logger.debug(
+                "retrieval_docs",
                 docs=[
                     {
                         "doc": chunk.document_name,
@@ -142,18 +163,18 @@ class RetrieverAgent:
                     for c in reranked[:10]
                 ],
             )
-            logger.warning(
-                "UNIQUE_DOCS_AFTER_RERANK",
+            logger.debug(
+                "unique_docs_after_rerank",
                 docs=list(unique_docs.keys()),
             )
             if requires_contract_disambiguation(
                 state.query,
                 reranked,
             ):
-                logger.warning("is_ambiguous_contract_query:true")
+                logger.debug("is_ambiguous_contract_query:true")
                 all_contracts = await self._retriever.get_contract_documents()
-                logger.warning(
-                    "CONTRACTS_FOUND",
+                logger.debug(
+                    "contract_found",
                     count=len(all_contracts),
                     contracts=all_contracts,
                 )
@@ -167,12 +188,18 @@ class RetrieverAgent:
                 contracts = list(unique.values())
 
                 answer = build_contract_disambiguation(contracts)
-                logger.warning("is_ambiguous_contract_query:answer", answer=answer)
+                logger.debug("is_ambiguous_contract_query:answer", answer=answer)
                 return {
                     "final_answer": answer,
                     "requires_clarification": True,
                     "agent_trace": {
                         "disambiguation": True,
+                        "query_rewrite": {
+                            "original_query": state.query,
+                            "rewritten_query": rewritten_query,
+                            "latency_ms": rewrite_latency_ms,
+                            "enabled": self._settings.query_rewrite_enabled,
+                        },
                     },
                     "total_tokens": getattr(state.query, "usage_metadata", {}).get(
                         "total_tokens", 0
@@ -181,14 +208,14 @@ class RetrieverAgent:
                 }
 
             logger.debug(
-                "RERANKED_CHUNKS",
+                "reranked docs",
                 chunks=[
                     {"doc": c.document_name, "score": round(c.score, 3)}
                     for c in reranked[:5]
                 ],
             )
             logger.debug(
-                "RERANK_OUTPUT",
+                "rerank_output",
                 docs=[
                     {
                         "doc": c.document_name,
@@ -198,21 +225,41 @@ class RetrieverAgent:
                 ],
             )
             latency = time.monotonic() - start_time
-            logger.debug("RERANKED_CHUNKS", latency=latency)
+            logger.debug("rerank_chunks", latency=latency)
 
             # 4. Analyze context sufficiency
             start_time = time.monotonic()
-            context_str = self._format_context(reranked[:2])
+            # context_str = self._format_context(reranked[:2])
+            selected_chunks = self._select_context_chunks(
+                reranked,
+                max_chunks=5,
+            )
+
+            context_str = self._context_assembler.build(
+                selected_chunks,
+                limit=2,
+            )
             latency = time.monotonic() - start_time
             logger.debug("self._format_context:", latency=latency)
             start_time = time.monotonic()
             analysis = await self._analyze_context(state.query, context_str)
             latency = time.monotonic() - start_time
 
-            logger.debug("ANALYZE_CONTEXT_TIME:", latency=latency)
-            analysis["has_sufficient_context"] = bool(reranked)
-            analysis["needs_research"] = False
-
+            logger.debug("analize context time:", latency=latency)
+            if not reranked:
+                has_sufficient_context = False
+                needs_research = True
+            else:
+                has_sufficient_context = analysis.get(
+                    "has_sufficient_context",
+                    True,
+                )
+                needs_research = analysis.get(
+                    "needs_research",
+                    not has_sufficient_context,
+                )
+            analysis["needs_research"] = needs_research
+            analysis["has_sufficient_context"] = has_sufficient_context
             latency_ms = round((time.monotonic() - start) * 1000, 2)
 
             logger.debug(
@@ -223,7 +270,7 @@ class RetrieverAgent:
                 latency_ms=latency_ms,
             )
             logger.debug(
-                "FINAL_CONTEXT",
+                "final context",
                 context=context_str,
             )
             return {
@@ -243,7 +290,13 @@ class RetrieverAgent:
                         "chunks_retrieved": len(chunks),
                         "chunks_reranked": len(reranked),
                         "latency_ms": latency_ms,
-                    }
+                    },
+                    "query_rewrite": {
+                        "original_query": state.query,
+                        "rewritten_query": rewritten_query,
+                        "latency_ms": rewrite_latency_ms,
+                        "enabled": self._settings.query_rewrite_enabled,
+                    },
                 },
             }
         except Exception as e:
@@ -251,46 +304,50 @@ class RetrieverAgent:
             raise
 
     async def _rewrite_query(self, state: AgentState) -> str:
-        """Rewrite the query for better retrieval."""
-        if any(term in state.query.lower() for term in PROTECTED_TERMS):
-            logger.debug(
-                "QUERY_REWRITE_SKIPPED",
-                query=state.query,
-            )
+        """Backward-compatible wrapper around QueryRewriter."""
+        return await self._query_rewriter.rewrite(state)
 
-            return state.query
-
-        context = (
-            "\n".join(f"{m.type}: {m.content[:200]}" for m in state.messages[-4:])
-            if state.messages
-            else "No prior context"
-        )
-
-        chain = self._build_rewrite_chain()
-        logger.debug(
-            "QUERY_USED_FOR_SEARCH",
-            query=state.query,
-        )
-
-        result = await chain.ainvoke(
-            {
-                "query": state.query,
-                "conversation_context": context[:3000],
-            }
-        )
-        content = result.content
-
-        if not isinstance(content, str):
-            raise TypeError(f"Expected string response, got {type(content).__name__}")
-        rewritten = content.strip()
-
-        logger.debug(
-            "RETRIEVAL_QUERY",
-            original=state.query,
-            rewritten=rewritten,
-        )
-
-        return rewritten
+    # async def _rewrite_query(self, state: AgentState) -> str:
+    #     """Rewrite the query for better retrieval."""
+    #     if any(term in state.query.lower() for term in PROTECTED_TERMS):
+    #         logger.debug(
+    #             "query rewrite skipped",
+    #             query=state.query,
+    #         )
+    #
+    #         return state.query
+    #
+    #     context = (
+    #         "\n".join(f"{m.type}: {m.content[:200]}" for m in state.messages[-4:])
+    #         if state.messages
+    #         else "No prior context"
+    #     )
+    #
+    #     chain = self._build_rewrite_chain()
+    #     logger.debug(
+    #         "query used for search",
+    #         query=state.query,
+    #     )
+    #
+    #     result = await chain.ainvoke(
+    #         {
+    #             "query": state.query,
+    #             "conversation_context": context[:3000],
+    #         }
+    #     )
+    #     content = result.content
+    #
+    #     if not isinstance(content, str):
+    #         raise TypeError(f"Expected string response, got {type(content).__name__}")
+    #     rewritten = content.strip()
+    #
+    #     logger.debug(
+    #         "retrieval_query",
+    #         original=state.query,
+    #         rewritten=rewritten,
+    #     )
+    #
+    #     return rewritten
 
     async def _analyze_context(self, query: str, context: str) -> dict:
         """Check if retrieved context is sufficient to answer the query."""
@@ -325,3 +382,34 @@ class RetrieverAgent:
             )
         context = "\n\n---\n\n".join(parts)
         return context[:MAX_CONTEXT]
+
+    @staticmethod
+    def _select_context_chunks(
+        chunks: list[RetrievedChunk],
+        max_chunks: int = 5,
+    ) -> list[RetrievedChunk]:
+        if not chunks:
+            return []
+
+        selected: list[RetrievedChunk] = []
+        seen_documents = set()
+
+        for chunk in chunks:
+            if len(selected) >= max_chunks:
+                break
+
+            # Avoid filling the whole context with one document.
+            if chunk.document_id not in seen_documents:
+                selected.append(chunk)
+                seen_documents.add(chunk.document_id)
+
+        for chunk in chunks:
+            if len(selected) >= max_chunks:
+                break
+
+            if chunk in selected:
+                continue
+
+            selected.append(chunk)
+
+        return selected

@@ -12,7 +12,6 @@ from pydantic import BaseModel, Field
 from pydantic import ConfigDict
 from app.models.schemas import Citation, RetrievedChunk
 
-
 # =============================================================================
 # Agent State
 # =============================================================================

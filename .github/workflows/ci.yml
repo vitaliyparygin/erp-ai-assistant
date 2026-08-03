@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+
+    runs-on: ubuntu-latest
+    env:
+      SECRET_KEY: ci-test-secret-key-12345678901234567890
+      CELERY_BROKER_URL: redis://localhost:6379/1
+      CELERY_RESULT_BACKEND: redis://localhost:6379/2
+      EMBEDDING_MODEL: nomic-embed-text
+      DATABASE_URL: postgresql+asyncpg://erp_user:password@postgres:5432/erp_assistant
+    strategy:
+      matrix:
+        python-version: ["3.12", "3.13"]
+
+    steps:
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - run: python -m pip install --upgrade pip
+
+      - run: pip install -e ".[dev]"
+
+      - name: Check test environment
+        run: |
+          python --version
+          pytest --version
+          python -c "import pytest_asyncio; print('pytest-asyncio:', pytest_asyncio.__version__)"
+
+      - run: ruff check .
+
+      - run: black --check .
+
+      - run: mypy app tests
+
+      - name: Run tests
+        run: pytest -q
+
+      - run: python -m build

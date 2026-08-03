@@ -7,7 +7,7 @@ rag-benchmark = "rag_benchmark.cli.main:app"
 
 [project]
 name = "erp-ai-assistant"
-version = "0.1.0"
+version = "0.1.1"
 description = "AI ERP Assistant"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -21,7 +21,7 @@ dependencies = [
     "uvicorn",
     "celery[redis]>=5.4.0",
     "redis",
-    "qdrant-client",
+    "qdrant-client==1.18.0",
     "prometheus-client",
     "flower",
     "sqlalchemy",
@@ -37,16 +37,18 @@ dependencies = [
     "langchain_text_splitters",
     "qdrant_client",
     "green",
-    "rag-benchmark",
-    "rules @ git+ssh://git@github.com/vitaliyparygin/rules.git@v0.1.2",
+    "rules @ git+https://git@github.com/vitaliyparygin/rules.git@v0.1.4",
+    "rag-benchmark @ git+https://git@github.com/vitaliyparygin/rag-benchmark@v0.1.1",
     "python-multipart>=0.0.20",
 ]
 
 [project.optional-dependencies]
 dev = [
+    "build",
     "pytest",
     "black",
-    "ruff",
+    "ruff == 0.15.20",
+    "mypy == 2.1.0",
     "python-multipart ",
     "fastapi",
     "uvicorn[standard]",
@@ -70,7 +72,9 @@ dev = [
     "prometheus-client",
     "python-jose[cryptography]",
     "passlib[bcrypt]",
-    "tiktoken"
+    "tiktoken",
+    "pytest",
+    "pytest-asyncio"
 
 ]
 
@@ -103,3 +107,6 @@ omit = [
 
 [tool.pytest.ini_options]
 asyncio_mode = "strict"
+
+[tool.hatch.metadata]
+allow-direct-references = true

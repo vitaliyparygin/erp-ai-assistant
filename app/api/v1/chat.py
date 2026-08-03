@@ -32,7 +32,8 @@ from app.models.schemas import (
     MessageRole,
 )
 from app.observability.metrics import GRAPH_EXECUTIONS_TOTAL, GRAPH_LATENCY_SECONDS
-from app.rag.retriever import Reranker, VectorRetriever
+from app.rag.retriever.vector_retriever import VectorRetriever
+from app.rag.retriever.reranker import Reranker
 from sqlalchemy import select
 from app.rag.embeddings import EmbeddingService
 

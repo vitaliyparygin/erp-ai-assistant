@@ -1,6 +1,4 @@
 import pytest
-from unittest.mock import Mock
-from types import SimpleNamespace
 from app.agents.retriever import RetrieverAgent
 from tests.factories import make_state
 from unittest.mock import AsyncMock
@@ -17,8 +15,8 @@ from app.agents.retriever import (
 
 @pytest.mark.asyncio
 async def test_query_rewrite_returns_llm_result():
-    chain = Mock()
-    chain.ainvoke = AsyncMock(return_value=SimpleNamespace(content="invoice amount"))
+    rewriter = AsyncMock()
+    rewriter.rewrite.return_value = "invoice amount"
 
     agent = RetrieverAgent(
         llm=AsyncMock(),
@@ -26,38 +24,13 @@ async def test_query_rewrite_returns_llm_result():
         reranker=AsyncMock(),
     )
 
-    agent._build_rewrite_chain = Mock(
-        return_value=chain,
-    )
+    agent._query_rewriter = rewriter
 
     state = make_state(query="How much do we owe?")
 
     rewritten = await agent._rewrite_query(state)
 
     assert rewritten == "invoice amount"
-
-
-# @pytest.mark.parametrize(
-#     "query",
-#     [
-#         "PO-2025-001",
-#         "Invoice INV-100",
-#         "Contract C-001",
-#     ],
-# )
-# @pytest.mark.asyncio
-# async def test_protected_terms_not_rewritten(query):
-#     agent = RetrieverAgent(
-#         llm=AsyncMock(),
-#         retriever=AsyncMock(),
-#         reranker=AsyncMock(),
-#     )
-#
-#     state = make_state(query=query)
-#
-#     rewritten = await agent._rewrite_query(state)
-#
-#     assert rewritten == query
 
 
 def test_contract_disambiguation_contains_all_contracts():

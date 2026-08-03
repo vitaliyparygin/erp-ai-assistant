@@ -73,7 +73,7 @@ services:
 
     restart: unless-stopped
 
-    command: python -m celery -A app.workers.celery_app worker --loglevel=info  --pool=solo
+    command: python -m celery -A app.workers.celery_app worker --loglevel=info  --pool=solo -Q ingestion
 
     volumes:
     - ./app:/app/app
@@ -251,7 +251,7 @@ services:
   # Qdrant — Vector Database
   # ---------------------------------------------------------------------------
   qdrant:
-    image: qdrant/qdrant:v1.12.0
+    image: qdrant/qdrant:v1.18.2
     container_name: erp_qdrant
     restart: unless-stopped
     ports:

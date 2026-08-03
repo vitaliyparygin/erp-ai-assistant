@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 from app.models.schemas import RetrievedChunk
-from app.rag.retriever import VectorRetriever
+from app.rag.retriever.vector_retriever import VectorRetriever
 from app.core.exceptions import RetrievalError
 
 
@@ -141,7 +141,14 @@ def test_get_filter_condition_combined():
         document_ids=["abc"],
     )
 
+    assert filt is not None
     assert len(filt.must) == 2
+
+    assert filt.must[0].key == "document_id"
+    assert filt.must[0].match.any == ["abc"]
+
+    assert filt.must[1].key == "customer"
+    assert filt.must[1].match.value == "ACME"
 
 
 def test_get_filter_condition_metadata():
@@ -153,7 +160,6 @@ def test_get_filter_condition_metadata():
     filt = retriever.get_filter_condition(
         query_metadata={
             "vendor": "IBM",
-            "intent": "ignored",
         },
     )
 

@@ -1,0 +1,36 @@
+[ ] git working tree clean
+[ ] README updated
+[ ] docs/configuration.md updated
+[ ] docs/deployment.md updated
+[ ] docs/api.md updated
+[ ] docs/testing.md updated
+
+[ ] ruff check app tests
+[ ] black --check .
+[ ] mypy app
+[ ] pytest -q -W error
+
+[ ] docker compose build
+[ ] docker compose up -d
+[ ] docker compose ps
+[ ] /health = healthy
+[ ] /health/ready = healthy
+
+[ ] Ollama model available
+[ ] Qdrant reachable
+[ ] erp_documents exists
+[ ] dataset indexed
+[ ] worker processed ingestion tasks
+
+[ ] document upload returns 202
+[ ] uploaded document reaches indexed state
+[ ] real chat query returns 200
+[ ] answer is grounded in dataset
+[ ] citations are returned
+
+[ ] no critical errors in backend logs
+[ ] no critical errors in worker logs
+
+[ ] version updated
+[ ] CHANGELOG / release notes updated
+[ ] git tag created

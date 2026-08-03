@@ -40,7 +40,7 @@ Each test case contains:
 Run the complete evaluation:
 
 ```bash
-python tests/run_tests.py
+python tests/e2e_chat.py
 ```
 
 Results are written to
@@ -106,7 +106,7 @@ After changing:
 run
 
 ```bash
-python tests/run_tests.py
+python tests/e2e_chat.py
 ```
 
 before committing changes.

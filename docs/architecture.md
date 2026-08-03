@@ -31,3 +31,20 @@
                        │
 
                  JSON Response
+
+
+
+Current
+- ingestion
+- RAG
+- agents
+- evaluation
+- Docker deployment
+
+Planned
+- authentication
+- streaming
+- hybrid search
+- UI improvements
+- MCP
+- Odoo integration

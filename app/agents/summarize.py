@@ -7,6 +7,7 @@ from app.rag.prompts import (
     SUMMARIZER_TEMPLATE,
 )
 from uuid import UUID
+from app.config.constants import MAX_CONTEXT
 
 logger = get_logger(__name__)
 
@@ -112,7 +113,7 @@ class SummarizerAgent:
             result = await chain.ainvoke(
                 {
                     "query": (state.rewritten_query or state.query),
-                    "context": state.context_str[:2000],
+                    "context": state.context_str[:MAX_CONTEXT],
                     "history": state.messages[-6:],
                     "research_notes": "\n".join(state.research_notes),
                 }

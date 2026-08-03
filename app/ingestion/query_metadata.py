@@ -9,42 +9,41 @@ PERSON_PATTERNS = [
 
 
 def extract_query_metadata(question: str) -> dict:
-    metadata = {}
-    #
-    # structured ids
-    #
+    metadata: dict[str, str] = {}
+
+    normalized_question = question.strip()
+
+    # Structured identifiers / explicit fields.
     for field_name, definition in FIELD_DEFINITIONS.items():
         for pattern in definition.patterns:
-            m = re.search(
+            match = re.search(
                 pattern,
-                question,
+                normalized_question,
                 re.IGNORECASE,
             )
 
-            if not m:
+            if not match:
                 continue
 
-            if m.lastindex:
-                value = m.group(1)
-            else:
-                value = m.group(0)
+            value = (match.group(1) if match.lastindex else match.group(0)).strip()
 
-            metadata[definition.name] = value.strip()
+            if not value:
+                continue
 
+            metadata[definition.name] = value
             break
 
-    #
-    # person
-    #
-
+    # Person names.
     for pattern in PERSON_PATTERNS:
-        m = re.search(pattern, question)
-        if m:
-            metadata["person"] = m.group(0)
+        match = re.search(pattern, normalized_question)
+
+        if match:
+            metadata["person"] = match.group(0).strip()
             break
 
+    # Document type is a hint, not necessarily an exact constraint.
     document_type = detect_document_type(
-        text=question.lower(),
+        text=normalized_question.lower(),
     )
 
     if document_type:
