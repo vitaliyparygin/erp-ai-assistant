@@ -6,6 +6,7 @@
 [ ] docs/testing.md updated
 
 [ ] ruff check app tests
+[ ] black --check .
 [ ] mypy app
 [ ] pytest -q -W error
 
