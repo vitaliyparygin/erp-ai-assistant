@@ -14,6 +14,7 @@ jobs:
       CELERY_BROKER_URL: redis://localhost:6379/1
       CELERY_RESULT_BACKEND: redis://localhost:6379/2
       EMBEDDING_MODEL: nomic-embed-text
+      DATABASE_URL: postgresql+asyncpg://erp_user:password@postgres:5432/erp_assistant
     strategy:
       matrix:
         python-version: ["3.12", "3.13"]
