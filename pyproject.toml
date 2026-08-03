@@ -7,7 +7,7 @@ rag-benchmark = "rag_benchmark.cli.main:app"
 
 [project]
 name = "erp-ai-assistant"
-version = "0.1.0"
+version = "0.1.1"
 description = "AI ERP Assistant"
 readme = "README.md"
 requires-python = ">=3.12"
