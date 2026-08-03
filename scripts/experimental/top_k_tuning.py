@@ -11,7 +11,6 @@ from scripts.experimental.e2e_chat import (
     run_single_turn,
 )
 
-
 TOP_K_VALUES = [3, 5, 7, 10]
 
 RESULTS_DIR = Path("tests/results")
@@ -107,4 +106,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

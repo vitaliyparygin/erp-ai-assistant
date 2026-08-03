@@ -25,11 +25,7 @@ def extract_query_metadata(question: str) -> dict:
             if not match:
                 continue
 
-            value = (
-                match.group(1)
-                if match.lastindex
-                else match.group(0)
-            ).strip()
+            value = (match.group(1) if match.lastindex else match.group(0)).strip()
 
             if not value:
                 continue

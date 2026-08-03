@@ -1,5 +1,6 @@
 from app.rag.retriever.filters import build_retrieval_filter
 
+
 def test_build_retrieval_filter_returns_none_without_constraints():
     assert build_retrieval_filter() is None
 

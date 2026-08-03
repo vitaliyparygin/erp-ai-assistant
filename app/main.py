@@ -31,7 +31,6 @@ from app.observability.metrics import (
 )
 from app.core.exceptions import ConversationNotFoundError
 
-
 settings = get_settings()
 logger = get_logger(__name__)
 
@@ -93,6 +92,7 @@ app = FastAPI(
     openapi_url="/openapi.json" if not settings.is_production else None,
     lifespan=lifespan,
 )
+
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):

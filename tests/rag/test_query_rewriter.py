@@ -17,6 +17,7 @@ def make_state(
         messages=messages or [],
     )
 
+
 @pytest.mark.asyncio
 async def test_rewrite_returns_empty_query_without_llm():
     llm = MagicMock()
@@ -45,6 +46,7 @@ async def test_rewrite_skips_protected_query(monkeypatch):
 
     assert result == "What is the invoice amount?"
     llm.assert_not_called()
+
 
 @pytest.mark.asyncio
 async def test_rewrite_without_llm_applies_deterministic_expansion(monkeypatch):
@@ -108,6 +110,7 @@ async def test_rewrite_calls_llm(monkeypatch):
     assert result == "rewritten query"
     chain.ainvoke.assert_awaited_once()
 
+
 @pytest.mark.asyncio
 async def test_llm_rewrite_falls_back_to_original_for_empty_response(monkeypatch):
     llm = MagicMock()
@@ -137,6 +140,7 @@ async def test_llm_rewrite_falls_back_to_original_for_empty_response(monkeypatch
 
     assert result == "some question"
     chain.ainvoke.assert_awaited_once()
+
 
 @pytest.mark.asyncio
 async def test_llm_rewrite_rejects_non_string_response(monkeypatch):
@@ -171,6 +175,7 @@ async def test_llm_rewrite_rejects_non_string_response(monkeypatch):
 
     chain.ainvoke.assert_awaited_once()
 
+
 def test_build_context_without_messages():
     state = make_state(query="hello")
 
@@ -178,11 +183,9 @@ def test_build_context_without_messages():
 
     assert result == "No prior context"
 
+
 def test_build_context_uses_last_four_messages_and_truncates():
-    messages = [
-        HumanMessage(content=f"message-{i}" * 100)
-        for i in range(6)
-    ]
+    messages = [HumanMessage(content=f"message-{i}" * 100) for i in range(6)]
 
     state = make_state(
         "hello",

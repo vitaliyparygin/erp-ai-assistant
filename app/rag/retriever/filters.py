@@ -23,6 +23,7 @@ class QueryMetadata(TypedDict, total=False):
     stage: str
     status: str
 
+
 def build_retrieval_filter(
     *,
     query_metadata: QueryMetadata | None = None,

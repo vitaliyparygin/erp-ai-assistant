@@ -9,7 +9,7 @@ from qdrant_client.models import (
     VectorParams,
 )
 from app.core.config import get_settings
-from app.core.exceptions import  VectorStoreError
+from app.core.exceptions import VectorStoreError
 from app.core.logging import get_logger
 from app.rag.chunker import TextChunk
 

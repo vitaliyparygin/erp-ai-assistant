@@ -78,7 +78,6 @@ async def test_rate_limit_exceeded():
     pipe = MagicMock()
     pipe.execute = AsyncMock(return_value=[101, True])
 
-
     redis = MagicMock()
     redis.pipeline.return_value = DummyPipeline()
 

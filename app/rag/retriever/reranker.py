@@ -4,7 +4,7 @@ from app.config.constants import (
     DOCUMENT_HINTS,
     RERANK_STOP_WORDS,
     TERM_EXPANSIONS,
-    IMPORTANT_TERMS
+    IMPORTANT_TERMS,
 )
 from app.models.schemas import RetrievedChunk
 from app.core.config import get_settings
@@ -14,19 +14,21 @@ from dataclasses import dataclass
 
 logger = get_logger(__name__)
 
+
 def _field_boost(
-        content: str,
-        marker: str,
-        boost: float,
+    content: str,
+    marker: str,
+    boost: float,
 ) -> float:
     if marker in content:
         return boost
 
     return 0.0
 
+
 def _calculate_field_boost(
-        query_terms: set[str],
-        content: str,
+    query_terms: set[str],
+    content: str,
 ) -> float:
     boost = 0.0
 
@@ -61,8 +63,6 @@ def _calculate_field_boost(
     return boost
 
 
-
-
 @dataclass(frozen=True)
 class ChunkScoreBreakdown:
     vector_score: float
@@ -79,6 +79,7 @@ class ChunkScoreBreakdown:
             + self.document_hint_boost
         )
 
+
 class Reranker:
     """
     Reranks retrieved chunks using deterministic lexical/domain boosts.
@@ -91,13 +92,13 @@ class Reranker:
     - important terms;
     - document-specific hints.
     """
+
     TERM_EXPANSIONS = TERM_EXPANSIONS
     IMPORTANT_TERMS = IMPORTANT_TERMS
     DOCUMENT_HINTS = DOCUMENT_HINTS
 
     def __init__(self) -> None:
         self._settings = get_settings()
-
 
     async def rerank(
         self,
@@ -143,19 +144,14 @@ class Reranker:
                 ),
             )
 
-            scored_chunks.append(
-                (chunk, breakdown.total)
-            )
+            scored_chunks.append((chunk, breakdown.total))
 
         scored_chunks.sort(
             key=lambda item: item[1],
             reverse=True,
         )
 
-        return [
-            chunk
-            for chunk, _score in scored_chunks[:k]
-        ]
+        return [chunk for chunk, _score in scored_chunks[:k]]
 
     @staticmethod
     def _extract_query_terms(query: str) -> set[str]:
@@ -168,16 +164,14 @@ class Reranker:
         expanded_terms = set(query_terms)
 
         for term in query_terms:
-            expanded_terms.update(
-                Reranker.TERM_EXPANSIONS.get(term, set())
-            )
+            expanded_terms.update(Reranker.TERM_EXPANSIONS.get(term, set()))
 
         return expanded_terms
 
     def _score_chunk(
-            self,
-            chunk: RetrievedChunk,
-            query_terms: set[str],
+        self,
+        chunk: RetrievedChunk,
+        query_terms: set[str],
     ) -> float:
         return self._score_breakdown(
             chunk=chunk,
@@ -186,12 +180,10 @@ class Reranker:
 
     @staticmethod
     def _calculate_term_match_boost(
-            query_terms: set[str],
-            content: str,
+        query_terms: set[str],
+        content: str,
     ) -> float:
-        content_terms = set(
-            re.findall(r"\w+", content)
-        )
+        content_terms = set(re.findall(r"\w+", content))
 
         term_matches = len(query_terms & content_terms)
 
@@ -202,8 +194,8 @@ class Reranker:
 
     @staticmethod
     def _calculate_document_hint_boost(
-            expanded_terms: set[str],
-            document_name: str,
+        expanded_terms: set[str],
+        document_name: str,
     ) -> float:
         boost = 0.0
 
@@ -216,9 +208,9 @@ class Reranker:
         return boost
 
     def _score_breakdown(
-            self,
-            chunk: RetrievedChunk,
-            query_terms: set[str],
+        self,
+        chunk: RetrievedChunk,
+        query_terms: set[str],
     ) -> ChunkScoreBreakdown:
         content_lower = chunk.content.lower()
 
@@ -237,8 +229,3 @@ class Reranker:
                 chunk.document_name,
             ),
         )
-
-
-
-
-

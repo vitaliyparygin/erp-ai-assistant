@@ -2,10 +2,13 @@ import pytest
 from app.utils.resources import load_json
 from app.ingestion.query_metadata import extract_query_metadata
 from unittest.mock import patch
-from app.retrieval.contracts import (normalize_document_type,
-                                     build_contract_disambiguation,
-                                     get_unique_docs)
+from app.retrieval.contracts import (
+    normalize_document_type,
+    build_contract_disambiguation,
+    get_unique_docs,
+)
 from app.models.schemas import RetrievedChunk
+
 
 def make_chunk(
     *,
@@ -22,6 +25,7 @@ def make_chunk(
         score=score,
         chunk_index=chunk_index,
     )
+
 
 def test_load_json_adds_json_extension():
     result = load_json("rewrite_map")
@@ -45,19 +49,18 @@ def test_extract_query_metadata_empty_question():
 
     assert result == {}
 
+
 def test_extract_query_metadata_extracts_field():
-    result = extract_query_metadata(
-        "What is the invoice number INV-2024-555?"
-    )
+    result = extract_query_metadata("What is the invoice number INV-2024-555?")
 
     assert "invoice_number" in result
 
+
 def test_extract_query_metadata_extracts_person_name():
-    result = extract_query_metadata(
-        "What did John Smith approve?"
-    )
+    result = extract_query_metadata("What did John Smith approve?")
 
     assert result["person"] == "John Smith"
+
 
 def test_extract_query_metadata_extracts_document_type():
     with patch(
@@ -68,6 +71,7 @@ def test_extract_query_metadata_extracts_document_type():
 
     assert result["document_type"] == "invoice"
 
+
 def test_normalize_document_type_none():
     assert normalize_document_type(None) == ""
 
@@ -75,8 +79,10 @@ def test_normalize_document_type_none():
 def test_normalize_document_type_value():
     assert normalize_document_type(" CONTRACT ") == " contract "
 
+
 def test_build_contract_disambiguation_empty():
     assert build_contract_disambiguation([]) is None
+
 
 def test_build_contract_disambiguation_contains_contract_details():
     contracts = [
@@ -94,6 +100,7 @@ def test_build_contract_disambiguation_contains_contract_details():
     assert "CNT-001" in result
     assert "2026-12-31" in result
     assert "Specify what you are talking about." in result
+
 
 def test_build_contract_disambiguation_without_optional_fields():
     contracts = [
@@ -128,6 +135,7 @@ def test_get_unique_docs_keeps_last_chunk_for_same_document():
 
     assert list(result) == ["invoice.pdf"]
     assert result["invoice.pdf"] is second
+
 
 def test_get_unique_docs_keeps_different_documents():
     first = make_chunk(

@@ -48,6 +48,7 @@ def ingest_document(
     Uses asyncio.run() to execute the async pipeline.
     """
     import asyncio
+
     # loop = asyncio.new_event_loop()
     # asyncio.set_event_loop(loop)
 
@@ -114,7 +115,6 @@ async def _ingest_document_async(
         # ---- Parse ----
         parser = DocumentParser()
         parsed_doc = parser.parse(file_path, mime_type)
-
 
         # ---- Chunk ----
         logger.debug(

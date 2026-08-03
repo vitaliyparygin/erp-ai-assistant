@@ -6,6 +6,7 @@ from app.rag.retriever.reranker import Reranker
 from unittest.mock import AsyncMock
 from unittest.mock import MagicMock
 
+
 @pytest.mark.asyncio
 async def test_rerank_top_k_larger_than_docs():
     reranker = Reranker()
@@ -210,7 +211,6 @@ async def test_rerank_term_expansion(monkeypatch):
 async def test_rerank_document_hint_boost(monkeypatch):
     # from app.rag import retriever as retriever_module
     from app.rag.retriever.reranker import Reranker as reranker_module
-
 
     monkeypatch.setattr(
         reranker_module,
@@ -508,6 +508,7 @@ def test_score_chunk_customer_field_boost():
 
     assert score > 0.5
 
+
 def test_score_chunk_stage_field_boost():
     reranker = Reranker()
 
@@ -522,6 +523,7 @@ def test_score_chunk_stage_field_boost():
     )
 
     assert score > 0.5
+
 
 def test_score_chunk_document_hint():
     reranker = Reranker()
@@ -539,6 +541,7 @@ def test_score_chunk_document_hint():
 
     assert score == 0.9
 
+
 def test_score_chunk_preserves_vector_score():
     reranker = Reranker()
 
@@ -553,6 +556,7 @@ def test_score_chunk_preserves_vector_score():
     )
 
     assert score == 0.9
+
 
 def test_score_chunk_without_document_hint():
     reranker = Reranker()
@@ -570,6 +574,7 @@ def test_score_chunk_without_document_hint():
 
     assert score == 0.4
 
+
 def test_score_breakdown_preserves_vector_score():
     reranker = Reranker()
 
@@ -586,6 +591,7 @@ def test_score_breakdown_preserves_vector_score():
 
     assert breakdown.vector_score == 0.7
     assert breakdown.total >= 0.7
+
 
 def test_score_breakdown_document_hint():
     reranker = Reranker()

@@ -12,6 +12,7 @@ def classification_rules():
 def extraction_rules():
     return ERP_TEMPLATE.extraction_rules
 
+
 @cache
 def erp_template():
     return load_template("erp")

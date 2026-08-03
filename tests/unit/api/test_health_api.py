@@ -9,6 +9,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 import pytest
 from app.api.v1 import health
+
 # ----------------------------------------------------------------------
 # liveness
 # ----------------------------------------------------------------------

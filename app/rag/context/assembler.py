@@ -1,6 +1,7 @@
 from app.config.constants import MAX_CONTEXT
 from app.models.schemas import RetrievedChunk
 
+
 class ContextAssembler:
     def __init__(self, max_context: int = MAX_CONTEXT) -> None:
         self._max_context = max_context

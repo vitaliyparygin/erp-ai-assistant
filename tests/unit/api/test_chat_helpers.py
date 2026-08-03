@@ -117,6 +117,7 @@ async def test_save_messages():
     db.execute.assert_awaited_once()
     db.commit.assert_awaited_once()
 
+
 @pytest.mark.asyncio
 async def test_save_messages_serializes_citations():
     db = MagicMock()

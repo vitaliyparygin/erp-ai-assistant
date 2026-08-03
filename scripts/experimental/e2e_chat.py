@@ -27,7 +27,6 @@ from typing import Any
 
 import requests
 
-
 BASE_URL = "http://localhost:8000"
 REQUEST_TIMEOUT = 120
 
@@ -176,16 +175,10 @@ class ChatClient:
             "citations",
         )
 
-        missing = [
-            field
-            for field in required_fields
-            if field not in data
-        ]
+        missing = [field for field in required_fields if field not in data]
 
         if missing:
-            raise AssertionError(
-                f"Chat response is missing fields: {missing}"
-            )
+            raise AssertionError(f"Chat response is missing fields: {missing}")
 
         return data
 
@@ -200,9 +193,7 @@ def load_json(filename: str) -> Any:
     path = DATA_DIR / filename
 
     if not path.exists():
-        raise FileNotFoundError(
-            f"E2E dataset not found: {path}"
-        )
+        raise FileNotFoundError(f"E2E dataset not found: {path}")
 
     with path.open(encoding="utf-8") as file:
         return json.load(file)
@@ -224,10 +215,7 @@ def expected_answer_matches(
     """Return True when at least one expected fragment is present."""
     answer_lower = answer.lower()
 
-    return any(
-        expected_value.lower() in answer_lower
-        for expected_value in expected
-    )
+    return any(expected_value.lower() in answer_lower for expected_value in expected)
 
 
 def print_result(
@@ -296,10 +284,7 @@ def run_single_turn(
         duration=time.monotonic() - started,
     )
 
-    print(
-        f"  Result: {result.passed}/{result.total} "
-        f"({result.percentage:.1f}%)"
-    )
+    print(f"  Result: {result.passed}/{result.total} " f"({result.percentage:.1f}%)")
 
     return result
 
@@ -325,11 +310,7 @@ def run_citations(
 
             citations = response.get("citations", [])
 
-            top_document = (
-                citations[0].get("document_name", "")
-                if citations
-                else ""
-            )
+            top_document = citations[0].get("document_name", "") if citations else ""
 
             expected_documents = test["expected_doc"]
 
@@ -344,10 +325,7 @@ def run_citations(
                 print_result(
                     question,
                     False,
-                    (
-                        f"expected={expected_documents}, "
-                        f"actual={top_document!r}"
-                    ),
+                    (f"expected={expected_documents}, " f"actual={top_document!r}"),
                 )
 
         except Exception as exc:
@@ -364,10 +342,7 @@ def run_citations(
         duration=time.monotonic() - started,
     )
 
-    print(
-        f"  Result: {result.passed}/{result.total} "
-        f"({result.percentage:.1f}%)"
-    )
+    print(f"  Result: {result.passed}/{result.total} " f"({result.percentage:.1f}%)")
 
     return result
 
@@ -431,10 +406,7 @@ def run_multi_turn(
         duration=time.monotonic() - started,
     )
 
-    print(
-        f"\n  Result: {result.passed}/{result.total} "
-        f"({result.percentage:.1f}%)"
-    )
+    print(f"\n  Result: {result.passed}/{result.total} " f"({result.percentage:.1f}%)")
 
     return result
 
@@ -449,8 +421,6 @@ def run_not_found(
     started = time.monotonic()
     tests = load_json("not_found.json")
 
-
-
     passed = 0
 
     for test in tests:
@@ -462,10 +432,7 @@ def run_not_found(
 
             answer = response["answer"].lower()
 
-            ok = any(
-                pattern in answer
-                for pattern in NOT_FOUND_PATTERNS
-            )
+            ok = any(pattern in answer for pattern in NOT_FOUND_PATTERNS)
 
             if ok:
                 passed += 1
@@ -490,10 +457,7 @@ def run_not_found(
         duration=time.monotonic() - started,
     )
 
-    print(
-        f"  Result: {result.passed}/{result.total} "
-        f"({result.percentage:.1f}%)"
-    )
+    print(f"  Result: {result.passed}/{result.total} " f"({result.percentage:.1f}%)")
 
     return result
 
@@ -525,15 +489,9 @@ def run_disambiguation(
 
             has_no_citations = not citations
 
-            disambiguation_trace = bool(
-                agent_trace.get("disambiguation")
-            )
+            disambiguation_trace = bool(agent_trace.get("disambiguation"))
 
-            ok = (
-                asks_for_clarification
-                or has_no_citations
-                or disambiguation_trace
-            )
+            ok = asks_for_clarification or has_no_citations or disambiguation_trace
 
             if ok:
                 passed += 1
@@ -558,10 +516,7 @@ def run_disambiguation(
         duration=time.monotonic() - started,
     )
 
-    print(
-        f"  Result: {result.passed}/{result.total} "
-        f"({result.percentage:.1f}%)"
-    )
+    print(f"  Result: {result.passed}/{result.total} " f"({result.percentage:.1f}%)")
 
     return result
 
@@ -604,10 +559,7 @@ def print_summary(stats: E2ERunStats) -> None:
     if stats.total_failed == 0:
         print("STATUS         : ✅ PASSED")
     else:
-        print(
-            f"STATUS         : ❌ FAILED "
-            f"({stats.total_failed} failed)"
-        )
+        print(f"STATUS         : ❌ FAILED " f"({stats.total_failed} failed)")
 
     print("=" * 60)
 
@@ -634,33 +586,20 @@ def main() -> int:
         print("\n❌ Application is not available.")
         print(f"Server: {client.base_url}")
         print(f"Error: {exc}")
-        print(
-            "\nStart the application before running E2E scenarios, "
-            "for example:"
-        )
+        print("\nStart the application before running E2E scenarios, " "for example:")
         print("  python -m uvicorn app.main:app --reload")
         return 1
 
     try:
-        stats.scenarios.append(
-            run_single_turn(client, stats)
-        )
+        stats.scenarios.append(run_single_turn(client, stats))
 
-        stats.scenarios.append(
-            run_disambiguation(client, stats)
-        )
+        stats.scenarios.append(run_disambiguation(client, stats))
 
-        stats.scenarios.append(
-            run_not_found(client, stats)
-        )
+        stats.scenarios.append(run_not_found(client, stats))
 
-        stats.scenarios.append(
-            run_citations(client, stats)
-        )
+        stats.scenarios.append(run_citations(client, stats))
 
-        stats.scenarios.append(
-            run_multi_turn(client, stats)
-        )
+        stats.scenarios.append(run_multi_turn(client, stats))
 
     except KeyboardInterrupt:
         print("\n\nInterrupted by user.")
@@ -679,4 +618,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-

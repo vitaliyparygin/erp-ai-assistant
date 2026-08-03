@@ -35,11 +35,11 @@ class RetrieverAgent:
     """
 
     def __init__(
-            self,
-            llm: ChatOllama,
-            retriever: VectorRetriever,
-            reranker: Reranker,
-            query_rewriter: QueryRewriter | None = None,
+        self,
+        llm: ChatOllama,
+        retriever: VectorRetriever,
+        reranker: Reranker,
+        query_rewriter: QueryRewriter | None = None,
     ) -> None:
         self._llm = llm
         self._retriever = retriever
@@ -49,10 +49,8 @@ class RetrieverAgent:
         self._context_assembler = ContextAssembler(
             max_context=MAX_CONTEXT,
         )
-        self._query_rewriter = (
-            query_rewriter
-            or QueryRewriter(llm=llm)
-        )
+        self._query_rewriter = query_rewriter or QueryRewriter(llm=llm)
+
     def _build_rewrite_chain(self):
         return QUERY_REWRITE_TEMPLATE | self._llm
 
@@ -308,6 +306,7 @@ class RetrieverAgent:
     async def _rewrite_query(self, state: AgentState) -> str:
         """Backward-compatible wrapper around QueryRewriter."""
         return await self._query_rewriter.rewrite(state)
+
     # async def _rewrite_query(self, state: AgentState) -> str:
     #     """Rewrite the query for better retrieval."""
     #     if any(term in state.query.lower() for term in PROTECTED_TERMS):
@@ -386,8 +385,8 @@ class RetrieverAgent:
 
     @staticmethod
     def _select_context_chunks(
-            chunks: list[RetrievedChunk],
-            max_chunks: int = 5,
+        chunks: list[RetrievedChunk],
+        max_chunks: int = 5,
     ) -> list[RetrievedChunk]:
         if not chunks:
             return []

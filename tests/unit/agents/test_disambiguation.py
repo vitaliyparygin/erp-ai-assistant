@@ -2,7 +2,6 @@ from rules.models import DocumentType
 from langchain_core.documents import Document
 from app.agents.disambiguation import build_disambiguation_answer
 
-
 chunk = Document(
     page_content="Contract Number: C-001\nValid Until: 2026-12-31",
     metadata={

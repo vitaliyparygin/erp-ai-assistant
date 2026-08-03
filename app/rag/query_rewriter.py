@@ -42,10 +42,7 @@ class QueryRewriter:
     def _is_protected(query: str) -> bool:
         query_lower = query.lower()
 
-        return any(
-            term.lower() in query_lower
-            for term in PROTECTED_TERMS
-        )
+        return any(term.lower() in query_lower for term in PROTECTED_TERMS)
 
     @staticmethod
     def _apply_deterministic_expansions(query: str) -> str:
@@ -82,8 +79,7 @@ class QueryRewriter:
 
         if not isinstance(content, str):
             raise TypeError(
-                "Expected string response, "
-                f"got {type(content).__name__}"
+                "Expected string response, " f"got {type(content).__name__}"
             )
 
         rewritten = content.strip()

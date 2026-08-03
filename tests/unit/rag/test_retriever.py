@@ -4,6 +4,7 @@ from app.models.schemas import RetrievedChunk
 from app.rag.retriever.vector_retriever import VectorRetriever
 from app.core.exceptions import RetrievalError
 
+
 @pytest.mark.asyncio
 async def test_retrieve_qdrant_exception():
     embedder = AsyncMock()

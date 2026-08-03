@@ -12,7 +12,7 @@ from app.core.exceptions import RetrievalError
 from app.core.logging import get_logger
 from app.models.schemas import RetrievedChunk
 from app.rag.embeddings import EmbeddingService
-from app.config.constants import  METADATA_FILTER_FIELDS
+from app.config.constants import METADATA_FILTER_FIELDS
 from qdrant_client.models import Condition
 
 logger = get_logger(__name__)
@@ -223,9 +223,9 @@ class VectorRetriever:
         return list(contracts.values())
 
     def get_filter_condition(
-            self,
-            query_metadata: dict | None = None,
-            document_ids: list[str] | None = None,
+        self,
+        query_metadata: dict | None = None,
+        document_ids: list[str] | None = None,
     ) -> Filter | None:
         must: list[Condition] = []
 

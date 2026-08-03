@@ -8,6 +8,7 @@ from app.rag.prompts import (
 )
 from uuid import UUID
 from app.config.constants import MAX_CONTEXT
+
 logger = get_logger(__name__)
 
 
