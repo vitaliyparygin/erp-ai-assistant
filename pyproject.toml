@@ -44,6 +44,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+    "build",
     "pytest",
     "black",
     "ruff == 0.15.20",
