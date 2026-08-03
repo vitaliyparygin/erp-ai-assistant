@@ -1,18 +1,13 @@
 import pytest
-from types import SimpleNamespace
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock
 from tests.factories import make_state
 from app.agents.retriever import RetrieverAgent
 
 
 @pytest.mark.asyncio
 async def test_query_rewrite():
-    chain = Mock()
-    chain.ainvoke = AsyncMock(
-        return_value=SimpleNamespace(
-            content="invoice amount",
-        )
-    )
+    rewriter = AsyncMock()
+    rewriter.rewrite.return_value = "invoice amount"
 
     agent = RetrieverAgent(
         llm=AsyncMock(),
@@ -20,12 +15,11 @@ async def test_query_rewrite():
         reranker=AsyncMock(),
     )
 
-    agent._build_rewrite_chain = Mock(
-        return_value=chain,
-    )
+    agent._query_rewriter = rewriter
 
     state = make_state(query="How much do we owe?")
 
     rewritten = await agent._rewrite_query(state)
 
     assert rewritten == "invoice amount"
+    rewriter.rewrite.assert_awaited_once_with(state)

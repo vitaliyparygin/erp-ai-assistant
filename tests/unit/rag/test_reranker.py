@@ -1,10 +1,10 @@
 from tests.conftest import make_chunk
 import pytest
 from app.models.schemas import RetrievedChunk
-from app.rag.retriever import Reranker, VectorRetriever
+from app.rag.retriever.vector_retriever import VectorRetriever
+from app.rag.retriever.reranker import Reranker
 from unittest.mock import AsyncMock
 from unittest.mock import MagicMock
-
 
 @pytest.mark.asyncio
 async def test_rerank_top_k_larger_than_docs():
@@ -142,10 +142,11 @@ async def test_rerank_invoice_penalty():
 
 @pytest.mark.asyncio
 async def test_rerank_important_term(monkeypatch):
-    from app.rag import retriever as retriever_module
+    # from app.rag import retriever as retriever_module
+    from app.rag.retriever.reranker import Reranker as reranker_module
 
     monkeypatch.setattr(
-        retriever_module,
+        reranker_module,
         "IMPORTANT_TERMS",
         {"critical"},
     )
@@ -173,10 +174,11 @@ async def test_rerank_important_term(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_rerank_term_expansion(monkeypatch):
-    from app.rag import retriever as retriever_module
+    # from app.rag import retriever as retriever_module
+    from app.rag.retriever.reranker import Reranker as reranker_module
 
     monkeypatch.setattr(
-        retriever_module,
+        reranker_module,
         "TERM_EXPANSIONS",
         {
             "agreement": {"contract"},
@@ -206,10 +208,12 @@ async def test_rerank_term_expansion(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_rerank_document_hint_boost(monkeypatch):
-    from app.rag import retriever as retriever_module
+    # from app.rag import retriever as retriever_module
+    from app.rag.retriever.reranker import Reranker as reranker_module
+
 
     monkeypatch.setattr(
-        retriever_module,
+        reranker_module,
         "DOCUMENT_HINTS",
         {
             "invoice": {
@@ -487,3 +491,115 @@ async def test_rerank_empty():
     )
 
     assert result == []
+
+
+def test_score_chunk_customer_field_boost():
+    reranker = Reranker()
+
+    chunk = make_chunk(
+        content="Customer: OpenAI",
+        score=0.5,
+    )
+
+    score = reranker._score_chunk(
+        chunk,
+        {"customer"},
+    )
+
+    assert score > 0.5
+
+def test_score_chunk_stage_field_boost():
+    reranker = Reranker()
+
+    chunk = make_chunk(
+        content="Stage: Development",
+        score=0.5,
+    )
+
+    score = reranker._score_chunk(
+        chunk,
+        {"stage"},
+    )
+
+    assert score > 0.5
+
+def test_score_chunk_document_hint():
+    reranker = Reranker()
+
+    chunk = make_chunk(
+        content="random",
+        document_name="service_contract.pdf",
+        score=0.4,
+    )
+
+    score = reranker._score_chunk(
+        chunk,
+        {"contractor"},
+    )
+
+    assert score == 0.9
+
+def test_score_chunk_preserves_vector_score():
+    reranker = Reranker()
+
+    chunk = make_chunk(
+        content="random",
+        score=0.9,
+    )
+
+    score = reranker._score_chunk(
+        chunk,
+        set(),
+    )
+
+    assert score == 0.9
+
+def test_score_chunk_without_document_hint():
+    reranker = Reranker()
+
+    chunk = make_chunk(
+        content="random",
+        document_name="invoice.pdf",
+        score=0.4,
+    )
+
+    score = reranker._score_chunk(
+        chunk,
+        {"invoice"},
+    )
+
+    assert score == 0.4
+
+def test_score_breakdown_preserves_vector_score():
+    reranker = Reranker()
+
+    chunk = make_chunk(
+        content="random text",
+        document_name="other.pdf",
+        score=0.7,
+    )
+
+    breakdown = reranker._score_breakdown(
+        chunk,
+        {"random"},
+    )
+
+    assert breakdown.vector_score == 0.7
+    assert breakdown.total >= 0.7
+
+def test_score_breakdown_document_hint():
+    reranker = Reranker()
+
+    chunk = make_chunk(
+        content="random",
+        document_name="service_contract.pdf",
+        score=0.4,
+    )
+
+    breakdown = reranker._score_breakdown(
+        chunk,
+        {"customer"},
+    )
+
+    assert breakdown.document_hint_boost == 0.4
+    assert breakdown.total > breakdown.vector_score

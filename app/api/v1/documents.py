@@ -98,7 +98,7 @@ async def upload_document(
     from app.workers.celery_app import celery_app
 
     task = celery_app.send_task(
-        "ingest_document",
+        "app.workers.ingestion_worker.ingest_document",
         kwargs={
             "document_id": str(document_id),
             "file_path": str(file_path),
@@ -188,7 +188,7 @@ async def delete_document(
         raise DocumentNotFoundError(f"Document {document_id} not found")
 
     try:
-        from app.rag.retriever import VectorStore
+        from app.rag.retriever.vector_store import VectorStore
         from qdrant_client import AsyncQdrantClient
 
         client = AsyncQdrantClient(url=settings.qdrant_url)

@@ -64,8 +64,11 @@ async def test_get_or_create_session_generates_uuid():
     result = MagicMock()
     result.scalar_one_or_none.return_value = None
 
-    db = AsyncMock()
-    db.execute.return_value = result
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=result)
+    db.add = MagicMock()
+    db.flush = AsyncMock()
+    db.commit = AsyncMock()
 
     generated = uuid.uuid4()
 
@@ -77,13 +80,21 @@ async def test_get_or_create_session_generates_uuid():
 
     assert session_id == str(generated)
 
+    db.execute.assert_awaited_once()
+    db.add.assert_called_once()
+    db.flush.assert_awaited_once()
+    db.commit.assert_awaited_once()
+
 
 @pytest.mark.asyncio
 async def test_save_messages():
     conversation_id = uuid.uuid4()
     message_id = uuid.uuid4()
 
-    db = AsyncMock()
+    db = MagicMock()
+    db.add = MagicMock()
+    db.execute = AsyncMock()
+    db.commit = AsyncMock()
 
     with patch(
         "app.api.v1.chat.uuid.uuid4",
@@ -102,15 +113,16 @@ async def test_save_messages():
         )
 
     assert returned == message_id
-
     assert db.add.call_count == 2
     db.execute.assert_awaited_once()
     db.commit.assert_awaited_once()
 
-
 @pytest.mark.asyncio
 async def test_save_messages_serializes_citations():
-    db = AsyncMock()
+    db = MagicMock()
+    db.add = MagicMock()
+    db.execute = AsyncMock()
+    db.commit = AsyncMock()
 
     citation = Citation(
         document_id=uuid.uuid4(),
@@ -140,7 +152,10 @@ async def test_save_messages_serializes_citations():
 
 @pytest.mark.asyncio
 async def test_save_messages_returns_message_id():
-    db = AsyncMock()
+    db = MagicMock()
+    db.add = MagicMock()
+    db.execute = AsyncMock()
+    db.commit = AsyncMock()
 
     expected = uuid.uuid4()
 

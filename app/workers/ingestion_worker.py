@@ -21,7 +21,6 @@ task_logger = get_task_logger(__name__)
 
 @celery_app.task(
     bind=True,
-    name="ingest_document",
     max_retries=3,
     default_retry_delay=30,
     soft_time_limit=300,
@@ -90,7 +89,7 @@ async def _ingest_document_async(
     )
     from app.rag.chunker import DocumentChunker, DocumentParser
     from app.rag.embeddings import EmbeddingService
-    from app.rag.retriever import VectorStore
+    from app.rag.retriever.vector_store import VectorStore
     from qdrant_client import AsyncQdrantClient
 
     logger = get_logger(__name__)
@@ -196,7 +195,7 @@ async def _ingest_document_async(
         logger.debug("BEFORE_EXECUTE")
         SessionLocal = get_sessionmaker()
         async with SessionLocal() as db:
-            # logger.warning("STEP_A-1")
+
             logger.debug(
                 "DB_SESSION",
                 session=id(db),
@@ -244,10 +243,10 @@ async def _ingest_document_async(
 
         # Update DB with error
         try:
-            # logger.warning("STEP_B-1")
+
             SessionLocal = get_sessionmaker()
             async with SessionLocal() as db2:
-                # logger.warning("STEP_B-2")
+
                 logger.debug(
                     "DB2_SESSION",
                     session=id(db2),
@@ -262,14 +261,14 @@ async def _ingest_document_async(
                         DocumentModel.id == uuid.UUID(document_id)
                     )
                 )
-                # logger.warning("STEP_B-2")
+
                 doc = result.scalar_one_or_none()
-                # logger.warning("STEP_B-3")
+
                 if doc:
                     doc.status = "failed"
                     doc.error_message = str(exc)[:500]
                     await db2.commit()
-                    # logger.warning("STEP_B-4")
+
         except Exception as e:
             logger.error(
                 "ingestion_worker. ",
@@ -280,8 +279,8 @@ async def _ingest_document_async(
 
             traceback.print_exc()
             raise
-        # logger.warning("STEP_C-1")
+
         DOCUMENTS_INGESTED_TOTAL.labels(status="error", mime_type=mime_type).inc()
-        # logger.warning("STEP_C-2")
+
         # Retry with exponential backoff
         raise task.retry(exc=exc, countdown=2**task.request.retries * 30)

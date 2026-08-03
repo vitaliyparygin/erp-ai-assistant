@@ -41,7 +41,16 @@ class ResearchAgent:
                 needs_research=state.needs_research,
                 query=state.query,
             )
-            logger.debug("AGENT_result", agent="research_agent", latency_ms=result)
+            latency_ms = round(
+                (time.monotonic() - start) * 1000,
+                2,
+            )
+            logger.debug(
+                "AGENT_RESULT",
+                agent="research_agent",
+                result_preview=str(result.content)[:500],
+                latency_ms=latency_ms,
+            )
             latency_ms = round((time.monotonic() - start) * 1000, 2)
             logger.debug("AGENT_TIMING", agent="research_agent", latency_ms=latency_ms)
             return {

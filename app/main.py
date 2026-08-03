@@ -64,7 +64,10 @@ async def lifespan(app: FastAPI):
         version=settings.app_version,
         env=settings.app_env,
     )
-
+    logger.info(
+        "DATABASE",
+        url=settings.database_url,
+    )
     await create_tables()
     logger.info("database_tables_ready")
 

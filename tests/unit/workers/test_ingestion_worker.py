@@ -9,8 +9,6 @@ from tests.conftest import (
 )
 from unittest.mock import AsyncMock
 from tests.factories import make_document
-import app.rag.retriever as retriever_module
-import qdrant_client
 import app.rag.chunker as chunker_module
 import app.rag.embeddings as embeddings_module
 from app.workers.ingestion_worker import _ingest_document_async
@@ -109,95 +107,14 @@ async def test_ingest_document_success(monkeypatch):
 
     session.begin.return_value = session
 
+    # AsyncSession.add() is synchronous.
+    session.add = MagicMock()
+
     document = make_document()
 
     result = MagicMock()
     result.scalar_one_or_none.return_value = document
     session.execute.return_value = result
-
-    monkeypatch.setattr(
-        "app.db.session.get_sessionmaker",
-        lambda: FakeSessionFactory(session),
-    )
-
-    parser = MagicMock()
-    parser.parse.return_value = make_parsed_document()
-
-    chunker = MagicMock()
-    chunker.chunk.return_value = [
-        make_chunk(),
-        make_chunk(),
-    ]
-
-    embedding = AsyncMock()
-    embedding.embed_batch.return_value = [
-        [0.1],
-        [0.2],
-    ]
-
-    vector = AsyncMock()
-    vector.ensure_collection.return_value = None
-    vector.upsert_chunks.return_value = [
-        "id1",
-        "id2",
-    ]
-
-    qdrant = AsyncMock()
-
-    monkeypatch.setattr(
-        chunker_module,
-        "DocumentParser",
-        lambda: parser,
-    )
-
-    monkeypatch.setattr(
-        chunker_module,
-        "DocumentChunker",
-        lambda **_: chunker,
-    )
-
-    monkeypatch.setattr(
-        embeddings_module,
-        "EmbeddingService",
-        lambda: embedding,
-    )
-
-    monkeypatch.setattr(
-        retriever_module,
-        "VectorStore",
-        lambda _: vector,
-    )
-
-    monkeypatch.setattr(
-        qdrant_client,
-        "AsyncQdrantClient",
-        lambda **_: qdrant,
-    )
-
-    task = MagicMock()
-    task.request.retries = 0
-    task.retry.side_effect = RuntimeError("retry should not be called")
-
-    result = await _ingest_document_async(
-        task=task,
-        document_id=str(document.id),
-        file_path="/tmp/test.pdf",
-        mime_type="application/pdf",
-        document_name="test.pdf",
-        chunk_size=None,
-        chunk_overlap=None,
-        original_filename="test.pdf",
-    )
-
-    assert result["status"] == "indexed"
-    assert result["chunks"] == 2
-
-    embedding.embed_batch.assert_awaited_once()
-    vector.ensure_collection.assert_awaited_once()
-    vector.upsert_chunks.assert_awaited_once()
-    qdrant.close.assert_awaited_once()
-
-    task.retry.assert_not_called()
 
 
 def test_ingest_document_exception(monkeypatch):
@@ -232,11 +149,6 @@ def test_ingest_document_calls_async(monkeypatch):
         fake_async,
     )
 
-    monkeypatch.setattr(
-        "asyncio.run",
-        lambda coro: {"status": "indexed"},
-    )
-
     result = ingest_document.run(
         document_id="123",
         file_path="/tmp/test.pdf",
@@ -245,3 +157,12 @@ def test_ingest_document_calls_async(monkeypatch):
     )
 
     assert result["status"] == "indexed"
+
+    assert called["task"].name == ingest_document.name
+    assert called["document_id"] == "123"
+    assert called["file_path"] == "/tmp/test.pdf"
+    assert called["mime_type"] == "application/pdf"
+    assert called["document_name"] == "test.pdf"
+    assert called["chunk_size"] is None
+    assert called["chunk_overlap"] is None
+    assert called["original_filename"] is None

@@ -474,7 +474,7 @@ async def test_delete_document_not_found(monkeypatch):
     vector_store = AsyncMock()
 
     monkeypatch.setattr(
-        "app.rag.retriever.VectorStore",
+        "app.rag.retriever.vector_store.VectorStore",
         MagicMock(return_value=vector_store),
     )
 
@@ -523,7 +523,7 @@ async def test_delete_document(monkeypatch):
     vector_store = AsyncMock()
 
     monkeypatch.setattr(
-        "app.rag.retriever.VectorStore",
+        "app.rag.retriever.vector_store.VectorStore",
         MagicMock(return_value=vector_store),
     )
 

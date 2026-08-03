@@ -11,7 +11,8 @@ from app.core.config import get_settings
 from app.core.logging import get_logger
 from langchain_ollama import ChatOllama
 
-from app.rag.retriever import Reranker, VectorRetriever
+from app.rag.retriever.vector_retriever import VectorRetriever
+from app.rag.retriever.reranker import Reranker
 
 from app.agents.retriever import RetrieverAgent
 from app.agents.memory import MemoryAgent
@@ -137,7 +138,7 @@ class ERPAssistantGraph:
             final_answer=state.final_answer,
         )
         if state.requires_clarification:
-            logger.warning("ROUTER_RETURN_END")
+            logger.debug("ROUTER_RETURN_END")
             return "end"
 
         if state.needs_research:

@@ -21,7 +21,7 @@ dependencies = [
     "uvicorn",
     "celery[redis]>=5.4.0",
     "redis",
-    "qdrant-client",
+    "qdrant-client==1.18.0",
     "prometheus-client",
     "flower",
     "sqlalchemy",
@@ -37,8 +37,8 @@ dependencies = [
     "langchain_text_splitters",
     "qdrant_client",
     "green",
-    "rag-benchmark",
-    "rules @ git+ssh://git@github.com/vitaliyparygin/rules.git@v0.1.2",
+    "rules @ git+https://git@github.com/vitaliyparygin/rules.git@v0.1.4",
+    "rag-benchmark @ git+https://git@github.com/vitaliyparygin/rag-benchmark@v0.1.1",
     "python-multipart>=0.0.20",
 ]
 
@@ -103,3 +103,6 @@ omit = [
 
 [tool.pytest.ini_options]
 asyncio_mode = "strict"
+
+[tool.hatch.metadata]
+allow-direct-references = true

@@ -75,8 +75,9 @@ async def test_rate_limit_exceeded():
     request = MagicMock()
     request.client.host = "127.0.0.1"
 
-    pipe = AsyncMock()
-    pipe.execute.return_value = [101, None]
+    pipe = MagicMock()
+    pipe.execute = AsyncMock(return_value=[101, True])
+
 
     redis = MagicMock()
     redis.pipeline.return_value = DummyPipeline()
@@ -161,8 +162,8 @@ async def test_check_rate_limit_unknown_client():
     request = AsyncMock()
     request.client = None
 
-    pipe = AsyncMock()
-    pipe.execute.return_value = [5, True]
+    pipe = MagicMock()
+    pipe.execute = AsyncMock(return_value=[5, True])
 
     class PipelineCtx:
         async def __aenter__(self):
@@ -193,8 +194,8 @@ async def test_check_rate_limit_exceeded():
     request = AsyncMock()
     request.client.host = "127.0.0.1"
 
-    pipe = AsyncMock()
-    pipe.execute.return_value = [15, True]
+    pipe = MagicMock()
+    pipe.execute = AsyncMock(return_value=[15, True])
 
     class PipelineCtx:
         async def __aenter__(self):
@@ -224,8 +225,8 @@ async def test_check_rate_limit_success():
     request = AsyncMock()
     request.client.host = "127.0.0.1"
 
-    pipe = AsyncMock()
-    pipe.execute.return_value = [5, True]
+    pipe = MagicMock()
+    pipe.execute = AsyncMock(return_value=[5, True])
 
     class PipelineCtx:
         async def __aenter__(self):
