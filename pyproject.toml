@@ -47,6 +47,7 @@ dev = [
     "pytest",
     "black",
     "ruff == 0.15.20",
+    "mypy == 2.1.0",
     "python-multipart ",
     "fastapi",
     "uvicorn[standard]",
