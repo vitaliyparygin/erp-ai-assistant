@@ -31,7 +31,7 @@ jobs:
 
       - run: black --check .
 
-      - run: mypy src
+      - run: mypy app tests
 
       - run: pytest
 
