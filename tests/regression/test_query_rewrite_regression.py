@@ -11,12 +11,20 @@ from rules.models import DocumentType
 from app.agents.retriever import (
     build_contract_disambiguation,
 )
+from app.ingestion.query_metadata import extract_query_metadata
 
 
 @pytest.mark.asyncio
 async def test_query_rewrite_returns_llm_result():
     rewriter = AsyncMock()
-    rewriter.rewrite.return_value = "invoice amount"
+    rewriter.rewrite.return_value = (
+        "invoice amount",
+        {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0,
+        },
+    )
 
     agent = RetrieverAgent(
         llm=AsyncMock(),
@@ -28,9 +36,14 @@ async def test_query_rewrite_returns_llm_result():
 
     state = make_state(query="How much do we owe?")
 
-    rewritten = await agent._rewrite_query(state)
+    rewritten, usage = await agent._rewrite_query(state)
 
     assert rewritten == "invoice amount"
+    assert usage == {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+    }
 
 
 def test_contract_disambiguation_contains_all_contracts():
@@ -152,3 +165,29 @@ def test_clarification_has_highest_priority():
     )
 
     assert ERPAssistantGraph._route_after_retrieval(state) == "end"
+
+
+def test_does_not_extract_invoice_number_from_natural_language():
+    metadata = extract_query_metadata(
+        "What is the amount in the internet invoice for August 2024?"
+    )
+
+    assert "invoice_number" not in metadata
+
+
+def test_extracts_invoice_number():
+    metadata = extract_query_metadata("What is the amount for INV-2024-777?")
+
+    assert metadata["invoice_number"] == "INV-2024-777"
+
+
+def test_extracts_contract_number():
+    metadata = extract_query_metadata("What is the amount for INT-2024-555?")
+
+    assert metadata["contract_number"] == "INT-2024-555"
+
+
+def test_does_not_extract_for_as_invoice_number():
+    metadata = extract_query_metadata("What is the amount in the invoice for August?")
+
+    assert "invoice_number" not in metadata

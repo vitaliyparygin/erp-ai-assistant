@@ -48,3 +48,5 @@ Planned
 - UI improvements
 - MCP
 - Odoo integration
+
+```FastAPI → Prometheus → Grafana```

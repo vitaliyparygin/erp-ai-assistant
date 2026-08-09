@@ -13,14 +13,18 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import sys
 from collections import defaultdict
-
+from pathlib import Path
 from sqlalchemy import func, select
 
 from app.models.orm import DocumentChunkModel, DocumentModel
 from app.db.session import AsyncSessionLocal
 from qdrant_client import AsyncQdrantClient
 from app.core.config import get_settings
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
 
 logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
 logging.getLogger("sqlalchemy.pool").setLevel(logging.WARNING)

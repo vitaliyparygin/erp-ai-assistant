@@ -12,6 +12,7 @@ from app.core.config import get_settings
 from app.core.exceptions import VectorStoreError
 from app.core.logging import get_logger
 from app.rag.chunker import TextChunk
+from app.ingestion.query_metadata import normalize_filter_metadata
 
 logger = get_logger(__name__)
 
@@ -81,6 +82,9 @@ class VectorStore:
             point_id = str(uuid.uuid4())
             point_ids.append(point_id)
 
+            canonical_metadata = chunk.metadata
+            qdrant_metadata = normalize_filter_metadata(canonical_metadata)
+
             payload = {
                 "document_id": document_id,
                 "document_name": original_filename,
@@ -89,8 +93,8 @@ class VectorStore:
                 "content": chunk.content,
                 "chunk_index": chunk.chunk_index,
                 "page_number": chunk.page_number,
-                "chunk_metadata": chunk.metadata,
-                **chunk.metadata,
+                "chunk_metadata": canonical_metadata,
+                **qdrant_metadata,
             }
             logger.debug("UPSERT_POINT payload", payload=payload)
             points.append(

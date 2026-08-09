@@ -14,7 +14,7 @@ from app.core.exceptions import ConversationNotFoundError
 from app.core.logging import get_logger
 from app.memory.redis_memory import RedisMemoryStore
 from app.models.orm import ConversationModel, MessageModel
-from app.models.schemas import Conversation
+from app.models.schemas import Conversation, ConversationListItem
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -22,7 +22,7 @@ logger = get_logger(__name__)
 
 @router.get(
     "/",
-    response_model=list[Conversation],
+    response_model=list[ConversationListItem],
     summary="List all conversations",
 )
 async def list_conversations(
@@ -31,21 +31,24 @@ async def list_conversations(
     active_only: bool = False,
     *,
     db: DBSessionDep,
-) -> list[Conversation]:
+) -> list[ConversationListItem]:
     """Return paginated conversation sessions, newest first."""
     offset = (page - 1) * page_size
+
     query = (
         select(ConversationModel)
         .order_by(ConversationModel.created_at.desc())
         .offset(offset)
         .limit(page_size)
     )
+
     if active_only:
-        query = query.where(ConversationModel.is_active == True)  # noqa: E712
+        query = query.where(ConversationModel.is_active.is_(True))
 
     result = await db.execute(query)
     conversations = result.scalars().all()
-    return [Conversation.model_validate(c) for c in conversations]
+
+    return [ConversationListItem.model_validate(c) for c in conversations]
 
 
 @router.get(
@@ -57,12 +60,12 @@ async def get_conversation(
     conversation_id: uuid.UUID,
     db: DBSessionDep,
 ) -> Conversation:
-    """Retrieve a single conversation and all its messages."""
     result = await db.execute(
         select(ConversationModel)
         .where(ConversationModel.id == conversation_id)
         .options(selectinload(ConversationModel.messages))
     )
+
     conv = result.scalar_one_or_none()
 
     if not conv:

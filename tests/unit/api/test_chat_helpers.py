@@ -1,8 +1,8 @@
 import uuid
 from unittest.mock import AsyncMock, MagicMock, patch
-
+from app.agents.state import AgentState
 import pytest
-
+from langgraph.graph import END, START, StateGraph
 from app.api.v1.chat import _get_or_create_session, _save_messages
 from app.models.schemas import Citation
 
@@ -83,7 +83,8 @@ async def test_get_or_create_session_generates_uuid():
     db.execute.assert_awaited_once()
     db.add.assert_called_once()
     db.flush.assert_awaited_once()
-    db.commit.assert_awaited_once()
+    db.flush.assert_awaited_once()
+    db.commit.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -105,7 +106,9 @@ async def test_save_messages():
             conversation_id=conversation_id,
             user_content="hello",
             assistant_content="world",
-            tokens_used=42,
+            input_tokens=10,
+            output_tokens=20,
+            total_tokens=30,
             latency_ms=15,
             citations=[],
             agent_trace={},
@@ -139,7 +142,9 @@ async def test_save_messages_serializes_citations():
         conversation_id=uuid.uuid4(),
         user_content="q",
         assistant_content="a",
-        tokens_used=1,
+        input_tokens=10,
+        output_tokens=20,
+        total_tokens=30,
         latency_ms=1,
         citations=[citation],
         agent_trace={},
@@ -169,7 +174,9 @@ async def test_save_messages_returns_message_id():
             conversation_id=uuid.uuid4(),
             user_content="q",
             assistant_content="a",
-            tokens_used=1,
+            input_tokens=10,
+            output_tokens=20,
+            total_tokens=30,
             latency_ms=1,
             citations=[],
             agent_trace={},
@@ -177,3 +184,63 @@ async def test_save_messages_returns_message_id():
         )
 
     assert returned == expected
+
+
+def test_agent_state_accumulates_token_usage():
+    state = AgentState(
+        session_id="session",
+        query="hello",
+    )
+
+    # Симулюємо updates від nodes.
+    state = AgentState.model_validate(
+        {
+            **state.model_dump(),
+            "input_tokens": state.input_tokens + 10,
+            "output_tokens": state.output_tokens + 20,
+            "total_tokens": state.total_tokens + 30,
+        }
+    )
+
+    assert state.input_tokens == 10
+    assert state.output_tokens == 20
+    assert state.total_tokens == 30
+
+
+@pytest.mark.asyncio
+async def test_agent_state_token_accumulation():
+    async def node_a(state: AgentState):
+        return {
+            "input_tokens": 10,
+            "output_tokens": 20,
+            "total_tokens": 30,
+        }
+
+    async def node_b(state: AgentState):
+        return {
+            "input_tokens": 40,
+            "output_tokens": 50,
+            "total_tokens": 90,
+        }
+
+    builder = StateGraph(AgentState)
+
+    builder.add_node("a", node_a)
+    builder.add_node("b", node_b)
+
+    builder.add_edge(START, "a")
+    builder.add_edge("a", "b")
+    builder.add_edge("b", END)
+
+    graph = builder.compile()
+
+    result = await graph.ainvoke(
+        AgentState(
+            session_id="test",
+            query="hello",
+        )
+    )
+
+    assert result["input_tokens"] == 50
+    assert result["output_tokens"] == 70
+    assert result["total_tokens"] == 120

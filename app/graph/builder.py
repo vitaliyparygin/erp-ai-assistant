@@ -4,6 +4,7 @@ Implements: Retriever → Research → Summarizer → Citation → Memory pipeli
 with conditional routing, retry handling, and full observability.
 """
 
+import time
 from typing import Any, Literal
 from langgraph.graph import END, START, StateGraph
 from app.agents.state import AgentState
@@ -20,6 +21,8 @@ from app.agents.research import ResearchAgent
 from app.agents.summarize import SummarizerAgent
 from app.agents.citation import CitationAgent
 from app.utils.resources import load_json
+from app.observability.metrics import GRAPH_EXECUTIONS_TOTAL, GRAPH_LATENCY_SECONDS
+from app.observability.llm import InstrumentedLLM
 
 logger = get_logger(__name__)
 
@@ -62,13 +65,56 @@ class ERPAssistantGraph:
             model=settings.ollama_model,
             base_url=settings.ollama_base_url,
             temperature=settings.ollama_temperature,
+            num_predict=settings.ollama_num_predict,
         )
 
-        self._memory_agent = MemoryAgent(self._llm, memory_store)
-        self._retriever_agent = RetrieverAgent(self._llm, retriever, reranker)
-        self._research_agent = ResearchAgent(self._llm)
-        self._summarizer_agent = SummarizerAgent(self._llm)
-        self._citation_agent = CitationAgent(self._llm)
+        retriever_llm = InstrumentedLLM(
+            self._llm,
+            model=settings.ollama_model,
+            agent="retriever",
+        )
+
+        memory_llm = InstrumentedLLM(
+            self._llm,
+            model=settings.ollama_model,
+            agent="memory",
+        )
+
+        research_llm = InstrumentedLLM(
+            self._llm,
+            model=settings.ollama_model,
+            agent="research",
+        )
+
+        summarizer_llm = InstrumentedLLM(
+            self._llm,
+            model=settings.ollama_model,
+            agent="summarizer",
+        )
+
+        citation_llm = InstrumentedLLM(
+            self._llm,
+            model=settings.ollama_model,
+            agent="citation",
+        )
+
+        self._memory_agent = MemoryAgent(
+            llm=memory_llm,
+            memory_store=memory_store,
+        )
+
+        self._citation_agent = CitationAgent(citation_llm)
+        self._retriever_agent = RetrieverAgent(
+            retriever_llm,
+            retriever,
+            reranker,
+        )
+        self._research_agent = ResearchAgent(
+            llm=research_llm,
+        )
+        self._summarizer_agent = SummarizerAgent(
+            llm=summarizer_llm,
+        )
 
         self._graph = self._build_graph()
 
@@ -148,6 +194,7 @@ class ERPAssistantGraph:
 
     async def run(self, state: AgentState) -> AgentState:
         """Execute the full agent graph for a query."""
+        start = time.perf_counter()
         logger.debug(
             "graph_execution_start",
             session_id=state.session_id,
@@ -155,7 +202,9 @@ class ERPAssistantGraph:
         )
         try:
             result = await self._graph.ainvoke(state)
-
+            GRAPH_EXECUTIONS_TOTAL.labels(
+                status="success",
+            ).inc()
             logger.debug(
                 "GRAPH_RESULT",
                 result_type=type(result).__name__,
@@ -167,14 +216,37 @@ class ERPAssistantGraph:
             )
             return AgentState(**result)
 
-        except Exception as e:
-            logger.debug("GRAPH FAILED", type=type(e), str=str(e))
+        except Exception:
+            GRAPH_EXECUTIONS_TOTAL.labels(
+                status="error",
+            ).inc()
             raise
 
+        finally:
+            GRAPH_LATENCY_SECONDS.observe(time.perf_counter() - start)
+
     async def stream(self, state: AgentState):
-        """Stream graph execution events for real-time UI updates."""
-        async for event in self._graph.astream_events(state, version="v2"):
-            yield event
+        start = time.perf_counter()
+
+        try:
+            async for event in self._graph.astream_events(
+                state,
+                version="v2",
+            ):
+                yield event
+
+            GRAPH_EXECUTIONS_TOTAL.labels(
+                status="success",
+            ).inc()
+
+        except Exception:
+            GRAPH_EXECUTIONS_TOTAL.labels(
+                status="error",
+            ).inc()
+            raise
+
+        finally:
+            GRAPH_LATENCY_SECONDS.observe(time.perf_counter() - start)
 
     def build_graph(self) -> Any:
-        return self._build_graph()
+        return self._graph

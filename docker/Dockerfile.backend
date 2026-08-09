@@ -1,11 +1,7 @@
 # =============================================================================
 # AI ERP Assistant — Backend Dockerfile
-# Multi-stage build for development and production
 # =============================================================================
 
-# ---------------------------------------------------------------------------
-# Stage 1: Base
-# ---------------------------------------------------------------------------
 FROM python:3.12-slim AS base
 
 LABEL maintainer="ERP AI Team"
@@ -15,7 +11,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONFAULTHANDLER=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    PATH="/app/.venv/bin:$PATH"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
@@ -27,19 +26,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
+
 # ---------------------------------------------------------------------------
-# Stage 2: Dependencies
+# Dependencies
 # ---------------------------------------------------------------------------
 FROM base AS dependencies
 
-COPY pyproject.toml .
-COPY README.md .
+COPY pyproject.toml uv.lock README.md ./
+
 RUN pip install --upgrade pip && \
-    pip install hatchling && \
-    pip install ".[dev]"
+    pip install uv && \
+    uv sync --frozen --extra dev
+
 
 # ---------------------------------------------------------------------------
-# Stage 3: Development
+# Development
 # ---------------------------------------------------------------------------
 FROM dependencies AS development
 
@@ -48,37 +49,28 @@ ENV APP_ENV=development \
 
 COPY . .
 
-# Create directories
 RUN mkdir -p /app/uploads /app/logs
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--log-level", "debug"]
+CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--log-level", "debug"]
 
 # ---------------------------------------------------------------------------
-# Stage 4: Production
+# Production
 # ---------------------------------------------------------------------------
 FROM base AS production
 
 ENV APP_ENV=production \
     DEBUG=false
 
-WORKDIR /app
-
-COPY pyproject.toml .
-COPY README.md .
-COPY . .
+COPY pyproject.toml uv.lock README.md ./
 
 RUN pip install --upgrade pip && \
-    pip install hatchling && \
-    pip install -e "."
+    pip install uv && \
+    uv sync --frozen --no-dev
 
+COPY . .
 
-
-#COPY alembic/ /app/alembic/
-#COPY alembic.ini /app/
-
-# Non-root user for security
 RUN groupadd --gid 1001 appgroup && \
     useradd --uid 1001 --gid appgroup --shell /bin/bash --create-home appuser && \
     mkdir -p /app/uploads /app/logs && \

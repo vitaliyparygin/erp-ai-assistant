@@ -168,7 +168,9 @@ class ChatClient:
         data = response.json()
 
         required_fields = (
-            "tokens_used",
+            "input_tokens",
+            "output_tokens",
+            "total_tokens",
             "latency_ms",
             "agent_trace",
             "answer",
@@ -205,7 +207,9 @@ def record_response(
 ) -> None:
     """Update global request/token statistics."""
     stats.requests_total += 1
-    stats.tokens_total += int(response.get("tokens_used", 0) or 0)
+    stats.input_tokens += int(response.get("input_tokens", 0) or 0)
+    stats.output_tokens += int(response.get("output_tokens", 0) or 0)
+    stats.total_tokens += int(response.get("total_tokens", 0) or 0)
 
 
 def expected_answer_matches(

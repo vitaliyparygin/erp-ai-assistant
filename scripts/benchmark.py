@@ -103,7 +103,6 @@ for item in queries:
             "returned": top_document,
             "success": success,
             "latency": round(elapsed, 2),
-            "tokens": data.get("tokens_used", 0),
             "sources": len(citations),
         }
     )

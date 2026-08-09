@@ -22,7 +22,16 @@ async def test_same_query_after_rewrite():
         reranker=reranker,
     )
 
-    agent._rewrite_query = AsyncMock(return_value="invoice")
+    agent._rewrite_query = AsyncMock(
+        return_value=(
+            "invoice",
+            {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+            },
+        )
+    )
 
     await agent(make_state(query="invoice"))
 
@@ -46,7 +55,16 @@ async def test_retriever_uses_rewritten_query():
         reranker=reranker,
     )
 
-    agent._rewrite_query = AsyncMock(return_value="invoice amount")
+    agent._rewrite_query = AsyncMock(
+        return_value=(
+            "invoice amount",
+            {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+            },
+        )
+    )
 
     await agent(make_state(query="How much do we owe?"))
 
@@ -269,7 +287,7 @@ async def test_empty_retrieval_returns_empty_context():
         retriever=retriever,
         reranker=reranker,
     )
-
+    stub_rewrite(agent, query="invoice")
     state = make_state(query="invoice")
 
     result = await agent(state)

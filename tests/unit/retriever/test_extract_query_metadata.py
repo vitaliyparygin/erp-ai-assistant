@@ -31,7 +31,16 @@ async def test_duplicate_docs_after_rerank():
         reranker=reranker,
     )
 
-    agent._rewrite_query = AsyncMock(return_value="invoice")
+    agent._rewrite_query = AsyncMock(
+        return_value=(
+            "invoice",
+            {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+            },
+        )
+    )
     agent._analyze_context = AsyncMock(return_value={})
 
     result = await agent(make_state())
@@ -53,8 +62,16 @@ async def test_metadata_passed_to_retriever():
         retriever=retriever,
         reranker=reranker,
     )
-
-    agent._rewrite_query = AsyncMock(return_value="invoice number INV-100")
+    agent._rewrite_query = AsyncMock(
+        return_value=(
+            "invoice number INV-100",
+            {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+            },
+        )
+    )
 
     agent._analyze_context = AsyncMock(return_value={})
 
@@ -62,7 +79,7 @@ async def test_metadata_passed_to_retriever():
 
     kwargs = retriever.retrieve.await_args.kwargs
 
-    assert kwargs["query_metadata"]["invoice_number"] == "INV-100"
+    assert kwargs["query_metadata"]["invoice_number"] == "inv-100"
 
 
 def test_extract_contract_number():

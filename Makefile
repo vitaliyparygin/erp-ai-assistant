@@ -1,3 +1,15 @@
+reindex:
+	@echo "==> Resetting search index..."
+	docker compose exec backend python scripts/reset_index.py
+	@echo "==> Queueing document reindex..."
+	docker compose exec backend python scripts/reindex_documents.py
+	@echo "==> Reindex tasks queued."
+
+qdrant-check:
+	@echo "==> Checking Qdrant from host..."
+	python3 scripts/qdrant_check.py --host http://localhost:6333
+reindex-status:
+	docker compose exec backend python scripts/check_ingestion.py
 test-rag:
 	python3 tests/run_tests.py
 upload_dataset:

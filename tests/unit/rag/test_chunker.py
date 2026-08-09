@@ -395,7 +395,7 @@ def test_extract_regex_without_group(monkeypatch):
     definition.patterns = [r"USD"]
 
     monkeypatch.setattr(
-        "app.parsers.field_dictionary.FIELD_DEFINITIONS",
+        "app.ingestion.metadata_extractor.FIELD_DEFINITIONS",
         {"currency": definition},
     )
 
@@ -418,7 +418,7 @@ def test_extract_regex_group(monkeypatch):
     definition.patterns = [r"Invoice:\s*(\d+)"]
 
     monkeypatch.setattr(
-        "app.parsers.field_dictionary.FIELD_DEFINITIONS",
+        "app.ingestion.metadata_extractor.FIELD_DEFINITIONS",
         {"invoice": definition},
     )
 
@@ -443,7 +443,7 @@ async def test_extract_document_type(monkeypatch):
     )
 
     monkeypatch.setattr(
-        "app.parsers.field_dictionary.FIELD_DEFINITIONS",
+        "app.ingestion.metadata_extractor.FIELD_DEFINITIONS",
         {},
     )
 

@@ -131,7 +131,6 @@ def test_query_rewrite_variables():
 
 def test_research_variables():
     assert set(RESEARCH_TEMPLATE.input_variables) == {
-        "history",
         "query",
         "context",
         "research_notes",
@@ -169,7 +168,6 @@ def test_retrieval_analysis_variables():
 
 def test_research_template_variables():
     assert set(RESEARCH_TEMPLATE.input_variables) == {
-        "history",
         "query",
         "context",
         "research_notes",

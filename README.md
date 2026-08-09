@@ -19,7 +19,6 @@
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![CI](https://github.com/vitaliyparygin/erp-ai-assistant/actions/workflows/ci.yml/badge.svg)](https://github.com/vitaliyparygin/erp-ai-assistant/actions/workflows/ci.yml)
 
-
 ## Overview
 
 AI ERP Assistant is an enterprise Retrieval-Augmented Generation (RAG) platform designed to answer questions over ERP documentation.
@@ -79,6 +78,10 @@ The project focuses on:
 * Structured logging
 * Prometheus metrics
 
+### Monitoring
+* 📊 Observability with Prometheus + Grafana
+* 📈 HTTP, RAG, retrieval, agent and LLM metrics
+* 🚨 Monitoring and alerting
 
 
 
@@ -301,50 +304,37 @@ Example
 
 Detailed documentation is available in the `docs/` directory.
 
-| Topic                                  | Description                |
-|----------------------------------------|----------------------------|
-| [Agents](docs/agents.md)               | Multi-agent workflow       |
-| [API](docs/api.md)                     | REST API                   |
-| [Architecture](docs/architecture.md)   | System architecture        |
-| [Benchmarks](docs/benchmarks.md)       | Benchmark generation       |
-| [Configuration](docs/configuration.md) | Configuration options      |
-| [Deployment](docs/deployment.md)       | Deployment guide           |
-| [FAQ](docs/faq.md)                     | Frequently asked questions |
-| [Prompts](docs/prompts.md)             | Prompt templates           |
-| [Rag](docs/rag.md)                     | Rag                        |
-| [Examples](docs/examples/)             | Example datasets           |
-| [Roadmap](docs/roadmap.md)             | Roadmap                    |
-| [Testing](docs/testing.md)             | Testing                    |
+| Topic                                  | Description                                                                                                                            |
+|----------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
+| [Agents](docs/agents.md)               | Multi-agent workflow                                                                                                                   |
+| [API](docs/api.md)                     | REST API                                                                                                                               |
+| [Architecture](docs/architecture.md)   | System architecture                                                                                                                    |
+| [Benchmarks](docs/benchmarks.md)       | Benchmark generation                                                                                                                   |
+| [Configuration](docs/configuration.md) | Configuration options                                                                                                                  |
+| [Deployment](docs/deployment.md)       | Deployment guide                                                                                                                       |
+| [FAQ](docs/faq.md)                     | Frequently asked questions                                                                                                             |
+| [Prompts](docs/prompts.md)             | Prompt templates                                                                                                                       |
+| [Rag](docs/rag.md)                     | Rag                                                                                                                                    |
+| [Examples](docs/examples/)             | Example datasets                                                                                                                       |
+| [Roadmap](docs/roadmap.md)             | Roadmap                                                                                                                                |
+| [Testing](docs/testing.md)             | Testing                                                                                                                                |
+| [Observability](docs/observability.md) | The system exposes Prometheus metrics and provides a Grafana dashboard for monitoring HTTP, agent, retrieval, LLM and RAG performance. |
+| [Monitoring](docs/monitoring.md)       | Prometheus and Grafana observability                                                                                                                   |
+
+
 
 ## Tech Stack
 
-* Python
-
-* FastAPI
-
-* LangGraph
-
-* Ollama
-
-* Qwen
-
-* Qdrant
-
-* Docker
-
-* PostgreSQL
-
-* Pytest
-
-* Redis
-
-* Celery
-
-* Coverage.py
-
-* Ruff
-
-* MyPy
+- **Python 3.12+**
+- **FastAPI** — REST API
+- **LangChain / LangGraph** — LLM and agent orchestration
+- **Ollama / Qwen 2.5 7B** — local LLM inference
+- **Qdrant** — vector database and semantic retrieval
+- **PostgreSQL** — persistent data storage
+- **Redis / Celery** — background processing
+- **Prometheus / Grafana** — observability and monitoring
+- **Docker / Docker Compose** — containerized deployment
+- **pytest / mypy / Ruff** — testing and code quality
 
 
 ## Status
@@ -368,6 +358,9 @@ Detailed documentation is available in the `docs/` directory.
 * Docker Compose deployment
 * Health and readiness checks
 * Prometheus metrics
+* Grafana observability dashboard
+* HTTP, RAG, agent and LLM monitoring
+* Health and readiness checks
 * Automated unit and integration tests
 * Ruff and MyPy validation
 
@@ -376,10 +369,11 @@ Detailed documentation is available in the `docs/` directory.
 The current release candidate has passed:
 
 ```text
-533 pytest tests
+
 ruff check app tests
 mypy app
 ```
+**<!-- TEST_COUNT -->556<!-- TEST_COUNT_END -->** pytest tests
 
 ### Experimental
 
@@ -400,4 +394,10 @@ They are intended for evaluation, tuning, and further RAG quality improvements.
 * Further frontend improvements
 * Odoo integration
 
+
+## Testing
+
+The project contains **<!-- TEST_COUNT -->556<!-- TEST_COUNT_END -->** automated tests.
+
+Run the test suite:
 

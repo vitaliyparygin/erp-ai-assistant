@@ -1,4 +1,5 @@
 from app.utils.resources import load_json
+import re
 
 TERM_EXPANSIONS = load_json("term_expansions.json")
 IMPORTANT_TERMS = load_json("important_terms_with_bust.json")
@@ -71,3 +72,15 @@ RERANK_FIELD_BOOSTS = {
     "invoice_penalty_for_contract": -0.20,
 }
 MAX_CONTEXT = 20_000
+MAX_CONTEXT_ANALYSIS = 4000
+PROTECTED_IDENTIFIER_PATTERN = re.compile(
+    r"\b[A-Z0-9]+(?:-[A-Z0-9]+)+\b",
+    re.IGNORECASE,
+)
+
+QUERY_IDENTIFIER_PATTERNS = {
+    "invoice_number": (r"\bINV-\d+(?:-\d+)*\b",),
+    "contract_number": (r"\b(?:C|INT)-\d+(?:-\d+)*\b",),
+    "po_number": (r"\bPO-\d+(?:-\d+)*\b",),
+    "ticket_number": (r"\b(?:TICKET|TKT)-[A-Za-z0-9-]+\b",),
+}

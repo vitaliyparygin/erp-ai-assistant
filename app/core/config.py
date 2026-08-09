@@ -65,6 +65,7 @@ class Settings(BaseSettings):
 
     ollama_max_tokens: int = 4096
     ollama_request_timeout: int = 120
+    ollama_num_predict: int = 512
     # -------------------------------------------------------------------------
     # Database
     # -------------------------------------------------------------------------

@@ -1,21 +1,82 @@
-from unittest.mock import Mock
-import pytest
-from types import SimpleNamespace
-from unittest.mock import AsyncMock
-
-from app.agents.research import ResearchAgent
 from tests.factories import make_state
 
-# class FakeChain:
-#     async def ainvoke(self, _):
-#         return SimpleNamespace(
-#             content="Research result",
-#         )
-#
-#
-# class FakePrompt:
-#     def __or__(self, _):
-#         return FakeChain()
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+from langchain_core.messages import HumanMessage
+
+from app.agents.research import ResearchAgent
+
+
+@pytest.mark.asyncio
+async def test_research_passes_empty_conversation_context_without_messages():
+    llm = MagicMock()
+
+    agent = ResearchAgent(llm=llm)
+
+    agent._chain = AsyncMock()
+    agent._chain.ainvoke.return_value = SimpleNamespace(
+        content="Research result",
+        usage_metadata={},
+    )
+
+    state = make_state(
+        query="What are the risks?",
+        context_str="Retrieved context.",
+        messages=[],
+        research_notes=[],
+        needs_research=True,
+    )
+
+    await agent(state)
+
+    agent._chain.ainvoke.assert_awaited_once()
+
+    prompt_input = agent._chain.ainvoke.await_args.args[0]
+
+    assert prompt_input["conversation_context"] == ""
+
+
+@pytest.mark.asyncio
+async def test_research_passes_conversation_context():
+    llm = MagicMock()
+
+    agent = ResearchAgent(llm=llm)
+
+    agent._chain = AsyncMock()
+    agent._chain.ainvoke.return_value = SimpleNamespace(
+        content="The main risk is project schedule slippage.",
+        usage_metadata={
+            "input_tokens": 10,
+            "output_tokens": 8,
+            "total_tokens": 18,
+        },
+    )
+
+    state = make_state(
+        query="What are the risks?",
+        context_str="Project context from retrieved documents.",
+        messages=[
+            HumanMessage(content="What is the project status?"),
+            HumanMessage(content="Tell me about the schedule."),
+        ],
+        research_notes=[],
+        needs_research=True,
+    )
+
+    await agent(state)
+
+    agent._chain.ainvoke.assert_awaited_once()
+
+    prompt_input = agent._chain.ainvoke.await_args.args[0]
+
+    assert prompt_input["query"] == "What are the risks?"
+    assert prompt_input["context"] == ("Project context from retrieved documents.")
+    assert prompt_input["research_notes"] == ""
+    assert prompt_input["conversation_context"] == (
+        "human: What is the project status?\n" "human: Tell me about the schedule."
+    )
 
 
 @pytest.mark.asyncio
@@ -26,11 +87,8 @@ async def test_query_sent_to_prompt():
         content="ERP",
     )
 
-    llm = AsyncMock()
-
-    agent = ResearchAgent(llm)
-
-    agent._build_chain = lambda: chain
+    agent = ResearchAgent(AsyncMock())
+    agent._chain = chain
 
     await agent(
         make_state(
@@ -47,18 +105,11 @@ async def test_query_sent_to_prompt():
 @pytest.mark.asyncio
 async def test_llm_exception():
 
-    llm = AsyncMock()
-    llm.ainvoke.side_effect = RuntimeError("ollama failed")
+    chain = AsyncMock()
+    chain.ainvoke.side_effect = RuntimeError("ollama failed")
 
-    agent = ResearchAgent(llm)
-    chain = Mock()
-    chain.ainvoke = AsyncMock(
-        side_effect=RuntimeError("ollama failed"),
-    )
-
-    agent._build_chain = Mock(
-        return_value=chain,
-    )
+    agent = ResearchAgent(AsyncMock())
+    agent._chain = chain
 
     with pytest.raises(
         RuntimeError,
@@ -111,13 +162,18 @@ async def test_execution_path():
 
 @pytest.mark.asyncio
 async def test_empty_research_response():
-    chain = Mock()
-    chain.ainvoke = AsyncMock(return_value=SimpleNamespace(content=""))
+
+    chain = AsyncMock()
+    chain.ainvoke.return_value = SimpleNamespace(content="")
 
     agent = ResearchAgent(AsyncMock())
-    agent._build_chain = Mock(return_value=chain)
+    agent._chain = chain
 
-    result = await agent(make_state())
+    result = await agent(
+        make_state(
+            needs_research=True,
+        )
+    )
 
     assert result["research_notes"] == [""]
 
@@ -164,27 +220,20 @@ async def test_research_skipped():
 @pytest.mark.asyncio
 async def test_research_agent():
 
-    chain = Mock()
-    chain.ainvoke = AsyncMock(
-        return_value=SimpleNamespace(
-            content="Research result",
+    chain = AsyncMock()
+    chain.ainvoke.return_value = SimpleNamespace(
+        content="Research result",
+    )
+
+    agent = ResearchAgent(AsyncMock())
+    agent._chain = chain
+
+    result = await agent(
+        make_state(
+            query="invoice",
+            context_str="context",
+            needs_research=True,
         )
     )
-
-    agent = ResearchAgent(
-        llm=AsyncMock(),
-    )
-
-    agent._build_chain = Mock(
-        return_value=chain,
-    )
-
-    state = make_state(
-        query="invoice",
-        context_str="context",
-        needs_research=True,
-    )
-
-    result = await agent(state)
 
     assert result["research_notes"] == ["Research result"]

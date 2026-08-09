@@ -2,12 +2,17 @@ import time
 from app.agents.state import AgentState
 from app.core.logging import get_logger
 from app.models.schemas import Citation
-from langchain_ollama import ChatOllama
+from app.llm.protocol import LLMProtocol
+
 from app.rag.prompts import (
     SUMMARIZER_TEMPLATE,
 )
 from uuid import UUID
 from app.config.constants import MAX_CONTEXT
+from app.observability.metrics import (
+    AGENT_EXECUTIONS_TOTAL,
+    AGENT_LATENCY_SECONDS,
+)
 
 logger = get_logger(__name__)
 
@@ -47,7 +52,7 @@ class SummarizerAgent:
     Generates the final business-friendly answer with Markdown formatting.
     """
 
-    def __init__(self, llm: ChatOllama) -> None:
+    def __init__(self, llm: LLMProtocol) -> None:
         self._llm = llm
 
         logger.warning("LLM_MODEL", model=getattr(self._llm, "model", "unknown"))
@@ -118,8 +123,19 @@ class SummarizerAgent:
                     "research_notes": "\n".join(state.research_notes),
                 }
             )
-
             answer = result.content
+            usage = getattr(result, "usage_metadata", {}) or {}
+            logger.warning(
+                "LLM_USAGE_DEBUG",
+                agent="summarizer",
+                usage=usage,
+                usage_type=type(usage).__name__,
+                result_type=type(result).__name__,
+            )
+            AGENT_EXECUTIONS_TOTAL.labels(
+                agent="summarizer",
+                status="success",
+            ).inc()
             latency_ms = round((time.monotonic() - start) * 1000, 2)
             logger.debug(
                 "OLLAMA_RESPONSE",
@@ -153,15 +169,19 @@ class SummarizerAgent:
                         "latency_ms": latency_ms,
                     }
                 },
-                "total_tokens": getattr(result, "usage_metadata", {}).get(
-                    "total_tokens", 0
-                ),
+                "input_tokens": usage.get("input_tokens", 0),
+                "output_tokens": usage.get("output_tokens", 0),
+                "total_tokens": usage.get("total_tokens", 0),
             }
 
-        except Exception as e:
-            logger.error(
-                "SUMMARIZER_FAILED",
-                error=str(e),
-                error_type=type(e).__name__,
-            )
+        except Exception:
+            AGENT_EXECUTIONS_TOTAL.labels(
+                agent="summarizer",
+                status="error",
+            ).inc()
             raise
+
+        finally:
+            AGENT_LATENCY_SECONDS.labels(
+                agent="summarizer",
+            ).observe(time.perf_counter() - start)

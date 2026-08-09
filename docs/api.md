@@ -333,6 +333,9 @@ This indicates an infrastructure/data-state problem rather than an invalid chat 
 | Prometheus     | `http://localhost:9090`              |
 | Grafana        | `http://localhost:3001`              |
 
+For monitoring setup, metrics, PromQL queries and Grafana troubleshooting, see
+[Monitoring](docs/monitoring.md).
+
 PostgreSQL and Redis are primarily accessed by the application through the Docker network.
 
 ---

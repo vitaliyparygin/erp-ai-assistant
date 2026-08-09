@@ -59,8 +59,8 @@ RETRIEVAL_CHUNKS_RETURNED = Histogram(
 
 LLM_TOKENS_TOTAL = Counter(
     "erp_llm_tokens_total",
-    "Total LLM tokens consumed",
-    labelnames=["model", "type"],
+    "Total number of tokens consumed by LLM calls.",
+    ["model", "agent", "type"],
 )
 
 LLM_REQUESTS_TOTAL = Counter(
@@ -82,15 +82,13 @@ LLM_LATENCY_SECONDS = Histogram(
 
 AGENT_EXECUTIONS_TOTAL = Counter(
     "erp_agent_executions_total",
-    "Total agent node executions",
-    labelnames=["agent", "status"],  # status: success | error | retry
+    "Number of agent executions.",
+    ["agent", "status"],
 )
-
 AGENT_LATENCY_SECONDS = Histogram(
     "erp_agent_latency_seconds",
-    "Agent execution duration in seconds",
-    labelnames=["agent"],
-    buckets=[0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0],
+    "Agent execution latency in seconds.",
+    ["agent"],
 )
 
 GRAPH_EXECUTIONS_TOTAL = Counter(
@@ -133,7 +131,7 @@ INGESTION_LATENCY_SECONDS = Histogram(
 
 RAGAS_SCORES = Histogram(
     "erp_ragas_scores",
-    "RAGAS evaluation scores",
+    "Latest RAGAS evaluation score",
     labelnames=["metric"],  # answer_relevancy | faithfulness | context_precision
     buckets=[0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
 )
@@ -145,4 +143,60 @@ RAGAS_SCORES = Histogram(
 ACTIVE_SESSIONS = Gauge(
     "erp_active_sessions",
     "Number of currently active conversation sessions",
+)
+
+RERANK_LATENCY_SECONDS = Histogram(
+    "erp_rerank_latency_seconds",
+    "Reranking latency in seconds.",
+    buckets=(0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0, 10.0),
+)
+CONTRACT_DISAMBIGUATIONS_TOTAL = Counter(
+    "erp_contract_disambiguations_total",
+    "Number of retrieval queries requiring contract disambiguation.",
+)
+EMBEDDING_REQUESTS_TOTAL = Counter(
+    "erp_embedding_requests_total",
+    "Number of embedding requests.",
+    ["status"],
+)
+
+EMBEDDING_LATENCY_SECONDS = Histogram(
+    "erp_embedding_latency_seconds",
+    "Embedding generation latency in seconds.",
+    buckets=(0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0),
+)
+
+QDRANT_SEARCH_LATENCY_SECONDS = Histogram(
+    "erp_qdrant_search_latency_seconds",
+    "Qdrant vector search latency in seconds",
+    buckets=(0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0),
+)
+
+MEMORY_SUMMARIZATIONS_TOTAL = Counter(
+    "erp_memory_summarizations_total",
+    "Number of conversation history summarizations",
+    ["status"],
+)
+
+QUERY_REWRITE_LATENCY_SECONDS = Histogram(
+    "erp_query_rewrite_latency_seconds",
+    "Query rewrite duration in seconds",
+)
+QUERY_REWRITE_TOTAL = Counter(
+    "erp_query_rewrite_total",
+    "Total query rewrite operations",
+    ["status", "method"],
+)
+CONTEXT_ANALYSIS_LATENCY_SECONDS = Histogram(
+    "erp_context_analysis_latency_seconds",
+    "Context sufficiency analysis duration in seconds",
+)
+CONTEXT_ANALYSIS_TOTAL = Counter(
+    "erp_context_analysis_total",
+    "Total context sufficiency analyses",
+    ["result"],
+)
+RETRIEVAL_EMPTY_TOTAL = Counter(
+    "erp_retrieval_empty_total",
+    "Total retrieval operations that returned no chunks",
 )

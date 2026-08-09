@@ -43,7 +43,14 @@ def chunk(
 
 def stub_rewrite(agent, query="invoice"):
     agent._rewrite_query = AsyncMock(
-        return_value=query,
+        return_value=(
+            query,
+            {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+            },
+        )
     )
 
 

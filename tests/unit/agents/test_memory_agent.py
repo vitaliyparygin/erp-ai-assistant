@@ -56,6 +56,9 @@ async def test_summary_generated():
     result = await agent(make_state(session_id="abc"))
 
     assert result["conversation_summary"] == "Conversation summary"
+    assert result["input_tokens"] == 0
+    assert result["output_tokens"] == 0
+    assert result["total_tokens"] == 0
 
 
 @pytest.mark.asyncio
@@ -95,7 +98,16 @@ async def test_summary_called_above_threshold():
 
     agent._settings.memory_summarization_threshold = 5
 
-    agent._summarize_history = AsyncMock(return_value="Summary")
+    agent._summarize_history = AsyncMock(
+        return_value=(
+            "Summary",
+            {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+            },
+        )
+    )
 
     result = await agent(make_state(session_id="abc"))
 
@@ -274,11 +286,20 @@ async def test_summarizes_long_history():
 
     agent._settings.memory_summarization_threshold = 3
 
-    agent._summarize_history = AsyncMock(return_value="summary")
+    agent._summarize_history = AsyncMock(
+        return_value=(
+            "Summary",
+            {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+            },
+        )
+    )
 
     result = await agent(make_state(session_id="session1"))
 
     agent._summarize_history.assert_awaited_once()
 
-    assert result["conversation_summary"] == "summary"
+    assert result["conversation_summary"] == "Summary"
     assert len(result["messages"]) == 4
