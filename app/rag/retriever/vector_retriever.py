@@ -213,7 +213,7 @@ class VectorRetriever:
                 results=[
                     {
                         "document_id": r.id,
-                        "document_name": (r.payload or {}).get('original_filename'),
+                        "document_name": (r.payload or {}).get("original_filename"),
                         "score": r.score,
                     }
                     for r in identifier_results
@@ -240,7 +240,7 @@ class VectorRetriever:
                 results=[
                     {
                         "document_id": r.id,
-                         "document_name": (r.payload or {}).get('original_filename'),
+                        "document_name": (r.payload or {}).get("original_filename"),
                         "score": None,
                     }
                     for r in identifier_results

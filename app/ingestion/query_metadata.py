@@ -30,7 +30,7 @@ def normalize_metadata_value(value: str) -> str:
 
 
 def normalize_filter_metadata(
-        metadata: Mapping[str, object],
+    metadata: Mapping[str, object],
 ) -> dict[str, object]:
     result = dict(metadata)
 
