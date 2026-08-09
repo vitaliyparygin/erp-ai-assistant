@@ -1,10 +1,15 @@
 import logging
 
-from langchain_ollama import ChatOllama
+from langchain_core.runnables import Runnable
 
-from app.config.constants import PROTECTED_TERMS, REWRITE_MAP
+from app.config.constants import (
+    PROTECTED_IDENTIFIER_PATTERN,
+    PROTECTED_TERMS,
+    REWRITE_MAP,
+)
 from app.rag.prompts import QUERY_REWRITE_TEMPLATE
 from app.agents.state import AgentState
+from app.rag.context.conversation import build_conversation_context
 
 logger = logging.getLogger(__name__)
 
@@ -12,26 +17,48 @@ logger = logging.getLogger(__name__)
 class QueryRewriter:
     """Rewrites user queries for improved semantic retrieval."""
 
-    def __init__(self, llm: ChatOllama) -> None:
+    def __init__(self, llm: Runnable | None) -> None:
         self._llm = llm
 
-    async def rewrite(self, state: AgentState) -> str:
+        self._chain = (
+            QUERY_REWRITE_TEMPLATE | llm
+            if llm is not None
+            else None
+        )
+
+    async def rewrite(
+        self,
+        state: AgentState,
+    ) -> tuple[str, dict[str, int]]:
         query = state.query.strip()
 
+        empty_usage = {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0,
+        }
+
         if not query:
-            return query
+            return query, empty_usage
 
         if self._is_protected(query):
             logger.debug(
                 "query_rewrite_skipped",
                 extra={"query": query},
             )
-            return query
+            return query, empty_usage
 
         query = self._apply_deterministic_expansions(query)
 
-        if not self._llm:
-            return query
+        if self._llm is None:
+            return query, empty_usage
+
+        if PROTECTED_IDENTIFIER_PATTERN.search(query):
+            logger.debug(
+                "query_rewrite_skipped_protected_identifier: query=%s",
+                query,
+            )
+            return query, empty_usage
 
         return await self._llm_rewrite(
             query=query,
@@ -42,7 +69,10 @@ class QueryRewriter:
     def _is_protected(query: str) -> bool:
         query_lower = query.lower()
 
-        return any(term.lower() in query_lower for term in PROTECTED_TERMS)
+        return any(
+            term.lower() in query_lower
+            for term in PROTECTED_TERMS
+        )
 
     @staticmethod
     def _apply_deterministic_expansions(query: str) -> str:
@@ -60,18 +90,15 @@ class QueryRewriter:
         return result.strip()
 
     async def _llm_rewrite(
-        self,
-        query: str,
-        state: AgentState,
-    ) -> str:
-        context = self._build_context(state)
-
-        chain = QUERY_REWRITE_TEMPLATE | self._llm
-
-        result = await chain.ainvoke(
+            self,
+            query: str,
+            state: AgentState,
+    ) -> tuple[str, dict[str, int]]:
+        conversation_context = build_conversation_context(state)
+        result = await self._chain.ainvoke(
             {
                 "query": query,
-                "conversation_context": context,
+                "conversation_context": conversation_context,
             }
         )
 
@@ -79,19 +106,28 @@ class QueryRewriter:
 
         if not isinstance(content, str):
             raise TypeError(
-                "Expected string response, " f"got {type(content).__name__}"
+                f"Expected string content from LLM, got {type(content).__name__}"
             )
 
-        rewritten = content.strip()
+        content = content.strip()
 
-        return rewritten or query
+        usage = getattr(result, "usage_metadata", None) or {}
 
-    @staticmethod
-    def _build_context(state: AgentState) -> str:
-        if not state.messages:
-            return "No prior context"
+        if not content:
+            return (
+                query,
+                {
+                    "input_tokens": usage.get("input_tokens", 0),
+                    "output_tokens": usage.get("output_tokens", 0),
+                    "total_tokens": usage.get("total_tokens", 0),
+                },
+            )
 
-        return "\n".join(
-            f"{message.type}: {message.content[:200]}"
-            for message in state.messages[-4:]
-        )[:3000]
+        return (
+            content,
+            {
+                "input_tokens": usage.get("input_tokens", 0),
+                "output_tokens": usage.get("output_tokens", 0),
+                "total_tokens": usage.get("total_tokens", 0),
+            },
+        )

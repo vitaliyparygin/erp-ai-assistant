@@ -7,7 +7,7 @@ import uuid
 from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any
-
+from dataclasses import dataclass
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 # =============================================================================
@@ -125,7 +125,9 @@ class Message(DomainModel):
     conversation_id: uuid.UUID
     role: MessageRole
     content: str
-    tokens_used: int | None = None
+    input_tokens: int | None = 0
+    output_tokens: int | None = 0
+    total_tokens: int | None = 0
     latency_ms: float | None = None
     model: str | None = None
     citations: list[Citation] = Field(default_factory=list)
@@ -140,7 +142,7 @@ class Conversation(DomainModel):
     message_count: int
     total_tokens: int
     summary: str | None = None
-    messages: list[Message] = Field(default_factory=list)
+    messages: list[Message] = []
     created_at: datetime
     updated_at: datetime
 
@@ -158,7 +160,9 @@ class ChatResponse(DomainModel):
     message_id: uuid.UUID
     answer: str
     citations: list[Citation] = Field(default_factory=list)
-    tokens_used: int | None = None
+    input_tokens: int | None = 0
+    output_tokens: int | None = 0
+    total_tokens: int | None = 0
     latency_ms: float | None = None
     agent_trace: dict[str, Any] = Field(default_factory=dict)
 
@@ -241,3 +245,31 @@ class HealthResponse(DomainModel):
     version: str
     services: list[ServiceHealth]
     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
+
+class ConversationListItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    title: str | None
+    user_id: str | None
+    session_id: str
+    is_active: bool
+    message_count: int
+
+    input_tokens: int
+    output_tokens: int
+    total_tokens: int
+
+    summary: str | None
+    conversations_metadata: dict[str, Any] | None
+    created_at: datetime
+    updated_at: datetime
+
+@dataclass(frozen=True)
+class QueryRewriteResult:
+    query: str
+    input_tokens: int
+    output_tokens: int
+    total_tokens: int

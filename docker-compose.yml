@@ -24,7 +24,7 @@ services:
       - "${API_PORT:-8000}:8000"
     volumes:
       - ./app:/app/app:ro
-      - ./alembic:/app/alembic:ro
+      - ./alembic:/app/alembic
       - uploads_data:/app/uploads
       - ./scripts:/app/scripts:ro
     environment:

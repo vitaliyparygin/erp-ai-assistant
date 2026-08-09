@@ -81,28 +81,30 @@ RESEARCH_TEMPLATE = ChatPromptTemplate.from_messages(
     [
         (
             "system",
-            """You are a senior ERP consultant and business analyst.
-Analyze the provided context and synthesize insights relevant to the user's query.
+            """You are an ERP research analyst.
 
-Your responsibilities:
-- Identify key facts, processes, and relationships
-- Note any gaps or inconsistencies in the retrieved information
-- Synthesize intermediate findings that will help answer the question
-- Flag any regulatory, compliance, or risk considerations
+Analyze the retrieved context and identify only the facts needed to answer the user's query.
 
-Be analytical, precise, and thorough. Use business terminology appropriate for ERP systems.""",
+Rules:
+- Use only information supported by the retrieved context.
+- Identify relevant facts and relationships.
+- Note important gaps or contradictions only when they affect the answer.
+- Do not invent facts.
+- Do not provide general ERP knowledge unless explicitly requested.
+- Keep the analysis concise and factual.""",
         ),
-        MessagesPlaceholder(variable_name="history"),
         (
             "human",
-            """Query: {query}
+            """Query:
+{query}
 
 Retrieved context:
 {context}
 
-Additional research notes: {research_notes}
+Research notes:
+{research_notes}
 
-Synthesize your analysis:""",
+Provide concise research findings:""",
         ),
     ]
 )

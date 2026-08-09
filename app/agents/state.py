@@ -71,10 +71,12 @@ class AgentState(BaseModel):
     agent_trace: dict[str, Any] = Field(default_factory=dict)
     errors: Annotated[list[str], add] = Field(default_factory=list)
     retries: dict[str, int] = Field(default_factory=dict)
-    total_tokens: int = 0
+    input_tokens: Annotated[int, add] = 0
+    output_tokens: Annotated[int, add] = 0
+    total_tokens: Annotated[int, add] = 0
     execution_path: Annotated[list[str], add] = Field(default_factory=list)
 
-    # -------------------------------------------------------------------------
+    # ----------------------------------------------------AgentState---------------------
     # Routing flags
     # -------------------------------------------------------------------------
     needs_research: bool = False
@@ -92,7 +94,9 @@ class NodeResult(BaseModel):
     state_updates: dict[str, Any] = Field(default_factory=dict)
     error: str | None = None
     latency_ms: float | None = None
-    tokens_used: int = 0
+    input_tokens: int = 0
+    output_tokens: int = 0
+    total_tokens: int = 0
 
     @classmethod
     def success_result(
@@ -100,14 +104,18 @@ class NodeResult(BaseModel):
         node_name: str,
         state_updates: dict[str, Any],
         latency_ms: float | None = None,
-        tokens_used: int = 0,
+        input_tokens: int = 0,
+        output_tokens: int = 0,
+        total_tokens: int = 0
     ) -> "NodeResult":
         return cls(
             node_name=node_name,
             success=True,
             state_updates=state_updates,
             latency_ms=latency_ms,
-            tokens_used=tokens_used,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            total_tokens=total_tokens,
         )
 
     @classmethod

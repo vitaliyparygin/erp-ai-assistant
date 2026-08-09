@@ -11,10 +11,7 @@ def test_build_graph():
     graph = ERPAssistantGraph.__new__(ERPAssistantGraph)
 
     compiled = MagicMock()
-
-    graph._build_graph = MagicMock(
-        return_value=compiled,
-    )
+    graph._graph = compiled
 
     assert graph.build_graph() is compiled
 

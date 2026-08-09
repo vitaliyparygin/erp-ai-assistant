@@ -396,7 +396,13 @@ Grafana is available at:
 http://localhost:3001
 ```
 
+### Backend Metrics
+
+http://localhost:8000/metrics/
+
 These services are useful for development and observability but are not required for the minimal application functionality.
+
+GRAFANA_PASSWORD:admin
 
 ---
 

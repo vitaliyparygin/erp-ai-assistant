@@ -31,11 +31,12 @@ from app.models.schemas import (
     Citation,
     MessageRole,
 )
-from app.observability.metrics import GRAPH_EXECUTIONS_TOTAL, GRAPH_LATENCY_SECONDS
 from app.rag.retriever.vector_retriever import VectorRetriever
 from app.rag.retriever.reranker import Reranker
 from sqlalchemy import select
 from app.rag.embeddings import EmbeddingService
+
+
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -76,7 +77,9 @@ async def _get_or_create_session(
     new_session_id = session_id or str(uuid.uuid4())
 
     result = await db.execute(
-        select(ConversationModel).where(ConversationModel.session_id == new_session_id)
+        select(ConversationModel).where(
+            ConversationModel.session_id == new_session_id
+        )
     )
     conv = result.scalar_one_or_none()
 
@@ -87,7 +90,6 @@ async def _get_or_create_session(
         )
         db.add(conv)
         await db.flush()
-        await db.commit()
 
     return new_session_id, conv.id
 
@@ -97,7 +99,9 @@ async def _save_messages(
     conversation_id: uuid.UUID,
     user_content: str,
     assistant_content: str,
-    tokens_used: int,
+    input_tokens: int,
+    output_tokens: int,
+    total_tokens: int,
     latency_ms: float,
     citations: list[Citation],
     agent_trace: dict,
@@ -118,7 +122,9 @@ async def _save_messages(
         conversation_id=conversation_id,
         role=MessageRole.ASSISTANT,
         content=assistant_content,
-        tokens_used=tokens_used,
+        input_tokens=input_tokens,
+        output_tokens=output_tokens,
+        total_tokens=total_tokens,
         latency_ms=latency_ms,
         model=model,
         citations=[c.model_dump(mode="json") for c in citations],
@@ -134,7 +140,9 @@ async def _save_messages(
         .where(ConversationModel.id == conversation_id)
         .values(
             message_count=ConversationModel.message_count + 2,
-            total_tokens=ConversationModel.total_tokens + tokens_used,
+            input_tokens=ConversationModel.input_tokens + input_tokens,
+            output_tokens=ConversationModel.output_tokens + output_tokens,
+            total_tokens=ConversationModel.total_tokens + total_tokens,
         )
     )
 
@@ -163,7 +171,7 @@ async def chat(
 ) -> ChatResponse:
 
     logger.debug("CHAT ENDPOINT START")
-    start_time = time.monotonic()
+    start = time.perf_counter()
 
     session_id, conversation_id = await _get_or_create_session(request.session_id, db)
     memory_store = RedisMemoryStore(redis_client=redis)
@@ -179,14 +187,19 @@ async def chat(
 
     try:
         result_state = await graph.run(state)
-        GRAPH_EXECUTIONS_TOTAL.labels(status="success").inc()
     except Exception as e:
-        GRAPH_EXECUTIONS_TOTAL.labels(status="error").inc()
-        logger.error("chat_graph_error", session_id=session_id, error=str(e))
-        raise HTTPException(status_code=500, detail=f"Agent pipeline failed: {e}")
+        logger.error(
+            "chat_graph_error",
+            session_id=session_id,
+            error=str(e),
+        )
+        raise HTTPException(
+            status_code=500,
+            detail=f"Agent pipeline failed: {e}",
+        )
 
-    latency_ms = round((time.monotonic() - start_time) * 1000, 2)
-    GRAPH_LATENCY_SECONDS.observe(latency_ms / 1000)
+    latency_ms = round((time.perf_counter() - start) * 1000, 2)
+
     logger.debug(
         "RESULT_STATE_DEBUG",
         type=type(result_state).__name__,
@@ -196,16 +209,20 @@ async def chat(
         result_state.final_answer or "I couldn't generate a response. Please try again."
     )
     citations = result_state.citations or []
-    tokens_used = result_state.total_tokens
+    input_tokens = result_state.input_tokens
+    output_tokens = result_state.output_tokens
+    total_tokens = result_state.total_tokens
 
-    # Persist to memory and DB
     await memory_store.add_ai_message(session_id, answer)
+
     message_id = await _save_messages(
         db=db,
         conversation_id=conversation_id,
         user_content=request.message,
         assistant_content=answer,
-        tokens_used=tokens_used,
+        input_tokens=input_tokens,
+        output_tokens=output_tokens,
+        total_tokens=total_tokens,
         latency_ms=latency_ms,
         citations=citations,
         agent_trace=result_state.agent_trace,
@@ -216,7 +233,9 @@ async def chat(
         "chat_response_sent",
         session_id=session_id,
         latency_ms=latency_ms,
-        tokens=tokens_used,
+        input_tokens=input_tokens,
+        output_tokens=output_tokens,
+        total_tokens=total_tokens,
         citations=len(citations),
         path=result_state.execution_path,
     )
@@ -226,7 +245,9 @@ async def chat(
         message_id=message_id,
         answer=answer,
         citations=citations,
-        tokens_used=tokens_used,
+        input_tokens=input_tokens,
+        output_tokens=output_tokens,
+        total_tokens=total_tokens,
         latency_ms=latency_ms,
         agent_trace=result_state.agent_trace,
     )

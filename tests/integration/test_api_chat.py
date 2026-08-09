@@ -28,6 +28,8 @@ async def test_chat_success():
     graph.run.return_value = AsyncMock(
         final_answer="Invoice total is 1000 USD",
         citations=[],
+        input_tokens=40,
+        output_tokens=83,
         total_tokens=123,
         execution_path=[],
         agent_trace={},
@@ -110,7 +112,9 @@ async def test_chat_returns_citations():
                 relevance_score=0.97,
             )
         ],
-        total_tokens=55,
+        input_tokens=40,
+        output_tokens=83,
+        total_tokens=123,
         execution_path=[],
         agent_trace={},
     )
@@ -163,10 +167,12 @@ async def test_chat_returns_citations():
 
     assert response.status_code == 200
 
+
     body = response.json()
 
     assert len(body["citations"]) == 1
     assert body["citations"][0]["document_name"] == "Invoice.pdf"
+    assert body["total_tokens"] == 123
 
 
 @pytest.mark.asyncio

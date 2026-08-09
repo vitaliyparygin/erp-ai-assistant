@@ -13,7 +13,12 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import sys
 from collections import defaultdict
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
 
 from sqlalchemy import func, select
 

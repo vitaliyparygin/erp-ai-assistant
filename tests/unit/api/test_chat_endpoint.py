@@ -93,10 +93,12 @@ async def test_chat_success():
         session_id=session_id,
         query="hello",
         original_query="hello",
+        input_tokens=10,
+        output_tokens=20,
+        total_tokens=30
     )
     result.final_answer = "Hi!"
     result.citations = []
-    result.total_tokens = 42
     result.agent_trace = {}
 
     graph.run.return_value = result
@@ -138,7 +140,9 @@ async def test_chat_success():
         )
 
     assert response.answer == "Hi!"
-    assert response.tokens_used == 42
+    assert response.input_tokens == 10
+    assert response.output_tokens == 20
+    assert response.total_tokens == 30
     assert response.session_id == session_id
     assert response.message_id == message_id
 

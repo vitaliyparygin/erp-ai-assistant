@@ -2,12 +2,19 @@ import pytest
 from unittest.mock import AsyncMock
 from tests.factories import make_state
 from app.agents.retriever import RetrieverAgent
-
+from types import SimpleNamespace
 
 @pytest.mark.asyncio
 async def test_query_rewrite():
     rewriter = AsyncMock()
-    rewriter.rewrite.return_value = "invoice amount"
+    rewriter.rewrite.return_value = (
+        "invoice amount",
+        {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0,
+        },
+    )
 
     agent = RetrieverAgent(
         llm=AsyncMock(),
@@ -19,7 +26,11 @@ async def test_query_rewrite():
 
     state = make_state(query="How much do we owe?")
 
-    rewritten = await agent._rewrite_query(state)
+    rewritten, usage = await agent._rewrite_query(state)
 
     assert rewritten == "invoice amount"
-    rewriter.rewrite.assert_awaited_once_with(state)
+    assert usage == {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+    }

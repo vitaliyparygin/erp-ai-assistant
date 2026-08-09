@@ -70,10 +70,9 @@ def test_extract_first_matching_pattern(monkeypatch):
 
     assert result["contract_number"] == "123"
 
-
 def test_extract_fields(monkeypatch):
     monkeypatch.setattr(
-        "rules.detect_document_type",
+        "app.ingestion.metadata_extractor.detect_document_type",
         lambda text, filename: None,
     )
 
@@ -81,6 +80,13 @@ def test_extract_fields(monkeypatch):
         def __init__(self):
             self.name = "invoice_number"
             self.patterns = [r"Invoice:\s*(\d+)"]
+
+    monkeypatch.setattr(
+        "app.ingestion.metadata_extractor.FIELD_DEFINITIONS",
+        {
+            "invoice": DummyField(),
+        },
+    )
 
     result = MetadataExtractor.extract(
         text="Invoice: 12345",

@@ -7,6 +7,7 @@ from app.agents.state import AgentState
 from app.core.logging import get_logger
 import time
 
+
 logger = get_logger(__name__)
 
 
@@ -25,11 +26,12 @@ class MemoryAgent:
         return CONVERSATION_SUMMARY_TEMPLATE | self._llm
 
     async def __call__(self, state: AgentState) -> dict:
-        start = time.monotonic()
+        start = time.perf_counter()
         logger.info("memory_agent_start", session_id=state.session_id)
-
+        input_tokens = 0
+        output_tokens = 0
+        total_tokens = 0
         try:
-            start_time = time.monotonic()
             history = await self._memory.get_history(state.session_id)
             logger.debug(
                 "MEMORY_HISTORY",
@@ -55,36 +57,46 @@ class MemoryAgent:
                     for m in history[-4:]
                 ],
             )
-            latency = time.monotonic() - start_time
+            latency = time.monotonic() - start
             logger.debug("_memory.get_history:", latency=latency)
             message_count = len(history)
             logger.debug("FINAL_CONTEXT", context=history[-4:])
 
             logger.debug("FINAL_QUERY", query=state.query)
-            summary = None
+            input_tokens = 0
+            output_tokens = 0
+            total_tokens = 0
+            summary_result = None
             if message_count >= self._settings.memory_summarization_threshold:
-                start = time.monotonic()
+                start_summary = time.monotonic()
                 # Summarize to keep context window manageable
 
-                summary = await self._summarize_history(history)
-                latency = time.monotonic() - start_time
+                summary_result, usage = await self._summarize_history(history)
+                latency = time.monotonic() - start_summary
                 logger.debug("_memory._summarize_history:", latency=latency)
                 # Keep only the last few messages after summarization
+
+                input_tokens = usage["input_tokens"]
+                output_tokens = usage["output_tokens"]
+                total_tokens = usage["total_tokens"]
                 history = history[-4:]
 
             updates: dict[str, Any] = {
                 "messages": history,
                 "message_count": message_count,
                 "execution_path": ["memory"],
+                "input_tokens": input_tokens,
+                "output_tokens": output_tokens,
+                "total_tokens": total_tokens,
             }
-            if summary:
-                updates["conversation_summary"] = summary
+            if summary_result:
+                updates["conversation_summary"] = summary_result
 
             logger.debug(
                 "memory_agent_done",
                 session_id=state.session_id,
                 history_len=message_count,
-                summarized=summary is not None,
+                summarized=summary_result is not None,
                 latency_ms=round((time.monotonic() - start) * 1000, 2),
             )
             logger.debug(
@@ -92,6 +104,7 @@ class MemoryAgent:
                 agent="memory",
                 latency_ms=round((time.monotonic() - start) * 1000, 2),
             )
+
             return updates
 
         except Exception as e:
@@ -101,13 +114,30 @@ class MemoryAgent:
             )
             raise
 
-    async def _summarize_history(self, history: list) -> str:
-        """Use LLM to summarize a long conversation."""
+    async def _summarize_history(self, history: list) -> tuple[str, dict[str, int]]:
         conversation_text = "\n".join(
             f"{msg.type.upper()}: {msg.content}" for msg in history
         )
-        chain = self._build_summary_chain()
-        logger.debug("SUMMARIZER_PROMPT", context=conversation_text[:2000])
 
-        result = await chain.ainvoke({"conversation": conversation_text})
-        return result.content
+        chain = self._build_summary_chain()
+
+        result = await chain.ainvoke(
+            {"conversation": conversation_text}
+        )
+
+        logger.debug(
+            "MEMORY_SUMMARY_RESULT_DEBUG",
+            result_type=type(result).__name__,
+            result=str(result)[:2000],
+        )
+
+        usage = getattr(result, "usage_metadata", {}) or {}
+
+        return (
+            result.content,
+            {
+                "input_tokens": usage.get("input_tokens", 0),
+                "output_tokens": usage.get("output_tokens", 0),
+                "total_tokens": usage.get("total_tokens", 0),
+            },
+        )

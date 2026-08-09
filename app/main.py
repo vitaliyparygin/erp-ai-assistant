@@ -26,10 +26,13 @@ from app.core.logging import (
     setup_logging,
 )
 from app.db.session import create_tables
+from app.core.exceptions import ConversationNotFoundError
 from app.observability.metrics import (
     APP_INFO,
+    HTTP_REQUESTS_TOTAL,
+    HTTP_REQUEST_DURATION_SECONDS,
 )
-from app.core.exceptions import ConversationNotFoundError
+from prometheus_client import REGISTRY
 
 settings = get_settings()
 logger = get_logger(__name__)
@@ -93,6 +96,44 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+
+
+@app.get("/debug/metrics-registry", include_in_schema=False)
+async def debug_metrics_registry():
+    names = sorted(
+        name
+        for name in REGISTRY._names_to_collectors
+        if name.startswith("erp_")
+    )
+
+    return {
+        "pid": __import__("os").getpid(),
+        "erp_collectors": names,
+        "count": len(names),
+    }
+
+@app.middleware("http")
+async def observe_http_requests(request: Request, call_next):
+    start = time.perf_counter()
+    status_code = 500
+
+    try:
+        response = await call_next(request)
+        status_code = response.status_code
+        return response
+    finally:
+        duration = time.perf_counter() - start
+
+        HTTP_REQUESTS_TOTAL.labels(
+            method=request.method,
+            path=request.url.path,
+            status_code=str(status_code),
+        ).inc()
+
+        HTTP_REQUEST_DURATION_SECONDS.labels(
+            method=request.method,
+            path=request.url.path,
+        ).observe(duration)
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):

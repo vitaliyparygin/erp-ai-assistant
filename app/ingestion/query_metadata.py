@@ -1,37 +1,70 @@
 import re
-from app.parsers.field_dictionary import FIELD_DEFINITIONS
+
 from rules import detect_document_type
+
+
+NORMALIZED_METADATA_FIELDS = {
+    "invoice_number",
+    "contract_number",
+    "po_number",
+    "ticket_number",
+    "employee_id",
+}
 
 PERSON_PATTERNS = [
     r"[А-ЯІЇЄҐ][а-яіїєґ']+\s+[А-ЯІЇЄҐ][а-яіїєґ']+\s+[А-ЯІЇЄҐ][а-яіїєґ']+",
     r"[A-Z][a-z]+\s+[A-Z][a-z]+",
 ]
 
+QUERY_IDENTIFIER_PATTERNS = {
+    "invoice_number": (
+        r"\bINV-\d+(?:-\d+)*\b",
+    ),
+    "contract_number": (
+        r"\bC-\d+(?:-\d+)*\b",
+        r"\bINT-\d{4}-\d+\b",
+    ),
+    "po_number": (
+        r"\bPO-\d+(?:-\d+)*\b",
+    ),
+}
 
-def extract_query_metadata(question: str) -> dict:
+
+def normalize_metadata_value(value: str) -> str:
+    return value.strip().casefold()
+
+
+def normalize_filter_metadata(
+    metadata: dict[str, object],
+) -> dict[str, object]:
+    result = dict(metadata)
+
+    for key in NORMALIZED_METADATA_FIELDS:
+        value = result.get(key)
+
+        if isinstance(value, str):
+            result[key] = value.strip().casefold()
+
+    return result
+
+
+def extract_query_metadata(question: str) -> dict[str, str]:
     metadata: dict[str, str] = {}
 
     normalized_question = question.strip()
 
-    # Structured identifiers / explicit fields.
-    for field_name, definition in FIELD_DEFINITIONS.items():
-        for pattern in definition.patterns:
+    # Explicit identifiers only.
+    for field_name, patterns in QUERY_IDENTIFIER_PATTERNS.items():
+        for pattern in patterns:
             match = re.search(
                 pattern,
                 normalized_question,
                 re.IGNORECASE,
             )
 
-            if not match:
-                continue
-
-            value = (match.group(1) if match.lastindex else match.group(0)).strip()
-
-            if not value:
-                continue
-
-            metadata[definition.name] = value
-            break
+            if match:
+                metadata[field_name] = match.group(0)
+                break
 
     # Person names.
     for pattern in PERSON_PATTERNS:

@@ -133,7 +133,6 @@ class ConversationModel(Base, TimestampMixin):
     session_id: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     message_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    total_tokens: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     conversations_metadata: Mapped[dict[str, Any] | None] = mapped_column(
         JSON, nullable=True
@@ -145,6 +144,24 @@ class ConversationModel(Base, TimestampMixin):
         back_populates="conversation",
         cascade="all, delete-orphan",
         order_by="MessageModel.created_at",
+    )
+
+    input_tokens: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        nullable=False,
+    )
+
+    output_tokens: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        nullable=False,
+    )
+
+    total_tokens: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        nullable=False,
     )
 
     def __repr__(self) -> str:
@@ -168,7 +185,6 @@ class MessageModel(Base, TimestampMixin):
         String(20), nullable=False
     )  # user | assistant | system
     content: Mapped[str] = mapped_column(Text, nullable=False)
-    tokens_used: Mapped[int | None] = mapped_column(Integer, nullable=True)
     latency_ms: Mapped[float | None] = mapped_column(Float, nullable=True)
     model: Mapped[str | None] = mapped_column(String(100), nullable=True)
     citations: Mapped[list[dict] | None] = mapped_column(JSON, nullable=True)
@@ -180,6 +196,21 @@ class MessageModel(Base, TimestampMixin):
     # Relationships
     conversation: Mapped["ConversationModel"] = relationship(
         "ConversationModel", back_populates="messages"
+    )
+
+    input_tokens: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+    )
+
+    output_tokens: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+    )
+
+    total_tokens: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
     )
 
 

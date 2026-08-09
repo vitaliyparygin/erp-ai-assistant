@@ -7,7 +7,7 @@ from app.graph.builder import ERPAssistantGraph
 from app.ingestion.metadata_extractor import MetadataExtractor
 from unittest.mock import patch
 from app.models.schemas import RetrievedChunk
-
+from tests.unit.agents.test_retriever_helpers import stub_rewrite
 
 @pytest.mark.asyncio
 async def test_empty_retrieval_returns_empty_chunks():
@@ -21,6 +21,8 @@ async def test_empty_retrieval_returns_empty_chunks():
         retriever=retriever,
         reranker=reranker,
     )
+
+    stub_rewrite(agent)
 
     result = await agent(make_state(query=DocumentType.INVOICE))
 

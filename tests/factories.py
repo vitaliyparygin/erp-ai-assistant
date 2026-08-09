@@ -63,10 +63,16 @@ def make_document(**kwargs) -> DocumentModel:
 def make_conversation(**kwargs):
     data = dict(
         id=uuid4(),
+        title=None,
+        user_id=None,
         session_id="session-1",
         is_active=True,
         message_count=0,
+        input_tokens=0,
+        output_tokens=0,
         total_tokens=0,
+        summary=None,
+        conversations_metadata=None,
         created_at=datetime.now(UTC),
         updated_at=datetime.now(UTC),
         messages=[],
