@@ -1,5 +1,6 @@
 from qdrant_client import QdrantClient
 from qdrant_client.models import Filter, FieldCondition, MatchValue
+
 client = QdrantClient(url="http://localhost:6333")
 
 collection = "erp_documents"

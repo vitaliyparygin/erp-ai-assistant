@@ -1,16 +1,13 @@
-
 import asyncio
 import sys
 from pathlib import Path
-
+from app.db.session import AsyncSessionLocal
+from app.models.orm import DocumentModel
+from app.workers.ingestion_worker import ingest_document
 from sqlalchemy import select
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
-
-from app.db.session import AsyncSessionLocal
-from app.models.orm import DocumentModel
-from app.workers.ingestion_worker import ingest_document
 
 
 async def main() -> None:
@@ -60,4 +57,3 @@ async def main() -> None:
 
 if __name__ == "__main__":
     asyncio.run(main())
-

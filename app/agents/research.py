@@ -44,9 +44,7 @@ class ResearchAgent:
             needs_research=state.needs_research,
             context_chars=len(state.context_str),
             history_messages=len(state.messages),
-            research_notes_chars=sum(
-                len(note) for note in state.research_notes
-            ),
+            research_notes_chars=sum(len(note) for note in state.research_notes),
         )
 
         try:

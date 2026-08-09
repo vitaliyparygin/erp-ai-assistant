@@ -7,7 +7,6 @@ from app.agents.state import AgentState
 from app.core.logging import get_logger
 import time
 
-
 logger = get_logger(__name__)
 
 
@@ -121,9 +120,7 @@ class MemoryAgent:
 
         chain = self._build_summary_chain()
 
-        result = await chain.ainvoke(
-            {"conversation": conversation_text}
-        )
+        result = await chain.ainvoke({"conversation": conversation_text})
 
         logger.debug(
             "MEMORY_SUMMARY_RESULT_DEBUG",

@@ -106,9 +106,9 @@ async def test_save_messages():
             conversation_id=conversation_id,
             user_content="hello",
             assistant_content="world",
-            input_tokens = 10,
-            output_tokens = 20,
-            total_tokens = 30,
+            input_tokens=10,
+            output_tokens=20,
+            total_tokens=30,
             latency_ms=15,
             citations=[],
             agent_trace={},
@@ -205,6 +205,7 @@ def test_agent_state_accumulates_token_usage():
     assert state.input_tokens == 10
     assert state.output_tokens == 20
     assert state.total_tokens == 30
+
 
 @pytest.mark.asyncio
 async def test_agent_state_token_accumulation():

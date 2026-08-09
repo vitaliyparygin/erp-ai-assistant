@@ -97,13 +97,10 @@ app = FastAPI(
 )
 
 
-
 @app.get("/debug/metrics-registry", include_in_schema=False)
 async def debug_metrics_registry():
     names = sorted(
-        name
-        for name in REGISTRY._names_to_collectors
-        if name.startswith("erp_")
+        name for name in REGISTRY._names_to_collectors if name.startswith("erp_")
     )
 
     return {
@@ -111,6 +108,7 @@ async def debug_metrics_registry():
         "erp_collectors": names,
         "count": len(names),
     }
+
 
 @app.middleware("http")
 async def observe_http_requests(request: Request, call_next):
@@ -134,6 +132,7 @@ async def observe_http_requests(request: Request, call_next):
             method=request.method,
             path=request.url.path,
         ).observe(duration)
+
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):

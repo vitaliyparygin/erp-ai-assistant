@@ -20,11 +20,7 @@ class QueryRewriter:
     def __init__(self, llm: Runnable | None) -> None:
         self._llm = llm
 
-        self._chain = (
-            QUERY_REWRITE_TEMPLATE | llm
-            if llm is not None
-            else None
-        )
+        self._chain = QUERY_REWRITE_TEMPLATE | llm if llm is not None else None
 
     async def rewrite(
         self,
@@ -69,10 +65,7 @@ class QueryRewriter:
     def _is_protected(query: str) -> bool:
         query_lower = query.lower()
 
-        return any(
-            term.lower() in query_lower
-            for term in PROTECTED_TERMS
-        )
+        return any(term.lower() in query_lower for term in PROTECTED_TERMS)
 
     @staticmethod
     def _apply_deterministic_expansions(query: str) -> str:
@@ -90,11 +83,13 @@ class QueryRewriter:
         return result.strip()
 
     async def _llm_rewrite(
-            self,
-            query: str,
-            state: AgentState,
+        self,
+        query: str,
+        state: AgentState,
     ) -> tuple[str, dict[str, int]]:
         conversation_context = build_conversation_context(state)
+        if self._chain is None:
+            raise ValueError("Chain is not initialized.")
         result = await self._chain.ainvoke(
             {
                 "query": query,

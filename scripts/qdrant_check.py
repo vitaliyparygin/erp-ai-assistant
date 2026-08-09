@@ -4,7 +4,6 @@ import argparse
 
 from qdrant_client import QdrantClient
 
-
 DEFAULT_HOST = "http://qdrant:6333"
 LOCAL_HOST = "http://localhost:6333"
 
@@ -30,10 +29,9 @@ EXPECTED_METADATA_FIELDS = {
     "status",
 }
 
+
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Check Qdrant payload metadata."
-    )
+    parser = argparse.ArgumentParser(description="Check Qdrant payload metadata.")
 
     parser.add_argument(
         "--host",
@@ -107,24 +105,28 @@ def main() -> None:
                 if value == normalized:
                     metadata_stats[field]["normalized"] += 1
                 else:
-                    metadata_stats[field]["non_normalized"].append({
-                        "point_id": str(point.id),
-                        "field": field,
-                        "value": value,
-                        "expected": normalized,
-                        "document": payload.get("original_filename"),
-                    })
+                    metadata_stats[field]["non_normalized"].append(
+                        {
+                            "point_id": str(point.id),
+                            "field": field,
+                            "value": value,
+                            "expected": normalized,
+                            "document": payload.get("original_filename"),
+                        }
+                    )
 
             invoice_number = payload.get("invoice_number")
 
             if invoice_number == "customer":
-                suspicious_values.append({
-                    "point_id": str(point.id),
-                    "field": "invoice_number",
-                    "value": invoice_number,
-                    "document": payload.get("original_filename"),
-                    "document_id": payload.get("document_id"),
-                })
+                suspicious_values.append(
+                    {
+                        "point_id": str(point.id),
+                        "field": "invoice_number",
+                        "value": invoice_number,
+                        "document": payload.get("original_filename"),
+                        "document_id": payload.get("document_id"),
+                    }
+                )
 
         if offset is None:
             break

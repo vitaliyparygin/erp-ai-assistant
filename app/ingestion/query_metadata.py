@@ -1,7 +1,6 @@
 import re
-
+from collections.abc import Mapping
 from rules import detect_document_type
-
 
 NORMALIZED_METADATA_FIELDS = {
     "invoice_number",
@@ -17,16 +16,12 @@ PERSON_PATTERNS = [
 ]
 
 QUERY_IDENTIFIER_PATTERNS = {
-    "invoice_number": (
-        r"\bINV-\d+(?:-\d+)*\b",
-    ),
+    "invoice_number": (r"\bINV-\d+(?:-\d+)*\b",),
     "contract_number": (
         r"\bC-\d+(?:-\d+)*\b",
         r"\bINT-\d{4}-\d+\b",
     ),
-    "po_number": (
-        r"\bPO-\d+(?:-\d+)*\b",
-    ),
+    "po_number": (r"\bPO-\d+(?:-\d+)*\b",),
 }
 
 
@@ -35,7 +30,7 @@ def normalize_metadata_value(value: str) -> str:
 
 
 def normalize_filter_metadata(
-    metadata: dict[str, object],
+        metadata: Mapping[str, object],
 ) -> dict[str, object]:
     result = dict(metadata)
 

@@ -70,6 +70,7 @@ def test_extract_first_matching_pattern(monkeypatch):
 
     assert result["contract_number"] == "123"
 
+
 def test_extract_fields(monkeypatch):
     monkeypatch.setattr(
         "app.ingestion.metadata_extractor.detect_document_type",

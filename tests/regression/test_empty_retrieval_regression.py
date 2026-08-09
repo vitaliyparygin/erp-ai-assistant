@@ -9,6 +9,7 @@ from unittest.mock import patch
 from app.models.schemas import RetrievedChunk
 from tests.unit.agents.test_retriever_helpers import stub_rewrite
 
+
 @pytest.mark.asyncio
 async def test_empty_retrieval_returns_empty_chunks():
     retriever = AsyncMock()

@@ -2,7 +2,7 @@ import time
 from typing import Any
 
 from langchain_core.runnables import Runnable
-
+from app.llm.protocol import LLMProtocol
 from app.observability.metrics import (
     LLM_REQUESTS_TOTAL,
     LLM_LATENCY_SECONDS,
@@ -10,7 +10,7 @@ from app.observability.metrics import (
 )
 
 
-class InstrumentedLLM(Runnable[Any, Any]):
+class InstrumentedLLM(LLMProtocol):
     """
     Runnable wrapper around an LLM that records Prometheus metrics.
 
@@ -137,4 +137,3 @@ class InstrumentedLLM(Runnable[Any, Any]):
                 agent=self._agent,
                 type="total",
             ).inc(total_tokens)
-

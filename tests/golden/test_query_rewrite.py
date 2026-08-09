@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import AsyncMock
 from tests.factories import make_state
 from app.agents.retriever import RetrieverAgent
-from types import SimpleNamespace
+
 
 @pytest.mark.asyncio
 async def test_query_rewrite():

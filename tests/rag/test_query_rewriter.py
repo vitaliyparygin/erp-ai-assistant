@@ -6,15 +6,16 @@ from langchain_core.messages import HumanMessage
 from app.rag.query_rewriter import QueryRewriter
 from app.agents.state import AgentState
 
-@staticmethod
+
+# @staticmethod
 def _build_context(state: AgentState) -> str:
     if not state.messages:
         return "No prior context"
 
     return "\n".join(
-        f"{message.type}: {message.content[:200]}"
-        for message in state.messages[-4:]
+        f"{message.type}: {message.content[:200]}" for message in state.messages[-4:]
     )[:3000]
+
 
 def make_state(
     query: str,
@@ -25,6 +26,7 @@ def make_state(
         query=query,
         messages=messages or [],
     )
+
 
 @pytest.mark.asyncio
 async def test_rewrite_passes_conversation_context():
@@ -58,8 +60,7 @@ async def test_rewrite_passes_conversation_context():
 
     assert prompt_input["query"] == "what are the risks?"
     assert prompt_input["conversation_context"] == (
-        "human: What is the project status?\n"
-        "human: Tell me about the schedule."
+        "human: What is the project status?\n" "human: Tell me about the schedule."
     )
 
     assert rewritten == "project schedule risks"
@@ -68,6 +69,7 @@ async def test_rewrite_passes_conversation_context():
         "output_tokens": 5,
         "total_tokens": 15,
     }
+
 
 @pytest.mark.asyncio
 async def test_rewrite_returns_empty_query_without_llm():
@@ -149,6 +151,7 @@ async def test_rewrite_without_llm_returns_original_when_no_expansion():
         "total_tokens": 0,
     }
 
+
 @pytest.mark.asyncio
 async def test_rewrite_calls_llm(monkeypatch):
     llm = MagicMock()
@@ -175,7 +178,7 @@ async def test_rewrite_calls_llm(monkeypatch):
 
     state = make_state("invoice amount")
 
-    result, usage =  await rewriter.rewrite(state)
+    result, usage = await rewriter.rewrite(state)
 
     assert result == "rewritten query"
     chain.ainvoke.assert_awaited_once()
@@ -206,7 +209,7 @@ async def test_llm_rewrite_falls_back_to_original_for_empty_response(monkeypatch
     rewriter = QueryRewriter(llm)
     state = make_state("some question")
 
-    result, usage =  await rewriter.rewrite(state)
+    result, usage = await rewriter.rewrite(state)
 
     assert result == "some question"
     chain.ainvoke.assert_awaited_once()
@@ -238,8 +241,8 @@ async def test_llm_rewrite_rejects_non_string_response(monkeypatch):
     state = make_state("some question")
 
     with pytest.raises(
-            TypeError,
-            match="Expected string content from LLM",
+        TypeError,
+        match="Expected string content from LLM",
     ):
         await rewriter._llm_rewrite(
             query="some question",

@@ -1,15 +1,13 @@
 import asyncio
 import sys
 from pathlib import Path
-
+from app.models.orm import DocumentModel
+from app.workers.celery_app import celery_app
+from app.db.session import AsyncSessionLocal
 from sqlalchemy import select
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
-
-from app.models.orm import DocumentModel
-from app.workers.celery_app import celery_app
-from app.db.session import AsyncSessionLocal
 
 
 async def main() -> None:
@@ -50,10 +48,7 @@ async def main() -> None:
             },
         )
 
-        print(
-            f"📥 queued: {document.original_filename} "
-            f"(task={task.id})"
-        )
+        print(f"📥 queued: {document.original_filename} " f"(task={task.id})")
 
         queued += 1
 

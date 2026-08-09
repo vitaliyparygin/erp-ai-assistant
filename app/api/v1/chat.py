@@ -36,8 +36,6 @@ from app.rag.retriever.reranker import Reranker
 from sqlalchemy import select
 from app.rag.embeddings import EmbeddingService
 
-
-
 router = APIRouter()
 logger = get_logger(__name__)
 
@@ -77,9 +75,7 @@ async def _get_or_create_session(
     new_session_id = session_id or str(uuid.uuid4())
 
     result = await db.execute(
-        select(ConversationModel).where(
-            ConversationModel.session_id == new_session_id
-        )
+        select(ConversationModel).where(ConversationModel.session_id == new_session_id)
     )
     conv = result.scalar_one_or_none()
 

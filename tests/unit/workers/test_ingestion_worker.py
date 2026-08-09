@@ -1,6 +1,5 @@
 from tests.conftest import (
     make_parsed_document,
-
     FakeSessionFactory,
     FakeAsyncSession,
 )
@@ -57,7 +56,6 @@ def test_ingest_document_calls_async_pipeline(monkeypatch):
         50,
     )
 
-
     assert result == expected
 
     assert called["task"].name == worker.ingest_document.name
@@ -88,6 +86,7 @@ def test_ingest_document_exception(monkeypatch):
             "application/pdf",
             "test.pdf",
         )
+
 
 @pytest.mark.asyncio
 async def test_ingest_document_calls_async(monkeypatch):
@@ -166,9 +165,7 @@ async def test_ingest_document_async_success(monkeypatch):
 
     vector_store = MagicMock()
     vector_store.ensure_collection = AsyncMock()
-    vector_store.upsert_chunks = AsyncMock(
-        return_value=["point-1", "point-2"]
-    )
+    vector_store.upsert_chunks = AsyncMock(return_value=["point-1", "point-2"])
 
     qdrant_client = MagicMock()
     qdrant_client.close = AsyncMock()
@@ -370,8 +367,6 @@ async def test_ingest_document_async_retries_on_pipeline_error(monkeypatch):
     assert retry_kwargs["countdown"] == 60
 
 
-
-
 @pytest.mark.asyncio
 async def test_ingest_document_embedding_failure(monkeypatch):
     parser = MagicMock()
@@ -473,8 +468,3 @@ async def test_ingest_document_success(monkeypatch):
     result = MagicMock()
     result.scalar_one_or_none.return_value = document
     session.execute.return_value = result
-
-
-
-
-

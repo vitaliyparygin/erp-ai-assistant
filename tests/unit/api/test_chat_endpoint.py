@@ -95,7 +95,7 @@ async def test_chat_success():
         original_query="hello",
         input_tokens=10,
         output_tokens=20,
-        total_tokens=30
+        total_tokens=30,
     )
     result.final_answer = "Hi!"
     result.citations = []

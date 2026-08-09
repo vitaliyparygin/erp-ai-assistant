@@ -25,15 +25,9 @@ def test_invoke_success(wrapped_llm):
     )
 
     with (
-        patch(
-            "app.observability.llm.LLM_REQUESTS_TOTAL.labels"
-        ) as requests_labels,
-        patch(
-            "app.observability.llm.LLM_LATENCY_SECONDS.labels"
-        ) as latency_labels,
-        patch(
-            "app.observability.llm.InstrumentedLLM._record_tokens"
-        ) as record_tokens,
+        patch("app.observability.llm.LLM_REQUESTS_TOTAL.labels") as requests_labels,
+        patch("app.observability.llm.LLM_LATENCY_SECONDS.labels") as latency_labels,
+        patch("app.observability.llm.InstrumentedLLM._record_tokens") as record_tokens,
     ):
         result = instrumented.invoke(
             {"query": "hello"},
@@ -73,12 +67,8 @@ def test_invoke_error_reraises_and_records_error(wrapped_llm):
     )
 
     with (
-        patch(
-            "app.observability.llm.LLM_REQUESTS_TOTAL.labels"
-        ) as requests_labels,
-        patch(
-            "app.observability.llm.LLM_LATENCY_SECONDS.labels"
-        ) as latency_labels,
+        patch("app.observability.llm.LLM_REQUESTS_TOTAL.labels") as requests_labels,
+        patch("app.observability.llm.LLM_LATENCY_SECONDS.labels") as latency_labels,
     ):
         with pytest.raises(RuntimeError, match="llm failed"):
             instrumented.invoke("hello")
@@ -112,15 +102,9 @@ async def test_ainvoke_success():
     )
 
     with (
-        patch(
-            "app.observability.llm.LLM_REQUESTS_TOTAL.labels"
-        ) as requests_labels,
-        patch(
-            "app.observability.llm.LLM_LATENCY_SECONDS.labels"
-        ) as latency_labels,
-        patch(
-            "app.observability.llm.InstrumentedLLM._record_tokens"
-        ) as record_tokens,
+        patch("app.observability.llm.LLM_REQUESTS_TOTAL.labels") as requests_labels,
+        patch("app.observability.llm.LLM_LATENCY_SECONDS.labels") as latency_labels,
+        patch("app.observability.llm.InstrumentedLLM._record_tokens") as record_tokens,
     ):
         result = await instrumented.ainvoke(
             {"query": "hello"},
@@ -162,12 +146,8 @@ async def test_ainvoke_error_reraises_and_records_error():
     )
 
     with (
-        patch(
-            "app.observability.llm.LLM_REQUESTS_TOTAL.labels"
-        ) as requests_labels,
-        patch(
-            "app.observability.llm.LLM_LATENCY_SECONDS.labels"
-        ) as latency_labels,
+        patch("app.observability.llm.LLM_REQUESTS_TOTAL.labels") as requests_labels,
+        patch("app.observability.llm.LLM_LATENCY_SECONDS.labels") as latency_labels,
     ):
         with pytest.raises(RuntimeError, match="ollama failed"):
             await instrumented.ainvoke("hello")
@@ -197,9 +177,7 @@ def test_record_tokens_without_usage_metadata():
 
     result = SimpleNamespace(content="answer")
 
-    with patch(
-        "app.observability.llm.LLM_TOKENS_TOTAL.labels"
-    ) as tokens_labels:
+    with patch("app.observability.llm.LLM_TOKENS_TOTAL.labels") as tokens_labels:
         instrumented._record_tokens(result)
 
     tokens_labels.assert_not_called()
@@ -222,9 +200,7 @@ def test_record_tokens_all_values():
         }
     )
 
-    with patch(
-        "app.observability.llm.LLM_TOKENS_TOTAL.labels"
-    ) as tokens_labels:
+    with patch("app.observability.llm.LLM_TOKENS_TOTAL.labels") as tokens_labels:
         instrumented._record_tokens(result)
 
     assert tokens_labels.call_count == 3
@@ -270,9 +246,7 @@ def test_record_tokens_skips_zero_values(usage):
         usage_metadata=usage,
     )
 
-    with patch(
-        "app.observability.llm.LLM_TOKENS_TOTAL.labels"
-    ) as tokens_labels:
+    with patch("app.observability.llm.LLM_TOKENS_TOTAL.labels") as tokens_labels:
         instrumented._record_tokens(result)
 
     expected_calls = sum(

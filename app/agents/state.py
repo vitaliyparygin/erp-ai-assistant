@@ -106,7 +106,7 @@ class NodeResult(BaseModel):
         latency_ms: float | None = None,
         input_tokens: int = 0,
         output_tokens: int = 0,
-        total_tokens: int = 0
+        total_tokens: int = 0,
     ) -> "NodeResult":
         return cls(
             node_name=node_name,

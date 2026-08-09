@@ -37,6 +37,7 @@ async def test_research_passes_empty_conversation_context_without_messages():
 
     assert prompt_input["conversation_context"] == ""
 
+
 @pytest.mark.asyncio
 async def test_research_passes_conversation_context():
     llm = MagicMock()
@@ -71,13 +72,10 @@ async def test_research_passes_conversation_context():
     prompt_input = agent._chain.ainvoke.await_args.args[0]
 
     assert prompt_input["query"] == "What are the risks?"
-    assert prompt_input["context"] == (
-        "Project context from retrieved documents."
-    )
+    assert prompt_input["context"] == ("Project context from retrieved documents.")
     assert prompt_input["research_notes"] == ""
     assert prompt_input["conversation_context"] == (
-        "human: What is the project status?\n"
-        "human: Tell me about the schedule."
+        "human: What is the project status?\n" "human: Tell me about the schedule."
     )
 
 

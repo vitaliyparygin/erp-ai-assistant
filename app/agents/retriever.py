@@ -33,13 +33,10 @@ from app.observability.metrics import (
     CONTEXT_ANALYSIS_TOTAL,
     QUERY_REWRITE_LATENCY_SECONDS,
     QUERY_REWRITE_TOTAL,
-    RETRIEVAL_EMPTY_TOTAL
+    RETRIEVAL_EMPTY_TOTAL,
 )
 
-
-
 logger = get_logger(__name__)
-
 
 
 class RetrieverAgent:
@@ -49,11 +46,11 @@ class RetrieverAgent:
     """
 
     def __init__(
-            self,
-            llm: Runnable,
-            retriever: VectorRetriever,
-            reranker: Reranker,
-            query_rewriter: QueryRewriter | None = None,
+        self,
+        llm: Runnable,
+        retriever: VectorRetriever,
+        reranker: Reranker,
+        query_rewriter: QueryRewriter | None = None,
     ) -> None:
         self._llm = llm
         self._retriever = retriever
@@ -118,7 +115,6 @@ class RetrieverAgent:
                 original=state.query,
                 rewritten=rewritten_query,
             )
-
 
             raw_query_metadata = extract_query_metadata(rewritten_query)
 
@@ -360,7 +356,6 @@ class RetrieverAgent:
             analysis_latency = time.perf_counter() - analysis_start
             CONTEXT_ANALYSIS_LATENCY_SECONDS.observe(analysis_latency)
 
-
             if not reranked:
                 has_sufficient_context = False
                 needs_research = True
@@ -396,11 +391,11 @@ class RetrieverAgent:
                 reranked=len(reranked),
                 sufficient=analysis.get("has_sufficient_context", False),
                 latency_ms=total_latency_ms,
-                retrieval_latency_ms= round(retrieval_latency * 1000, 2),
-                rerank_latency_ms= round(rerank_latency * 1000, 2),
-                context_analysis_latency_ms= round(analysis_latency * 1000, 2),
-                query_rewrite_latency_ms= round(rewrite_latency_ms, 2),
-                vector_retrieval_latency_ms= retrieval_latency_ms
+                retrieval_latency_ms=round(retrieval_latency * 1000, 2),
+                rerank_latency_ms=round(rerank_latency * 1000, 2),
+                context_analysis_latency_ms=round(analysis_latency * 1000, 2),
+                query_rewrite_latency_ms=round(rewrite_latency_ms, 2),
+                vector_retrieval_latency_ms=retrieval_latency_ms,
             )
             logger.info(
                 "retriever_diagnostic",
@@ -424,7 +419,6 @@ class RetrieverAgent:
                     }
                     for c in reranked[:10]
                 ],
-
             )
             logger.debug(
                 "final context",
@@ -481,21 +475,18 @@ class RetrieverAgent:
         finally:
             AGENT_LATENCY_SECONDS.labels(
                 agent="retriever",
-            ).observe(
-                time.perf_counter() - start
-            )
+            ).observe(time.perf_counter() - start)
 
     async def _rewrite_query(
-            self,
-            state: AgentState,
+        self,
+        state: AgentState,
     ) -> tuple[str, dict[str, int]]:
         return await self._query_rewriter.rewrite(state)
 
-
     async def _analyze_context(
-            self,
-            query: str,
-            context: str,
+        self,
+        query: str,
+        context: str,
     ) -> dict:
         """Check if retrieved context is sufficient to answer the query."""
         if not context:
@@ -516,9 +507,7 @@ class RetrieverAgent:
         content = result.content
 
         if not isinstance(content, str):
-            raise TypeError(
-                f"Expected string response, got {type(content).__name__}"
-            )
+            raise TypeError(f"Expected string response, got {type(content).__name__}")
 
         try:
             analysis = json.loads(content)
@@ -536,7 +525,7 @@ class RetrieverAgent:
 
     @staticmethod
     def _format_context(
-            chunks: list[RetrievedChunk],
+        chunks: list[RetrievedChunk],
     ) -> str:
         return ContextAssembler(
             max_context=MAX_CONTEXT_ANALYSIS,

@@ -1,7 +1,7 @@
 from app.agents.state import AgentState
 from app.core.logging import get_logger
 from app.models.schemas import Citation
-from langchain_ollama import ChatOllama
+from app.llm.protocol import LLMProtocol
 from app.rag.prompts import CITATION_EXTRACTION_TEMPLATE
 from uuid import UUID
 
@@ -13,7 +13,7 @@ class CitationAgent:
     Extracts citations from the answer and maps them to source chunks.
     """
 
-    def __init__(self, llm: ChatOllama) -> None:
+    def __init__(self, llm: LLMProtocol) -> None:
         self._llm = llm
 
     def _build_chain(self):

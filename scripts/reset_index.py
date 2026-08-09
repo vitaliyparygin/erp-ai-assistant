@@ -21,17 +21,12 @@ async def main() -> None:
     client = AsyncQdrantClient(url=settings.qdrant_url)
 
     try:
-        exists = await client.collection_exists(
-            settings.qdrant_collection_name
-        )
+        exists = await client.collection_exists(settings.qdrant_collection_name)
 
         if exists:
-            await client.delete_collection(
-                settings.qdrant_collection_name
-            )
+            await client.delete_collection(settings.qdrant_collection_name)
             print(
-                f"✅ Qdrant collection deleted: "
-                f"{settings.qdrant_collection_name}"
+                f"✅ Qdrant collection deleted: " f"{settings.qdrant_collection_name}"
             )
         else:
             print("ℹ️ Qdrant collection does not exist")

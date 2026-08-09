@@ -10,7 +10,7 @@ from app.observability.metrics import (
     EMBEDDING_REQUESTS_TOTAL,
     EMBEDDING_LATENCY_SECONDS,
     RETRIEVAL_REQUESTS_TOTAL,
-    QDRANT_SEARCH_LATENCY_SECONDS
+    QDRANT_SEARCH_LATENCY_SECONDS,
 )
 from app.core.config import get_settings
 from app.core.exceptions import RetrievalError
@@ -21,7 +21,6 @@ from qdrant_client.models import Condition
 from app.config.constants import (
     METADATA_FILTER_FIELDS,
     PROTECTED_IDENTIFIER_PATTERN,
-
 )
 from qdrant_client.models import ScoredPoint
 
@@ -65,7 +64,6 @@ class VectorRetriever:
             List of RetrievedChunk sorted by relevance score descending.
         """
 
-
         start = time.perf_counter()
         k = top_k or self._settings.rag_top_k
 
@@ -93,23 +91,24 @@ class VectorRetriever:
 
             print(
                 "QDRANT METRIC DEBUG:",
-                "object_id=", id(QDRANT_SEARCH_LATENCY_SECONDS),
-                "type=", type(QDRANT_SEARCH_LATENCY_SECONDS),
-                "name=", QDRANT_SEARCH_LATENCY_SECONDS._name,
-                "qdrant_latency=", embedding_latency,
+                "object_id=",
+                id(QDRANT_SEARCH_LATENCY_SECONDS),
+                "type=",
+                type(QDRANT_SEARCH_LATENCY_SECONDS),
+                "name=",
+                QDRANT_SEARCH_LATENCY_SECONDS._name,
+                "qdrant_latency=",
+                embedding_latency,
             )
 
             print(
                 "REGISTERED:",
-                "qdrant_search_latency_seconds"
-                in REGISTRY._names_to_collectors,
+                "qdrant_search_latency_seconds" in REGISTRY._names_to_collectors,
             )
 
             print(
                 "COLLECTOR:",
-                REGISTRY._names_to_collectors.get(
-                    "erp_qdrant_search_latency_seconds"
-                ),
+                REGISTRY._names_to_collectors.get("erp_qdrant_search_latency_seconds"),
             )
             EMBEDDING_LATENCY_SECONDS.observe(
                 embedding_latency,
@@ -193,14 +192,9 @@ class VectorRetriever:
             logger.debug(
                 "semantic_retrieval_results",
                 query=query,
-                results=[
-                    self._payload_preview(point)
-                    for point in response.points
-                ],
+                results=[self._payload_preview(point) for point in response.points],
             )
             semantic_results = response.points
-
-
 
             identifier = self._extract_identifier(query)
             logger.info(
@@ -219,7 +213,7 @@ class VectorRetriever:
                 results=[
                     {
                         "document_id": r.id,
-                        "document_name": r.payload.get("original_filename"),
+                        "document_name": (r.payload or {}).get('original_filename'),
                         "score": r.score,
                     }
                     for r in identifier_results
@@ -229,8 +223,7 @@ class VectorRetriever:
                 results = identifier_results + [
                     result
                     for result in semantic_results
-                    if str(result.id)
-                       not in {str(r.id) for r in identifier_results}
+                    if str(result.id) not in {str(r.id) for r in identifier_results}
                 ]
             else:
                 results = semantic_results
@@ -247,13 +240,12 @@ class VectorRetriever:
                 results=[
                     {
                         "document_id": r.id,
-                        "document_name": r.payload.get("original_filename"),
+                         "document_name": (r.payload or {}).get('original_filename'),
                         "score": None,
                     }
                     for r in identifier_results
                 ],
             )
-
 
             logger.debug(
                 "retrieval_debug",
@@ -265,9 +257,7 @@ class VectorRetriever:
                 status="error",
             ).inc()
 
-            raise RetrievalError(
-                f"Qdrant search failed: {e}"
-            ) from e
+            raise RetrievalError(f"Qdrant search failed: {e}") from e
 
         latency_ms = (time.monotonic() - start) * 1000
 
@@ -296,7 +286,6 @@ class VectorRetriever:
                     metadata=res_payload,
                 )
             )
-
 
         RETRIEVAL_REQUESTS_TOTAL.labels(
             status="success",
@@ -352,8 +341,8 @@ class VectorRetriever:
         return list(contracts.values())
 
     async def search_by_identifier(
-            self,
-            identifier: str,
+        self,
+        identifier: str,
     ) -> list[ScoredPoint]:
         response = await self._client.scroll(
             collection_name=self._collection,
@@ -396,9 +385,9 @@ class VectorRetriever:
         ]
 
     def get_filter_condition(
-            self,
-            query_metadata: dict | None = None,
-            document_ids: list[str] | None = None,
+        self,
+        query_metadata: dict | None = None,
+        document_ids: list[str] | None = None,
     ) -> Filter | None:
         must: list[Condition] = []
 
@@ -441,8 +430,8 @@ class VectorRetriever:
 
     @staticmethod
     def merge_results(
-            identifier_results,
-            semantic_results,
+        identifier_results,
+        semantic_results,
     ):
         merged = []
         seen = set()

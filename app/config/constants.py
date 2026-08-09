@@ -79,16 +79,8 @@ PROTECTED_IDENTIFIER_PATTERN = re.compile(
 )
 
 QUERY_IDENTIFIER_PATTERNS = {
-    "invoice_number": (
-        r"\bINV-\d+(?:-\d+)*\b",
-    ),
-    "contract_number": (
-        r"\b(?:C|INT)-\d+(?:-\d+)*\b",
-    ),
-    "po_number": (
-        r"\bPO-\d+(?:-\d+)*\b",
-    ),
-    "ticket_number": (
-        r"\b(?:TICKET|TKT)-[A-Za-z0-9-]+\b",
-    ),
+    "invoice_number": (r"\bINV-\d+(?:-\d+)*\b",),
+    "contract_number": (r"\b(?:C|INT)-\d+(?:-\d+)*\b",),
+    "po_number": (r"\bPO-\d+(?:-\d+)*\b",),
+    "ticket_number": (r"\b(?:TICKET|TKT)-[A-Za-z0-9-]+\b",),
 }

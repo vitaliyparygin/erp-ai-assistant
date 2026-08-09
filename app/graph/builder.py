@@ -3,6 +3,7 @@ LangGraph multi-agent orchestration graph.
 Implements: Retriever → Research → Summarizer → Citation → Memory pipeline
 with conditional routing, retry handling, and full observability.
 """
+
 import time
 from typing import Any, Literal
 from langgraph.graph import END, START, StateGraph
@@ -20,10 +21,7 @@ from app.agents.research import ResearchAgent
 from app.agents.summarize import SummarizerAgent
 from app.agents.citation import CitationAgent
 from app.utils.resources import load_json
-from app.observability.metrics import (
-    GRAPH_EXECUTIONS_TOTAL,
-    GRAPH_LATENCY_SECONDS
-)
+from app.observability.metrics import GRAPH_EXECUTIONS_TOTAL, GRAPH_LATENCY_SECONDS
 from app.observability.llm import InstrumentedLLM
 
 logger = get_logger(__name__)
@@ -225,17 +223,15 @@ class ERPAssistantGraph:
             raise
 
         finally:
-            GRAPH_LATENCY_SECONDS.observe(
-                time.perf_counter() - start
-            )
+            GRAPH_LATENCY_SECONDS.observe(time.perf_counter() - start)
 
     async def stream(self, state: AgentState):
         start = time.perf_counter()
 
         try:
             async for event in self._graph.astream_events(
-                    state,
-                    version="v2",
+                state,
+                version="v2",
             ):
                 yield event
 
@@ -250,9 +246,7 @@ class ERPAssistantGraph:
             raise
 
         finally:
-            GRAPH_LATENCY_SECONDS.observe(
-                time.perf_counter() - start
-            )
+            GRAPH_LATENCY_SECONDS.observe(time.perf_counter() - start)
 
     def build_graph(self) -> Any:
         return self._graph

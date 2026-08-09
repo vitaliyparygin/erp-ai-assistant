@@ -167,7 +167,6 @@ async def test_chat_returns_citations():
 
     assert response.status_code == 200
 
-
     body = response.json()
 
     assert len(body["citations"]) == 1

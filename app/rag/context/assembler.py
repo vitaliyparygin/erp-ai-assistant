@@ -16,11 +16,7 @@ class ContextAssembler:
         parts = []
 
         for i, chunk in enumerate(chunks, 1):
-            page_info = (
-                f" (page {chunk.page_number})"
-                if chunk.page_number
-                else ""
-            )
+            page_info = f" (page {chunk.page_number})" if chunk.page_number else ""
 
             parts.append(
                 f"[Source {i}: {chunk.document_name}{page_info}, "

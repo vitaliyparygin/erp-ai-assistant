@@ -386,10 +386,11 @@ Detailed documentation is available in the `docs/` directory.
 The current release candidate has passed:
 
 ```text
-533 pytest tests
+
 ruff check app tests
 mypy app
 ```
+**<!-- TEST_COUNT -->556<!-- TEST_COUNT_END -->** pytest tests
 
 ### Experimental
 
@@ -413,7 +414,7 @@ They are intended for evaluation, tuning, and further RAG quality improvements.
 
 ## Testing
 
-The project contains **<!-- TEST_COUNT -->147<!-- /TEST_COUNT --> automated tests**.
+The project contains **<!-- TEST_COUNT -->556<!-- TEST_COUNT_END -->** automated tests.
 
 Run the test suite:
 

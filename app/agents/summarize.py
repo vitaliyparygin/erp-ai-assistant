@@ -2,7 +2,8 @@ import time
 from app.agents.state import AgentState
 from app.core.logging import get_logger
 from app.models.schemas import Citation
-from langchain_ollama import ChatOllama
+from app.llm.protocol import LLMProtocol
+
 from app.rag.prompts import (
     SUMMARIZER_TEMPLATE,
 )
@@ -12,6 +13,7 @@ from app.observability.metrics import (
     AGENT_EXECUTIONS_TOTAL,
     AGENT_LATENCY_SECONDS,
 )
+
 logger = get_logger(__name__)
 
 
@@ -50,7 +52,7 @@ class SummarizerAgent:
     Generates the final business-friendly answer with Markdown formatting.
     """
 
-    def __init__(self, llm: ChatOllama) -> None:
+    def __init__(self, llm: LLMProtocol) -> None:
         self._llm = llm
 
         logger.warning("LLM_MODEL", model=getattr(self._llm, "model", "unknown"))
@@ -171,7 +173,6 @@ class SummarizerAgent:
                 "output_tokens": usage.get("output_tokens", 0),
                 "total_tokens": usage.get("total_tokens", 0),
             }
-
 
         except Exception:
             AGENT_EXECUTIONS_TOTAL.labels(

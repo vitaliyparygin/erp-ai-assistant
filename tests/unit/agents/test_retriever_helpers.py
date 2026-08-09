@@ -40,6 +40,7 @@ def chunk(
         metadata=metadata,
     )
 
+
 def stub_rewrite(agent, query="invoice"):
     agent._rewrite_query = AsyncMock(
         return_value=(

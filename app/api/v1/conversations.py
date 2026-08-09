@@ -48,10 +48,7 @@ async def list_conversations(
     result = await db.execute(query)
     conversations = result.scalars().all()
 
-    return [
-        ConversationListItem.model_validate(c)
-        for c in conversations
-    ]
+    return [ConversationListItem.model_validate(c) for c in conversations]
 
 
 @router.get(
@@ -72,9 +69,7 @@ async def get_conversation(
     conv = result.scalar_one_or_none()
 
     if not conv:
-        raise ConversationNotFoundError(
-            f"Conversation {conversation_id} not found"
-        )
+        raise ConversationNotFoundError(f"Conversation {conversation_id} not found")
 
     return Conversation.model_validate(conv)
 

@@ -176,24 +176,18 @@ def test_does_not_extract_invoice_number_from_natural_language():
 
 
 def test_extracts_invoice_number():
-    metadata = extract_query_metadata(
-        "What is the amount for INV-2024-777?"
-    )
+    metadata = extract_query_metadata("What is the amount for INV-2024-777?")
 
     assert metadata["invoice_number"] == "INV-2024-777"
 
 
 def test_extracts_contract_number():
-    metadata = extract_query_metadata(
-        "What is the amount for INT-2024-555?"
-    )
+    metadata = extract_query_metadata("What is the amount for INT-2024-555?")
 
     assert metadata["contract_number"] == "INT-2024-555"
 
 
 def test_does_not_extract_for_as_invoice_number():
-    metadata = extract_query_metadata(
-        "What is the amount in the invoice for August?"
-    )
+    metadata = extract_query_metadata("What is the amount in the invoice for August?")
 
     assert "invoice_number" not in metadata

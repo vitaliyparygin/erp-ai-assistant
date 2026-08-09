@@ -247,7 +247,6 @@ class HealthResponse(DomainModel):
     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
-
 class ConversationListItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -266,6 +265,7 @@ class ConversationListItem(BaseModel):
     conversations_metadata: dict[str, Any] | None
     created_at: datetime
     updated_at: datetime
+
 
 @dataclass(frozen=True)
 class QueryRewriteResult:
