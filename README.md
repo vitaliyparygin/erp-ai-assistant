@@ -325,33 +325,16 @@ Detailed documentation is available in the `docs/` directory.
 
 ## Tech Stack
 
-* Python
-
-* FastAPI
-
-* LangGraph
-
-* Ollama
-
-* Qwen
-
-* Qdrant
-
-* Docker
-
-* PostgreSQL
-
-* Pytest
-
-* Redis
-
-* Celery
-
-* Coverage.py
-
-* Ruff
-
-* MyPy
+- **Python 3.12+**
+- **FastAPI** — REST API
+- **LangChain / LangGraph** — LLM and agent orchestration
+- **Ollama / Qwen 2.5 7B** — local LLM inference
+- **Qdrant** — vector database and semantic retrieval
+- **PostgreSQL** — persistent data storage
+- **Redis / Celery** — background processing
+- **Prometheus / Grafana** — observability and monitoring
+- **Docker / Docker Compose** — containerized deployment
+- **pytest / mypy / Ruff** — testing and code quality
 
 
 ## Status
