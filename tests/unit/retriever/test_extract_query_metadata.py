@@ -91,7 +91,7 @@ def test_extract_contract_number():
 
 def test_detect_contract():
 
-    assert detect_document_type("Contract C-001") == "Contract"
+    assert detect_document_type("Contract C-001") == "contract"
 
 
 def test_extract_contract_identifier():
