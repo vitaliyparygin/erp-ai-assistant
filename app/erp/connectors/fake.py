@@ -199,9 +199,7 @@ class FakeInventoryService(InventoryService):
     async def search_products(self, query: str) -> list[Product]:
         q = query.lower()
         return [
-            p
-            for p in _PRODUCTS.values()
-            if q in p.name.lower() or q in p.sku.lower()
+            p for p in _PRODUCTS.values() if q in p.name.lower() or q in p.sku.lower()
         ]
 
     async def check_availability(self, product_id: str, quantity: int) -> bool:

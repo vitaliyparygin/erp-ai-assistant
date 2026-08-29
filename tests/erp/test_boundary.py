@@ -46,9 +46,9 @@ def test_core_erp_modules_do_not_import_vendor_infrastructure():
             if any(marker in name.lower() for marker in VENDOR_MARKERS)
         ]
 
-        assert not offending, (
-            f"{module.__name__} imports vendor-specific module(s): {offending}"
-        )
+        assert (
+            not offending
+        ), f"{module.__name__} imports vendor-specific module(s): {offending}"
 
 
 def test_fake_connector_satisfies_erp_connector_interface():

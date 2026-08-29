@@ -7,7 +7,7 @@ rag-benchmark = "rag_benchmark.cli.main:app"
 
 [project]
 name = "erp-ai-assistant"
-version = "0.1.2"
+version = "0.1.3"
 description = "AI ERP Assistant"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -37,9 +37,8 @@ dependencies = [
     "langchain_text_splitters",
     "qdrant_client",
     "greenlet",
-    "rules",
-    "rules @ git+https://git@github.com/vitaliyparygin/rules.git@v0.1.6",
-    "rag-benchmark @ git+https://git@github.com/vitaliyparygin/rag-benchmark@v0.1.3",
+    "rules @ git+https://git@github.com/vitaliyparygin/rules.git@v0.1.10",
+    "rag-benchmark @ git+https://git@github.com/vitaliyparygin/rag-benchmark@v0.1.5",
     "python-multipart>=0.0.20",
 ]
 
@@ -109,8 +108,8 @@ omit = [
 asyncio_mode = "strict"
 
 [tool.uv.sources]
-rag-benchmark = { git = "https://github.com/vitaliyparygin/rag-benchmark", rev = "v0.1.3" }
-rules = { git = "https://github.com/vitaliyparygin/rules", rev = "v0.1.6" }
+rag-benchmark = { git = "https://github.com/vitaliyparygin/rag-benchmark", rev = "v0.1.5" }
+rules = { git = "https://github.com/vitaliyparygin/rules", rev = "v0.1.10" }
 
 [tool.hatch.metadata]
 allow-direct-references = true
