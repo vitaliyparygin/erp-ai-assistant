@@ -2,7 +2,6 @@
 
 > AI-powered ERP Assistant built with FastAPI, LangGraph, Ollama, Qdrant and Retrieval-Augmented Generation (RAG).
 
-![License](https://img.shields.io/badge/license-MIT-green)
 ![Python](https://img.shields.io/badge/python-3.12+-blue)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?logo=fastapi)
 ![LangGraph](https://img.shields.io/badge/LangGraph-Multi--Agent-purple)
@@ -401,3 +400,9 @@ The project contains **<!-- TEST_COUNT -->556<!-- TEST_COUNT_END -->** automated
 
 Run the test suite:
 
+## License
+
+This project is licensed under the
+Vitalii Parygin Agent Platform License (VPAL-1.0).
+
+See [LICENSE.md](LICENSE.md) for the license terms.
